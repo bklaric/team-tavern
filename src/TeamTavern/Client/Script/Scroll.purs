@@ -3,6 +3,7 @@ module TeamTavern.Client.Script.Scroll
     , focusFirstInvalid
     , onScroll
     , scrollRestorationManual
+    , scrollToFragment
     , scrollToId
     ) where
 
@@ -41,6 +42,14 @@ foreign import scrollRestorationManual :: Effect Unit
 -- | Brings the first field marked invalid into view and focuses its control,
 -- | once the page has drawn the marks.
 foreign import focusFirstInvalid :: Effect Unit
+
+foreign import scrollToFragmentImpl :: Effect Unit
+
+-- | Brings the element the URL's fragment names to the top of the screen, once
+-- | the page has drawn it. The browser looks for it only as the page loads,
+-- | before a page that fetches its text has anything to scroll to.
+scrollToFragment :: ∀ monad. MonadEffect monad => monad Unit
+scrollToFragment = liftEffect scrollToFragmentImpl
 
 foreign import focusCenteredImpl :: String -> Effect Unit
 

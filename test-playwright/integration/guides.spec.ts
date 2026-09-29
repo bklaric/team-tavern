@@ -32,6 +32,30 @@ test("a guide's link to a feed opens the feed without a reload", async ({ page }
     expect(await page.evaluate(() => (self as unknown as { stayed?: boolean }).stayed)).toBe(true);
 });
 
+test("the guides to joining and making a team lead to each other", async ({ page }) => {
+    await page.goto(guidePath);
+    await expect(page.getByRole("heading", { name: guideHeading, level: 1 })).toBeVisible();
+
+    await page.getByRole("link", { name: "How to make an esports team" }).click();
+
+    await expectPage(page, "/guides/make-an-esports-team");
+    await expect(page.getByRole("heading", { name: "How to make an esports team", level: 1 })).toBeVisible();
+
+    await page.getByRole("link", { name: "chart in the join guide" }).click();
+
+    await expectPage(page, guidePath);
+    await expect(page.getByRole("figure", { name: /^Groups asking for each role/ })).toBeInViewport();
+});
+
+// The guide's text comes after the page loads, so the page, not the browser,
+// finds the part of it the address names.
+test("an address naming a part of a guide opens the guide at it", async ({ page }) => {
+    await page.goto(`${guidePath}#from-amateur-team-to-pro`);
+
+    await expect(page.getByRole("heading", { name: "From amateur team to pro", level: 2 })).toBeInViewport();
+    expect(await page.evaluate(() => scrollY)).toBeGreaterThan(0);
+});
+
 test("a guide that doesn't exist is not found", async ({ page }) => {
     await page.goto("/guides/no-such-guide");
 

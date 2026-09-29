@@ -7,6 +7,8 @@ import Data.Ord (comparing)
 
 foreign import joinAnEsportsTeamText :: String
 
+foreign import makeAnEsportsTeamText :: String
+
 foreign import markdownToHtml :: String -> String
 
 -- | The slug is the guide's URL, so it never changes. `updated` is the date a
@@ -33,5 +35,14 @@ guides = sortBy (flip $ comparing _.updated)
       , published: "2026-09-29"
       , updated: "2026-09-29"
       , html: markdownToHtml joinAnEsportsTeamText
+      }
+    , { slug: "make-an-esports-team"
+      , heading: "How to make an esports team"
+      , title: "How to make an esports team: a captain's guide for Valorant, League, CS2 and more"
+      , description: "Starting an amateur team? How to pick your format, recruit for the roles you're missing, "
+            <> "run tryouts, find scrims, and the roster rules each game's tournament enforces."
+      , published: "2026-09-29"
+      , updated: "2026-09-29"
+      , html: markdownToHtml makeAnEsportsTeamText
       }
     ]

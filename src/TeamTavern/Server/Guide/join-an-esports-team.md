@@ -6,7 +6,7 @@ Most guides to this are careers pieces. They tell you to practise, stream and ne
 >
 > - Almost every esports team you can join is an amateur team playing its game's own team tournament (Valorant Premier, League of Legends Clash, the Dota 2 Battle Cup, Siege Cup) or a league such as ESEA, plus scrims.
 > - Get your account eligible first, and offer the role teams are short of.
-> - Post your rank, role and hours, then answer group posts. On TeamTavern there are about ten player posts for every group post, so waiting to be found is the slow route.
+> - Post your rank, role and hours, then answer group posts. Players have posted about ten times as often as groups on TeamTavern, so waiting to be found is the slow route.
 > - Pro teams recruit from the top of these same ladders, and only a few teams per region go up each year.
 
 ## What an esports team is below pro level
@@ -27,54 +27,54 @@ Teams recruit to fill a gap in their roster, not for a good player in general. A
 
 TeamTavern's posts show which roles those are. For each role, the chart sets the share of group posts asking for it against the share of player posts offering it. Where a role's "Groups asking" figure is higher than its "Players offering" figure, groups ask for it more often than players offer it.
 
-<figure class="guide-chart">
+<figure class="guide-chart" id="role-chart">
 <figcaption><strong>Groups asking for each role, against players offering it</strong><span>Share of posts naming each role, among the posts that answer the role question. TeamTavern's posts, 2019–2026, counted 29 September 2026.</span></figcaption>
-<ul class="guide-chart-legend" aria-hidden="true"><li class="asking">Groups asking</li><li class="offering">Players offering</li></ul>
+<ul class="guide-chart-legend" aria-hidden="true"><li class="groups">Groups asking</li><li class="players">Players offering</li></ul>
 <div>
 <p class="guide-chart-heading">Counter-Strike 2 <span>120 groups, 849 players</span></p>
 <dl>
-<dt>Entry fragger</dt><dd class="asking" style="--share: 68%"><span class="visually-hidden">Groups asking:</span> 68%</dd><dd class="offering" style="--share: 46%"><span class="visually-hidden">Players offering:</span> 46%</dd>
-<dt>Rifler</dt><dd class="asking" style="--share: 83%"><span class="visually-hidden">Groups asking:</span> 83%</dd><dd class="offering" style="--share: 79%"><span class="visually-hidden">Players offering:</span> 79%</dd>
-<dt>AWPer</dt><dd class="asking" style="--share: 66%"><span class="visually-hidden">Groups asking:</span> 66%</dd><dd class="offering" style="--share: 50%"><span class="visually-hidden">Players offering:</span> 50%</dd>
-<dt>Lurker</dt><dd class="asking" style="--share: 63%"><span class="visually-hidden">Groups asking:</span> 63%</dd><dd class="offering" style="--share: 39%"><span class="visually-hidden">Players offering:</span> 39%</dd>
-<dt>Support</dt><dd class="asking" style="--share: 68%"><span class="visually-hidden">Groups asking:</span> 68%</dd><dd class="offering" style="--share: 38%"><span class="visually-hidden">Players offering:</span> 38%</dd>
+<dt>Entry fragger</dt><dd class="groups" style="--share: 68%"><span class="visually-hidden">Groups asking:</span> 68%</dd><dd class="players" style="--share: 46%"><span class="visually-hidden">Players offering:</span> 46%</dd>
+<dt>Rifler</dt><dd class="groups" style="--share: 83%"><span class="visually-hidden">Groups asking:</span> 83%</dd><dd class="players" style="--share: 79%"><span class="visually-hidden">Players offering:</span> 79%</dd>
+<dt>AWPer</dt><dd class="groups" style="--share: 66%"><span class="visually-hidden">Groups asking:</span> 66%</dd><dd class="players" style="--share: 50%"><span class="visually-hidden">Players offering:</span> 50%</dd>
+<dt>Lurker</dt><dd class="groups" style="--share: 63%"><span class="visually-hidden">Groups asking:</span> 63%</dd><dd class="players" style="--share: 39%"><span class="visually-hidden">Players offering:</span> 39%</dd>
+<dt>Support</dt><dd class="groups" style="--share: 68%"><span class="visually-hidden">Groups asking:</span> 68%</dd><dd class="players" style="--share: 38%"><span class="visually-hidden">Players offering:</span> 38%</dd>
 </dl>
 </div>
 <div>
 <p class="guide-chart-heading">Dota 2 <span>222 groups, 3,014 players</span></p>
 <dl>
-<dt>Carry (1)</dt><dd class="asking" style="--share: 65%"><span class="visually-hidden">Groups asking:</span> 65%</dd><dd class="offering" style="--share: 51%"><span class="visually-hidden">Players offering:</span> 51%</dd>
-<dt>Mid (2)</dt><dd class="asking" style="--share: 67%"><span class="visually-hidden">Groups asking:</span> 67%</dd><dd class="offering" style="--share: 40%"><span class="visually-hidden">Players offering:</span> 40%</dd>
-<dt>Offlane (3)</dt><dd class="asking" style="--share: 70%"><span class="visually-hidden">Groups asking:</span> 70%</dd><dd class="offering" style="--share: 49%"><span class="visually-hidden">Players offering:</span> 49%</dd>
-<dt>Soft support (4)</dt><dd class="asking" style="--share: 71%"><span class="visually-hidden">Groups asking:</span> 71%</dd><dd class="offering" style="--share: 58%"><span class="visually-hidden">Players offering:</span> 58%</dd>
-<dt>Hard support (5)</dt><dd class="asking" style="--share: 68%"><span class="visually-hidden">Groups asking:</span> 68%</dd><dd class="offering" style="--share: 48%"><span class="visually-hidden">Players offering:</span> 48%</dd>
+<dt>Carry (1)</dt><dd class="groups" style="--share: 65%"><span class="visually-hidden">Groups asking:</span> 65%</dd><dd class="players" style="--share: 51%"><span class="visually-hidden">Players offering:</span> 51%</dd>
+<dt>Mid (2)</dt><dd class="groups" style="--share: 67%"><span class="visually-hidden">Groups asking:</span> 67%</dd><dd class="players" style="--share: 40%"><span class="visually-hidden">Players offering:</span> 40%</dd>
+<dt>Offlane (3)</dt><dd class="groups" style="--share: 70%"><span class="visually-hidden">Groups asking:</span> 70%</dd><dd class="players" style="--share: 49%"><span class="visually-hidden">Players offering:</span> 49%</dd>
+<dt>Soft support (4)</dt><dd class="groups" style="--share: 71%"><span class="visually-hidden">Groups asking:</span> 71%</dd><dd class="players" style="--share: 58%"><span class="visually-hidden">Players offering:</span> 58%</dd>
+<dt>Hard support (5)</dt><dd class="groups" style="--share: 68%"><span class="visually-hidden">Groups asking:</span> 68%</dd><dd class="players" style="--share: 48%"><span class="visually-hidden">Players offering:</span> 48%</dd>
 </dl>
 </div>
 <div>
 <p class="guide-chart-heading">League of Legends <span>290 groups, 3,493 players</span></p>
 <dl>
-<dt>Top</dt><dd class="asking" style="--share: 58%"><span class="visually-hidden">Groups asking:</span> 58%</dd><dd class="offering" style="--share: 35%"><span class="visually-hidden">Players offering:</span> 35%</dd>
-<dt>Jungle</dt><dd class="asking" style="--share: 57%"><span class="visually-hidden">Groups asking:</span> 57%</dd><dd class="offering" style="--share: 38%"><span class="visually-hidden">Players offering:</span> 38%</dd>
-<dt>Mid</dt><dd class="asking" style="--share: 50%"><span class="visually-hidden">Groups asking:</span> 50%</dd><dd class="offering" style="--share: 42%"><span class="visually-hidden">Players offering:</span> 42%</dd>
-<dt>ADC</dt><dd class="asking" style="--share: 46%"><span class="visually-hidden">Groups asking:</span> 46%</dd><dd class="offering" style="--share: 41%"><span class="visually-hidden">Players offering:</span> 41%</dd>
-<dt>Support</dt><dd class="asking" style="--share: 48%"><span class="visually-hidden">Groups asking:</span> 48%</dd><dd class="offering" style="--share: 48%"><span class="visually-hidden">Players offering:</span> 48%</dd>
+<dt>Top</dt><dd class="groups" style="--share: 58%"><span class="visually-hidden">Groups asking:</span> 58%</dd><dd class="players" style="--share: 35%"><span class="visually-hidden">Players offering:</span> 35%</dd>
+<dt>Jungle</dt><dd class="groups" style="--share: 57%"><span class="visually-hidden">Groups asking:</span> 57%</dd><dd class="players" style="--share: 38%"><span class="visually-hidden">Players offering:</span> 38%</dd>
+<dt>Mid</dt><dd class="groups" style="--share: 50%"><span class="visually-hidden">Groups asking:</span> 50%</dd><dd class="players" style="--share: 42%"><span class="visually-hidden">Players offering:</span> 42%</dd>
+<dt>ADC</dt><dd class="groups" style="--share: 46%"><span class="visually-hidden">Groups asking:</span> 46%</dd><dd class="players" style="--share: 41%"><span class="visually-hidden">Players offering:</span> 41%</dd>
+<dt>Support</dt><dd class="groups" style="--share: 48%"><span class="visually-hidden">Groups asking:</span> 48%</dd><dd class="players" style="--share: 48%"><span class="visually-hidden">Players offering:</span> 48%</dd>
 </dl>
 </div>
 <div>
 <p class="guide-chart-heading">Rainbow Six Siege <span>50 groups, 553 players</span></p>
 <dl>
-<dt>Entry</dt><dd class="asking" style="--share: 82%"><span class="visually-hidden">Groups asking:</span> 82%</dd><dd class="offering" style="--share: 71%"><span class="visually-hidden">Players offering:</span> 71%</dd>
-<dt>Support</dt><dd class="asking" style="--share: 86%"><span class="visually-hidden">Groups asking:</span> 86%</dd><dd class="offering" style="--share: 87%"><span class="visually-hidden">Players offering:</span> 87%</dd>
-<dt>Roamer</dt><dd class="asking" style="--share: 80%"><span class="visually-hidden">Groups asking:</span> 80%</dd><dd class="offering" style="--share: 70%"><span class="visually-hidden">Players offering:</span> 70%</dd>
-<dt>Anchor</dt><dd class="asking" style="--share: 78%"><span class="visually-hidden">Groups asking:</span> 78%</dd><dd class="offering" style="--share: 63%"><span class="visually-hidden">Players offering:</span> 63%</dd>
+<dt>Entry</dt><dd class="groups" style="--share: 82%"><span class="visually-hidden">Groups asking:</span> 82%</dd><dd class="players" style="--share: 71%"><span class="visually-hidden">Players offering:</span> 71%</dd>
+<dt>Support</dt><dd class="groups" style="--share: 86%"><span class="visually-hidden">Groups asking:</span> 86%</dd><dd class="players" style="--share: 87%"><span class="visually-hidden">Players offering:</span> 87%</dd>
+<dt>Roamer</dt><dd class="groups" style="--share: 80%"><span class="visually-hidden">Groups asking:</span> 80%</dd><dd class="players" style="--share: 70%"><span class="visually-hidden">Players offering:</span> 70%</dd>
+<dt>Anchor</dt><dd class="groups" style="--share: 78%"><span class="visually-hidden">Groups asking:</span> 78%</dd><dd class="players" style="--share: 63%"><span class="visually-hidden">Players offering:</span> 63%</dd>
 </dl>
 </div>
 <div>
 <p class="guide-chart-heading">Overwatch <span>189 groups, 2,522 players</span></p>
 <dl>
-<dt>Tank</dt><dd class="asking" style="--share: 43%"><span class="visually-hidden">Groups asking:</span> 43%</dd><dd class="offering" style="--share: 41%"><span class="visually-hidden">Players offering:</span> 41%</dd>
-<dt>DPS</dt><dd class="asking" style="--share: 54%"><span class="visually-hidden">Groups asking:</span> 54%</dd><dd class="offering" style="--share: 47%"><span class="visually-hidden">Players offering:</span> 47%</dd>
-<dt>Support</dt><dd class="asking" style="--share: 71%"><span class="visually-hidden">Groups asking:</span> 71%</dd><dd class="offering" style="--share: 70%"><span class="visually-hidden">Players offering:</span> 70%</dd>
+<dt>Tank</dt><dd class="groups" style="--share: 43%"><span class="visually-hidden">Groups asking:</span> 43%</dd><dd class="players" style="--share: 41%"><span class="visually-hidden">Players offering:</span> 41%</dd>
+<dt>DPS</dt><dd class="groups" style="--share: 54%"><span class="visually-hidden">Groups asking:</span> 54%</dd><dd class="players" style="--share: 47%"><span class="visually-hidden">Players offering:</span> 47%</dd>
+<dt>Support</dt><dd class="groups" style="--share: 71%"><span class="visually-hidden">Groups asking:</span> 71%</dd><dd class="players" style="--share: 70%"><span class="visually-hidden">Players offering:</span> 70%</dd>
 </dl>
 </div>
 </figure>
@@ -200,7 +200,7 @@ For most teams the ladder is the goal in itself: a season of matches that count,
 
 ## Or start your own team
 
-If no group fits, make one. Put up a group post that names the roles you're missing, the ranks you want and when you play. With about ten player posts for every group post, a group that knows what it needs has plenty to choose from.
+If no group fits, make one. Put up a group post that names the roles you're missing, the ranks you want and when you play. Players have posted about ten times as often as groups, so a group that knows what it needs has plenty to choose from. [How to make an esports team](/guides/make-an-esports-team) covers recruiting, tryouts and the roster rules of each format.
 
 ## Frequently asked questions
 

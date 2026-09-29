@@ -8,6 +8,13 @@ export const scrollRestorationManual = () => {
     history.scrollRestoration = "manual";
 };
 
+export const scrollToFragmentImpl = () => {
+    requestAnimationFrame(() => {
+        const id = decodeURIComponent(location.hash.slice(1));
+        if (id) document.getElementById(id)?.scrollIntoView({ block: "start" });
+    });
+};
+
 export const focusCenteredImpl = id => () => {
     requestAnimationFrame(() => {
         const element = document.getElementById(id);

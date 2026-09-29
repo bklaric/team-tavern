@@ -246,17 +246,17 @@ const scenes = [
             await shot();
         },
     },
-    {
-        name: "guide", run: async (page, shot) => {
+    ...["join-an-esports-team", "make-an-esports-team"].map(slug => ({
+        name: `guide-${slug}`, run: async (page, shot) => {
             // The covers are lazy, and those below the window never load on their own, so
             // the whole page's shot loads them at once.
-            await page.goto("/guides/join-an-esports-team");
+            await page.goto(`/guides/${slug}`);
             await page.locator(".guide table").waitFor();
             await page.evaluate(() => document.querySelectorAll("img[loading=lazy]").forEach(image => image.loading = "eager"));
             await settle(page);
             await shot();
         },
-    },
+    })),
     { name: "about", run: async (page, shot) => { await open(page, "/about"); await shot(); } },
     { name: "contact", run: async (page, shot) => { await open(page, "/contact"); await shot(); } },
     { name: "terms", run: async (page, shot) => { await open(page, "/terms"); await shot(); } },

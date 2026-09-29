@@ -14,6 +14,8 @@ const sitePages = ["/guides", "/about", "/contact", "/terms", "/privacy"];
 
 const guidePath = "/guides/join-an-esports-team";
 
+const guidePaths = [guidePath, "/guides/make-an-esports-team"];
+
 // Neither robots nor the sitemap is a page, so Caddy answers a bot with the file itself
 // rather than with a render of it.
 test.describe("a bot", () => {
@@ -71,7 +73,8 @@ test.describe("a bot", () => {
             .matchAll(/<url><loc>([^<]*)<\/loc>(?:<lastmod>([^<]*)<\/lastmod>)?<\/url>/g)]
             .map(match => [match[1], match[2]]));
         const guides = [...urls].filter(([location]) => location.startsWith(`${baseURL}/guides/`));
-        expect(guides.map(([location]) => location)).toContain(`${baseURL}${guidePath}`);
+        expect(guides.map(([location]) => location))
+            .toEqual(expect.arrayContaining(guidePaths.map(path => `${baseURL}${path}`)));
         for (const [, lastmod] of guides)
             expect(lastmod).toMatch(/^\d{4}-\d{2}-\d{2}$/);
         expect(urls.get(`${baseURL}/guides`)).toBe(guides.map(([, lastmod]) => lastmod!).sort().at(-1));
@@ -96,7 +99,7 @@ for (const [who, userAgent] of [["a bot", googlebot], ["a browser", undefined]] 
             expect(links).toEqual(expect.arrayContaining([
                 ...handles.map(handle => `${baseURL}/games/${handle}`),
                 ...sitePages.map(path => `${baseURL}${path}`),
-                `${baseURL}${guidePath}`,
+                ...guidePaths.map(path => `${baseURL}${path}`),
                 `${baseURL}/sitemap.xml`,
             ]));
         });

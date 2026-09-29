@@ -54,6 +54,11 @@
     margin-top: var(--space-4);
 }
 
+/* A link to a part of a guide puts it below the sticky header, not under it. */
+.guide [id] {
+    scroll-margin-top: calc(56px + var(--space-4));
+}
+
 /* A table wraps its cells to fit a phone, which is narrower than any of the
    guides' tables. A column is kept as wide as its longest word, so words break
    only where one is too long for the whole table. */
@@ -119,8 +124,8 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-card);
     font-size: var(--size-12);
-    --asking: #d9733a;
-    --offering: #5b8fd6;
+    --groups: #d9733a;
+    --players: #5b8fd6;
 }
 
 .guide-chart figcaption {
@@ -202,12 +207,13 @@
     background: var(--swatch);
 }
 
-.guide-chart .asking {
-    --swatch: var(--asking);
+/* Every chart sets group posts against player posts, in the same two colours. */
+.guide-chart .groups {
+    --swatch: var(--groups);
 }
 
-.guide-chart .offering {
-    --swatch: var(--offering);
+.guide-chart .players {
+    --swatch: var(--players);
 }
 
 /* The guides index: each guide under a rule, its title, then when it was

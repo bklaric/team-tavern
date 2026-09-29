@@ -21,6 +21,7 @@ import TeamTavern.Client.Pages.Placeholder (placeholder)
 import TeamTavern.Client.Script.Meta (setGuideData, setMeta)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
 import TeamTavern.Client.Script.RenderReady (appendRenderReadyNotFound, appendRenderReadyUnavailable)
+import TeamTavern.Client.Script.Scroll (scrollToFragment)
 import TeamTavern.Client.Shared.Fetch (expecting, fetchPath)
 import TeamTavern.Client.Shared.Slot (Slot__I)
 import TeamTavern.Client.Snippets.Class as HS
@@ -66,6 +67,7 @@ component = Hooks.component \_ slug -> Hooks.do
                             , updated: guide'.updated
                             }
                         Hooks.put pageId $ Shown guide'
+                        scrollToFragment
                     , notFound: const do
                         appendRenderReadyNotFound
                         setMeta "Page not found | TeamTavern" ""
