@@ -29,6 +29,14 @@ test.describe("a bot", () => {
         expect(await response?.text()).toContain(`Sitemap: ${baseURL}/sitemap.xml`);
     });
 
+    test("is kept by robots.txt from the account pages that carry a way back", async ({ page }) => {
+        const response = await page.goto("/robots.txt");
+
+        const lines = (await response!.text()).split("\n").map(line => line.trim());
+        expect(lines).toEqual(expect.arrayContaining(
+            ["Disallow: /signin?", "Disallow: /signup?", "Disallow: /forgot-password?"]));
+    });
+
     // Valorant's seeded posts include GroupTester's group Night Owls, active, and
     // ExpiredTester's player post, past its 30 days.
     test("finds the home page, the site's own pages, every feed and the active posts in the sitemap, and no expired one", async ({ page, browser, baseURL }) => {
@@ -118,6 +126,7 @@ for (const [who, userAgent] of [["a bot", googlebot], ["a browser", undefined]] 
 const aiCrawlers = [
     ["OAI-SearchBot", "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; OAI-SearchBot/1.0; +https://openai.com/searchbot"],
     ["ClaudeBot", "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; ClaudeBot/1.0; +claudebot@anthropic.com)"],
+    ["Meta-ExternalAgent", "meta-externalagent/1.1 (+https://developers.facebook.com/docs/sharing/webmasters/crawler)"],
 ];
 
 for (const [name, userAgent] of aiCrawlers)
@@ -159,6 +168,48 @@ for (const [name, userAgent] of aiCrawlers)
                 .toHaveAttribute("href", /\/games\/valorant$/);
         });
     });
+
+// Ahrefs audits the site as a search engine would read it, so its crawler and its site
+// audit are served the render search engines get, robots tag and canonical included. A
+// bot Caddy has no name for is served it too, as long as it calls itself a bot, a crawler
+// or a spider.
+const otherBots = [
+    ["AhrefsBot", "Mozilla/5.0 (compatible; AhrefsBot/7.0; +http://ahrefs.com/robot/)"],
+    ["AhrefsSiteAudit", "Mozilla/5.0 (compatible; AhrefsSiteAudit/6.1; +http://ahrefs.com/robot/site-audit)"],
+    ["a bot nobody has named", "Mozilla/5.0 (compatible; UnheardOfBot/1.0; +https://example.com/bot)"],
+    ["a crawler nobody has named", "UnheardOfCrawler/1.0 (+https://example.com/crawler)"],
+    ["a spider nobody has named", "Mozilla/5.0 (compatible; UnheardOfSpider/1.0)"],
+];
+
+for (const [name, userAgent] of otherBots)
+    test.describe(name, () => {
+        test.use({ userAgent, javaScriptEnabled: false });
+
+        test("is served a game's feed prerendered", async ({ page }) => {
+            test.slow();
+
+            const response = await page.goto("/games/valorant", { timeout: 60_000 });
+
+            expect(response?.status()).toBe(200);
+            await expect(page.getByRole("link", { name: "Night Owls", exact: true })).toBeVisible();
+        });
+    });
+
+// Cubot's phones carry its name in their browser's user agent, and a player on one gets
+// the site, not a render of it. With scripts off, the site is the shell, which shows no feed.
+test.describe("a Cubot phone", () => {
+    test.use({
+        userAgent: "Mozilla/5.0 (Linux; Android 13; CUBOT NOTE 50) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36",
+        javaScriptEnabled: false,
+    });
+
+    test("is served the site, not a render", async ({ page }) => {
+        const response = await page.goto("/games/valorant");
+
+        expect(response?.status()).toBe(200);
+        await expect(page.getByRole("link", { name: "Night Owls", exact: true })).toHaveCount(0);
+    });
+});
 
 // A link pasted into a chat or a post is previewed from the page a bot fetches, and a
 // search engine's testing tool reads the page as its crawler does. None of them runs

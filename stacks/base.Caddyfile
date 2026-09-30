@@ -56,9 +56,15 @@ handle @prerender_header {
 # which the file matcher counts as a file, so it is let through by name. The
 # sitemap, robots and llms.txt are answered below without a file, and nothing
 # under /.well-known/ is a page, so they are kept out by name.
+#
+# A bot is any user agent that calls itself a bot, a crawler or a spider, which
+# most do, so one nobody has heard of is rendered for too. The names after
+# those are the bots that use none of the three words. Cubot is a phone maker
+# whose browsers carry its name.
 
 @bot_page {
-    header_regexp User-Agent (?i)(amazonbot|applebot|baiduspider|bingbot|bytespider|cardyb|ccbot|chatgpt-user|claude-searchbot|claude-user|claudebot|discordbot|duckassistbot|duckduckbot|embedly|facebot|facebookexternalhit|google-inspectiontool|googlebot|gptbot|iframely|linkedinbot|mastodon|oai-searchbot|outbrain|perplexity-user|perplexitybot|pinterest|pinterestbot|quora\slink\spreview|redditbot|rogerbot|showyoubot|skypeuripreview|slackbot|steamchaturllookup|telegrambot|twitterbot|vkshare|W3C_Validator|whatsapp|yandex)
+    header_regexp User-Agent (?i)(bot|crawl|spider|ahrefssiteaudit|amzn-user|cardyb|chatgpt-user|claude-user|cohere-ai|embedly|facebookexternalhit|gemini-deep-research|google-inspectiontool|googleagent-urlcontext|googleother|iframely|kagi-fetcher|kimi-user|mastodon|meta-external|meta-webindexer|mistralai|notebooklm|outbrain|perplexity-user|pinterest|quora\slink\spreview|skypeuripreview|steamchaturllookup|vkshare|W3C_Validator|whatsapp|yandex)
+    not header_regexp User-Agent (?i)cubot
     not path /api/* /images/* /sitemap.xml /robots.txt /llms.txt /.well-known/*
     expression `{path} == "/" || !file({"try_files": [{path}]})`
 }
@@ -126,13 +132,18 @@ handle /sitemap.xml {
     reverse_proxy tt-node
 }
 
-# Each origin names its own sitemap.
+# Each origin names its own sitemap. Every page's header links to the account
+# pages with that page in `?back=`, which makes three addresses per page that
+# all show the same form, so crawlers are kept to the bare ones.
 
 handle /robots.txt {
     header Content-Type "text/plain; charset=utf-8"
     respond <<TXT
         User-agent: *
         Allow: /
+        Disallow: /signin?
+        Disallow: /signup?
+        Disallow: /forgot-password?
 
         Sitemap: {http.request.scheme}://{http.request.hostport}/sitemap.xml
 
