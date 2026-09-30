@@ -43,7 +43,8 @@ response # onMatch
     (const $ showError "Something went wrong.")
 ```
 
-Change the route and both sides stop compiling until they agree again.
+Rename a field or drop a response, and whichever side still uses it stops
+compiling.
 
 | Part | Built with |
 | --- | --- |
