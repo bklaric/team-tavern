@@ -99,6 +99,29 @@ test.describe("the ads", () => {
         expect(after.y).toBe(before.y);
     });
 
+    // An ad blocker refuses the script and hides every element whose class its filter
+    // lists name, which are classes that say ad. Only the units may go with them.
+    test("take nothing of the page with them when an ad blocker hides them", async ({ page }) => {
+        await page.unroute("https://hb.vntsm.com/**");
+        await page.route("https://hb.vntsm.com/**", route => route.abort());
+        const hideAdClasses = () => page.addStyleTag({ content: `
+            .ad, .ads, [class^="ad-"], [class*=" ad-"], [class^="ads-"], [class*=" ads-"] { display: none !important; }
+        ` });
+        await page.setViewportSize({ width: 1280, height: 900 });
+        await openFeed(page);
+        await hideAdClasses();
+
+        await expect(page.getByRole("heading", { name: "Valorant LFG", level: 1 })).toBeVisible();
+        await expect(page.locator(".card").first()).toBeVisible();
+        const column = await box(page, ".feed-page");
+        const middle = await page.evaluate(() => document.documentElement.clientWidth / 2);
+        expect(Math.abs(column.x + column.width / 2 - middle)).toBeLessThanOrEqual(1);
+
+        await page.goto(guidePath);
+        await hideAdClasses();
+        await expect(page.getByRole("heading", { name: "How to join an esports team", level: 1 })).toBeVisible();
+    });
+
     test("drop the rails where a skyscraper no longer fits beside the column", async ({ page }) => {
         await page.setViewportSize({ width: 1280, height: 900 });
         await openFeed(page);

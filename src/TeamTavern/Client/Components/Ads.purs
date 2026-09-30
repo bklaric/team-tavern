@@ -64,13 +64,17 @@ rail side =
 -- | either side on a desktop, and a sticky on the window's floor on a desktop
 -- | and on a phone. A page keeps its units while it renders, and a new visit
 -- | mounts the page, and so its units, again.
+-- |
+-- | An ad blocker hides elements by class names its filter lists know, so the
+-- | units keep names that say ad, and go with the ads, while the frame and the
+-- | page's own content carry none.
 around :: ∀ action slots m. MonadEffect m =>
     HH.ComponentHTML action (ad :: Slot | slots) m -> HH.ComponentHTML action (ad :: Slot | slots) m
 around content =
-    HH.div [ HS.class_ "ads-page" ]
+    HH.div [ HS.class_ "page-frame" ]
     [ HH.div [ HS.class_ "ad-takeover" ] [ ad "takeover" $ inPage "desktop_takeover" desktop ]
     , rail "left"
-    , HH.div [ HS.class_ "ads-content" ] [ content ]
+    , HH.div [ HS.class_ "page-frame-main" ] [ content ]
     , rail "right"
     , ad "bottom" $ floor "horizontal_sticky" desktop
     , ad "phone-bottom" $ floor "mobile_horizontal_sticky" phone
