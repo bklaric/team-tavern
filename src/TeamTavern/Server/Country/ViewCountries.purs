@@ -17,7 +17,7 @@ loadCountriesQuery = Query """
         array(select name from region order by ordinal) as regions,
         coalesce((
             select jsonb_agg(jsonb_build_object('name', country.name, 'region', region.name)
-                order by region.ordinal, country.name)
+                order by country.name)
             from country
                 join region on region.name = country.region_name
         ), '[]') as countries

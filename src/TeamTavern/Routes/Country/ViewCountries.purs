@@ -11,7 +11,7 @@ type Country =
     , region :: String
     }
 
--- | The regions in their order, and the countries by region, then by name.
+-- | The regions in their order, and the countries by name.
 type OkContent =
     { regions :: Array String
     , countries :: Array Country
