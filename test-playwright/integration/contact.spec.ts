@@ -82,6 +82,16 @@ test.describe("the contact panel", () => {
             ["Discord", "Marvel Rivals username", "PSN ID", "Xbox gamertag"]);
     });
 
+    // Rocket League offers the Epic ID its friend list is built on.
+    test("lists the Epic ID before the platforms' accounts", async ({ page }) => {
+        await signIn(page, "new@example.com");
+        await openFeed(page, "rocket-league");
+        const dialog = await openPanel(page, "RocketLeagueTester");
+
+        await expect(dialog.locator(".contact-label")).toHaveText(
+            ["Discord", "Epic ID", "PSN ID", "Xbox gamertag", "Nintendo friend code"]);
+    });
+
     test("makes a community's invite or website the one filled button", async ({ page }) => {
         await signIn(page, "new@example.com");
         await openFeed(page, "valorant");

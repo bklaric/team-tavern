@@ -137,8 +137,9 @@ factsOf game post hours = let
         Just fact -> [ withMatch (markOf key >>= shownMatch) fact ]
         Nothing | markOf key == Just "missing" -> [ missed $ name <> " not given" ]
         Nothing -> []
-    -- Overwatch ranks each role on a ladder of its own, so where a card leads
-    -- with more than one ladder each names itself.
+    -- Overwatch ranks each role on a ladder of its own and Rocket League each
+    -- playlist, so where a card leads with more than one ladder each names
+    -- itself.
     laddersNamed = length (filter (\field -> field.ordered && field.onCard) game.fields) > 1
     gameFact shown field = let
         text = answerText post field

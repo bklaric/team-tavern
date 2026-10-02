@@ -3,10 +3,11 @@ import { expectPage, postPath } from "../pages";
 
 const googlebot = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)";
 
-// `Database/Seed/Games/` seeds the eleven games of the catalogue.
+// `Database/Seed/Games/` seeds the twelve games of the catalogue.
 const handles = [
     "apex-legends", "counter-strike-2", "dota-2", "heroes-of-the-storm", "league-of-legends",
-    "marvel-rivals", "overwatch", "rainbow-six-siege", "team-fortress-2", "valheim", "valorant",
+    "marvel-rivals", "overwatch", "rainbow-six-siege", "rocket-league", "team-fortress-2", "valheim",
+    "valorant",
 ];
 
 // The site's own pages, which the footer links from every page.
