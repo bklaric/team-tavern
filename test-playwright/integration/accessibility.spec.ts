@@ -52,7 +52,12 @@ for (const [device, viewport] of [["desktop", { width: 1280, height: 800 }], ["p
             await page.goto("/guides");
             await expect(page.getByRole("link", { name: "How to join an esports team" })).toBeVisible();
             await expectAccessible(page, "/guides");
-            for (const guide of ["/guides/join-an-esports-team", "/guides/make-an-esports-team", "/guides/marvel-rivals-championship-team"]) {
+            for (const guide of [
+                "/guides/join-an-esports-team",
+                "/guides/make-an-esports-team",
+                "/guides/marvel-rivals-championship-team",
+                "/guides/rocket-league-tournaments",
+            ]) {
                 await page.goto(guide);
                 await expect(page.getByRole("table")).toBeVisible();
                 await expectAccessible(page, guide);

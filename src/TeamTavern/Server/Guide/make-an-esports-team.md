@@ -14,7 +14,7 @@ This guide is for whoever is putting that team together: a player building a sta
 
 Settle the format, the night, the rank range and the language before you post anything. Every post you write and every tryout you run depends on them, and a player can't judge a team that hasn't decided.
 
-**The format.** Pick what the team is for: Valorant Premier, League of Legends Clash, the Dota 2 Battle Cup, ESEA in Counter-Strike 2, the FACEIT leagues in Overwatch, the Marvel Rivals Championship, Siege Cup or the Challenger Series in Rainbow Six Siege, the ALGS Challenger Circuit in Apex Legends, ETF2L or RGL in Team Fortress 2, or scrims only. The formats differ in how often they play, what they ask of each player's account and where they lead. The guide to joining a team covers [each game's team format](/guides/join-an-esports-team#your-games-team-format), so this one doesn't repeat it.
+**The format.** Pick what the team is for: Valorant Premier, League of Legends Clash, the Dota 2 Battle Cup, ESEA in Counter-Strike 2, the FACEIT leagues in Overwatch, the Marvel Rivals Championship, Siege Cup or the Challenger Series in Rainbow Six Siege, the ALGS Challenger Circuit in Apex Legends, the in-game tournaments in Rocket League, ETF2L or RGL in Team Fortress 2, or scrims only. The formats differ in how often they play, what they ask of each player's account and where they lead. The guide to joining a team covers [each game's team format](/guides/join-an-esports-team#your-games-team-format), so this one doesn't repeat it.
 
 **The night.** Pick one or two fixed evenings, with a start time and a time zone. A team that can't agree on a night isn't a team yet, and players look for posts whose hours match their own.
 
@@ -83,6 +83,7 @@ Every format has its own way to create a team and its own roster rules, and some
 | **League of Legends: Clash** | The captain adds and removes players and picks the name, logo and tag. 5 players, each with a ticket | Invites open the Monday before a cup. Teams lock in during a window set by their tier |
 | **Counter-Strike 2: ESEA** | The team is ready once 5 players hold an ESEA League Pass | After registration closes, at most 3 players join per 7 days. Rosters lock 2 weeks before the regular season ends |
 | **Apex Legends: ALGS Challenger Circuit** | Whoever creates the team on Battlefy is its captain. 3–4 players and a coach, registered for each event | Points belong to the players, and a team is seeded by its top three |
+| **Rocket League: in-game tournaments** | Nobody: each player registers alone or in a party of 2 or 3, and the game fills empty places | A party enters at its highest player's tournament rank, and a duo in 3v3 must be within three ranks |
 | **Rainbow Six Siege: Siege Cup** | The squad leader registers a squad of five | The team can't be edited once registered |
 | **Rainbow Six Siege: Challenger Series** | The team's creator invites players on Challengermode | A player who wasn't in the lineup needs an admin's approval to join mid-tournament |
 | **Overwatch: OWCS** | Up to 8 players, aged 17 or over | The 2026 open qualifier requires Masters 1 |
@@ -143,7 +144,7 @@ Climb your format's own divisions first. The join guide names [the ladder from a
 
 ### How many players do you need to start an esports team?
 
-Five to play in most games, three in Apex Legends, six in Marvel Rivals, and six or nine in Team Fortress 2. Keep one or two more as subs: Premier allows up to seven players, and RGL Sixes up to twelve. You don't need them all to start: a group post says how many players you have and how many you want.
+Five to play in most games, three in Apex Legends, two or three in Rocket League, six in Marvel Rivals, and six or nine in Team Fortress 2. Keep one or two more as subs: Premier allows up to seven players, and RGL Sixes up to twelve. You don't need them all to start: a group post says how many players you have and how many you want.
 
 ### How much does it cost to run an amateur team?
 

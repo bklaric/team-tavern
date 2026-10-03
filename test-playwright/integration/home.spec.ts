@@ -16,7 +16,7 @@ async function expectStart(page: Page) {
     await expect(page.locator(".type-card").nth(1)).toHaveAttribute("href", "/post/group");
     await expect(page.locator(".type-card").nth(2)).toHaveAttribute("href", "/post/community");
     const games = page.getByRole("region", { name: "Or browse a game" });
-    await expect(games.locator(".cover")).toHaveCount(11);
+    await expect(games.locator(".cover")).toHaveCount(12);
 }
 
 test.describe("the home page", () => {
@@ -57,7 +57,7 @@ test.describe("the home page", () => {
         await expect(valheim.locator(".own-post-state")).toHaveText("Expires in 4 days");
         await expect(valheim.getByRole("button", { name: "Renew" })).toHaveClass(/button-outline/);
 
-        await expect(page.getByRole("region", { name: "Other games" }).locator(".cover")).toHaveCount(8);
+        await expect(page.getByRole("region", { name: "Other games" }).locator(".cover")).toHaveCount(9);
 
         await dota.getByRole("link", { name: "New Dota 2 post" }).click();
         await expectPage(page, "/post");

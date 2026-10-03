@@ -11,6 +11,8 @@ foreign import makeAnEsportsTeamText :: String
 
 foreign import marvelRivalsChampionshipTeamText :: String
 
+foreign import rocketLeagueTournamentsText :: String
+
 foreign import markdownToHtml :: String -> String
 
 -- | The slug is the guide's URL, so it never changes. `updated` is the date a
@@ -35,7 +37,7 @@ guides = sortBy (flip $ comparing _.updated)
       , description: "Most esports teams are amateur five-stacks playing Premier, Clash, ESEA or Siege Cup. "
             <> "Here's what each game asks of your account, what teams look for, and where to find one."
       , published: "2026-09-29"
-      , updated: "2026-09-30"
+      , updated: "2026-10-04"
       , html: markdownToHtml joinAnEsportsTeamText
       }
     , { slug: "make-an-esports-team"
@@ -44,7 +46,7 @@ guides = sortBy (flip $ comparing _.updated)
       , description: "Starting an amateur team? How to pick your format, recruit for the roles you're missing, "
             <> "run tryouts, find scrims, and the roster rules each game's tournament enforces."
       , published: "2026-09-29"
-      , updated: "2026-09-30"
+      , updated: "2026-10-04"
       , html: markdownToHtml makeAnEsportsTeamText
       }
     , { slug: "marvel-rivals-championship-team"
@@ -55,5 +57,14 @@ guides = sortBy (flip $ comparing _.updated)
       , published: "2026-09-30"
       , updated: "2026-09-30"
       , html: markdownToHtml marvelRivalsChampionshipTeamText
+      }
+    , { slug: "rocket-league-tournaments"
+      , heading: "How Rocket League tournaments work, and how to find a teammate for them"
+      , title: "Rocket League tournaments: how they work and who to play them with"
+      , description: "Several brackets a day in every region, a party entered at its best player's rank, a duo in 3v3 "
+            <> "kept within three ranks: how Rocket League's tournaments work, and how to find a partner for them."
+      , published: "2026-10-04"
+      , updated: "2026-10-04"
+      , html: markdownToHtml rocketLeagueTournamentsText
       }
     ]

@@ -28,6 +28,7 @@ accountQuery = Query """
             'riot', player.riot_id,
             'battle_tag', player.battle_tag,
             'ea', player.ea_id,
+            'epic', player.epic_id,
             'ubisoft', player.ubisoft_username,
             'marvel_rivals', player.marvel_rivals_username,
             'psn', player.psn_id,
