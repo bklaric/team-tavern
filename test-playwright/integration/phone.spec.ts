@@ -115,7 +115,7 @@ test.describe("on a phone", () => {
         await page.goto("/guides");
         await expect(page.getByRole("link", { name: "How to join an esports team" })).toBeVisible();
         await expectFits(page);
-        for (const guide of ["join-an-esports-team", "make-an-esports-team", "marvel-rivals-championship-team"]) {
+        for (const guide of ["join-an-esports-team", "make-an-esports-team", "marvel-rivals-championship-team", "rocket-league-tournaments"]) {
             await page.goto(`/guides/${guide}`);
             await expect(page.getByRole("table")).toBeVisible();
             await expectFits(page);

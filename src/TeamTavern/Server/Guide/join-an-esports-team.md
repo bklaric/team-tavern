@@ -11,7 +11,7 @@ Most guides to this are careers pieces. They tell you to practise, stream and ne
 
 ## What an esports team is below pro level
 
-An amateur esports team is a group of five players (three in Apex Legends, six in Marvel Rivals, six or nine in Team Fortress 2) that plays together on a fixed schedule, in its game's team tournament, in a league, or in scrims. Scrims are practice matches against another team, arranged between the two teams.
+An amateur esports team is a group of five players (three in Apex Legends, two or three in Rocket League, six in Marvel Rivals, six or nine in Team Fortress 2) that plays together on a fixed schedule, in its game's team tournament, in a league, or in scrims. Scrims are practice matches against another team, arranged between the two teams.
 
 Teams come in three kinds:
 
@@ -104,6 +104,7 @@ Most team formats set a bar for your account, and some cost money. Check yours b
 | **Marvel Rivals: the Championship**, 6–12 players | Platinum 3 in the season's Competitive, and every member on one platform | Once a season |
 | **Counter-Strike 2: ESEA**, 5 players | – | Seasons |
 | **Apex Legends: ALGS Challenger Circuit**, 3 players | – | Open tournaments in each split |
+| **Rocket League: in-game tournaments**, 2 or 3 players | Nothing: they're free and open to everyone | Several every day in each region |
 | **Rainbow Six Siege: Siege Cup**, 5 players | The paid game, not free access | – |
 | **Rainbow Six Siege: Challenger Series**, 5 players | – | Open qualifiers, February to March in 2026 |
 | **Team Fortress 2: ETF2L**, 6 or 9 players | For the Fresh division, no more than 10 ETF2L Open matches, among other limits | Seasons |
@@ -158,6 +159,12 @@ Clash doesn't lead to pro play. Teams that want more than Clash play scrims and 
 
 [Apex Legends players and groups on TeamTavern](/games/apex-legends)
 
+### Rocket League: tournaments
+
+<img class="guide-cover" src="/images/games/400/rocket-league.webp" alt="" width="400" height="600" loading="lazy"> Rocket League runs its own Competitive Tournaments, free brackets of 32 teams in 2v2 and 3v3, several times a day in every region. [Epic's tournament rules](https://www.epicgames.com/help/rocket-league-c-37599050/gameplay-c-32343914/what-are-competitive-auto-tournaments-in-rocket-league-a12090278) let you register alone and have the game fill your team, but a party enters at its best player's tournament rank, and a duo in 3v3 must be within three ranks of each other, so a regular partner near your rank pays off. Above them is the RLCS, whose 2027 season opens with a Club Championship that gives four places to an open qualifier starting in November. [How Rocket League tournaments work, and how to find a teammate for them](/guides/rocket-league-tournaments) covers the schedule, the entry rules and how to find a partner.
+
+[Rocket League players and groups on TeamTavern](/games/rocket-league)
+
 ### Rainbow Six Siege
 
 <img class="guide-cover" src="/images/games/400/rainbow-six-siege.webp" alt="" width="400" height="600" loading="lazy"> Siege Cup is Siege's tournament for five-stacks, inside the game. Since [Siege X in June 2025](https://news.ubisoft.com/en-us/article/5tIdWMRe5DKP4wZj321qCP/rainbow-six-siege-x-launches-today-free-access-now-available) the game has free access, but Ranked and Siege Cup need the paid game. The way up is the [Challenger Series](https://www.ubisoft.com/en-us/esports/rainbow-six/siege/news-updates/2qbD0Cm5dSvxBfBxrIbW3i/r6se-challenger-series-2026): open qualifiers on Challengermode that teams of any level can enter, where both teams in each region's grand final qualify for that region's league.
@@ -202,6 +209,7 @@ Pro teams recruit from the top of the same ladders amateur teams play on, and ea
 - **Overwatch:** the FACEIT League, then promotion matches against the bottom OWCS teams.
 - **Marvel Rivals:** the Championship on PC, then the Annual Qualifier for Ignite's Pro Circuit, for the top Factions and the Champion Points leaders.
 - **Apex Legends:** the Challenger Circuit, then the Pro League Qualifier, then the Pro League.
+- **Rocket League:** for 2027, an open online qualifier for four places in the RLCS Club Championship, beside 20 invited clubs.
 - **Rainbow Six Siege:** the Challenger Series, then the regional league.
 
 For most teams the ladder is the goal in itself: a season of matches that count, with a fixed lineup.

@@ -246,7 +246,7 @@ const scenes = [
             await shot();
         },
     },
-    ...["join-an-esports-team", "make-an-esports-team", "marvel-rivals-championship-team"].map(slug => ({
+    ...["join-an-esports-team", "make-an-esports-team", "marvel-rivals-championship-team", "rocket-league-tournaments"].map(slug => ({
         name: `guide-${slug}`, run: async (page, shot) => {
             // The covers are lazy, and those below the window never load on their own, so
             // the whole page's shot loads them at once.
