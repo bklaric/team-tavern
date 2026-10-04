@@ -269,9 +269,10 @@ curl's `--aws-sigv4`.
 Email goes out through SES in `eu-central-1`, where `teamtavern.net` is
 verified by the Easy DKIM records in its Namecheap DNS. The key pair is the IAM
 user `teamtavern-ses`'s, whose one policy lets it send only as
-`admin@teamtavern.net`, so every email the server and the backup send is from
-that address. SES keeps its account-level suppression list on for bounces and
-complaints, and Virtual Deliverability Manager shows their rates.
+`admin@teamtavern.net`, which every email the server sends is from, and
+`backup@teamtavern.net`, which the backup is from. SES keeps its
+account-level suppression list on for bounces and complaints, and Virtual
+Deliverability Manager shows their rates.
 
 ### Expected noise
 

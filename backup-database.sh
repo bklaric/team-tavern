@@ -1,10 +1,10 @@
 #!/bin/bash
-# Emails a gzipped dump of the database through SES, as admin@teamtavern.net,
-# the one sender the IAM user's policy allows.
+# Emails a gzipped dump of the database through SES, as backup@teamtavern.net,
+# a sender the IAM user's policy allows.
 set -o pipefail
 # UTC ISO timestamp for file name.
 DATETIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-FROM="admin@teamtavern.net"
+FROM="backup@teamtavern.net"
 TO="branimir.klaric.bk@gmail.com"
 BOUNDARY="database-backup-$DATETIME"
 # The raw email: a line of text and the dump attached. Its lines end in CRLF,
