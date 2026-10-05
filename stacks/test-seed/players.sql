@@ -12,13 +12,13 @@ language sql as $$
         ( nickname, email, email_confirmed, password_hash
         , birthday, languages, country, timezone
         , discord_tag, steam_id, riot_id, battle_tag, ea_id
-        , epic_id, ubisoft_username, marvel_rivals_username, psn_id, gamer_tag, friend_code
+        , epic_id, embark_id, ubisoft_username, marvel_rivals_username, psn_id, gamer_tag, friend_code
         )
     values
         ( nickname, email, true, '$2b$10$.ooPKTLO.JoL61KIvfsTKu2Nx1awadTkA9C1h/29.mIbi86dhHFwO'
         , date '2000-06-15', array['English'], 'Croatia', 'Europe/Zagreb'
         , nickname, nickname, nickname || '#EUW', nickname || '#1234', nickname
-        , nickname, nickname, nickname, nickname, nickname, 'SW-1234-5678-9012'
+        , nickname, nickname || '#1234', nickname, nickname, nickname, nickname, 'SW-1234-5678-9012'
         )
     returning id
 $$;

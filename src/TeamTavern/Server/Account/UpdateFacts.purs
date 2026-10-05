@@ -49,6 +49,7 @@ queryString = Query """
         battle_tag = $7::jsonb->>'battle_tag',
         ea_id = $7::jsonb->>'ea',
         epic_id = $7::jsonb->>'epic',
+        embark_id = $7::jsonb->>'embark',
         ubisoft_username = $7::jsonb->>'ubisoft',
         marvel_rivals_username = $7::jsonb->>'marvel_rivals',
         psn_id = $7::jsonb->>'psn',
@@ -58,7 +59,7 @@ queryString = Query """
     """
 
 allContactKinds :: Array String
-allContactKinds = [ "discord", "steam", "riot", "battle_tag", "ea", "epic", "ubisoft", "marvel_rivals", "psn", "gamer_tag", "friend_code" ]
+allContactKinds = [ "discord", "steam", "riot", "battle_tag", "ea", "epic", "embark", "ubisoft", "marvel_rivals", "psn", "gamer_tag", "friend_code" ]
 
 updateFacts :: ∀ left. Pool -> Cookies -> UpdateFacts.RequestContent -> Async left _
 updateFacts pool cookies { nickname, account } =

@@ -73,6 +73,7 @@ create table player
     -- live table can only go at the end, and this schema has to match one.
     , marvel_rivals_username text
     , epic_id text
+    , embark_id text
 
     , constraint player_identity_check check (num_nonnulls(password_hash, discord_id) = 1)
     );
@@ -135,7 +136,7 @@ create table game_contact
     , kind text not null
     , primary key (game_id, kind)
     , constraint game_contact_kind_check check (kind in
-        ('discord', 'steam', 'riot', 'battle_tag', 'ea', 'epic'
+        ('discord', 'steam', 'riot', 'battle_tag', 'ea', 'epic', 'embark'
         , 'ubisoft', 'marvel_rivals', 'psn', 'gamer_tag', 'friend_code'))
     );
 

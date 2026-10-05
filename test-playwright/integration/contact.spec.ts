@@ -92,6 +92,16 @@ test.describe("the contact panel", () => {
             ["Discord", "Epic ID", "PSN ID", "Xbox gamertag", "Nintendo friend code"]);
     });
 
+    // The Finals offers the Embark ID its friend list is built on.
+    test("lists the Embark ID before the platforms' accounts", async ({ page }) => {
+        await signIn(page, "new@example.com");
+        await openFeed(page, "the-finals");
+        const dialog = await openPanel(page, "TheFinalsTester");
+
+        await expect(dialog.locator(".contact-label")).toHaveText(
+            ["Discord", "Embark ID", "PSN ID", "Xbox gamertag"]);
+    });
+
     test("makes a community's invite or website the one filled button", async ({ page }) => {
         await signIn(page, "new@example.com");
         await openFeed(page, "valorant");
