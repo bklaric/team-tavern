@@ -41,6 +41,7 @@ import TeamTavern.Client.Pages.Feed.Bar (bar, sheet, summaryButton)
 import TeamTavern.Client.Pages.Feed.Description (Stored, current, describes, emptyDescription, emptyStored, isEmpty, loadStored, saveStored, setCurrent, storedFrom)
 import TeamTavern.Client.Pages.Feed.Fields (Lists, barFields)
 import TeamTavern.Client.Pages.Placeholder (placeholder)
+import TeamTavern.Client.Script.Chips (onChipsFit)
 import TeamTavern.Client.Script.Expand (toggleCard)
 import TeamTavern.Client.Script.Focus (focusSoon)
 import TeamTavern.Client.Script.Meta (setBreadcrumbs, setCoverImage, setMeta)
@@ -112,6 +113,9 @@ type State =
     , expanded :: Array Int
     , openField :: Maybe String
     , showMore :: Boolean
+    -- How many fields behind More the bar shows without it. It only grows
+    -- while the type stays, so no chip goes from under the pointer.
+    , moreShown :: Int
     , sheetOpen :: Boolean
     , viewer :: Maybe Viewer
     -- The note a renewal link lands under, until the description changes.
@@ -198,6 +202,7 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
         , expanded: maybe [] _.expanded restore
         , openField: Nothing
         , showMore: false
+        , moreShown: 0
         , sheetOpen: false
         , viewer: restore <#> _.viewer
         , renewed: Nothing
@@ -290,7 +295,7 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
 
         changeType type_ = do
             state' <- Hooks.get stateId
-            update _ { segment = "all", openField = Nothing, showMore = false }
+            update _ { segment = "all", openField = Nothing, showMore = false, moreShown = 0 }
             change state'.stored { type = type_ }
 
         closeSheet = do
@@ -379,7 +384,16 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
             path <- window >>= location >>= pathname
             when (path == "/games/" <> handle) $
                 Ref.modify_ (Map.update (\entry -> Just entry { y = y }) handle) cache
-        pure $ Just $ Hooks.unsubscribe subscription
+        -- Chips shown because they fit stay once a filled one has widened
+        -- them past two rows, as they do once More is pressed.
+        chipsSubscription <- Hooks.subscribe $ Subscription.makeEmitter onChipsFit <#> \fit -> do
+            state' <- Hooks.get stateId
+            if fit.all
+            then unless state'.showMore $ Hooks.modify_ stateId _ { showMore = true }
+            else when (fit.shown > state'.moreShown) $ Hooks.modify_ stateId _ { moreShown = fit.shown }
+        pure $ Just do
+            Hooks.unsubscribe subscription
+            Hooks.unsubscribe chipsSubscription
 
     let description = current state.stored
         empty = isEmpty description
@@ -541,14 +555,18 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
                     , description
                     , openField: state.openField
                     , showMore: state.showMore
+                    , moreShown: state.moreShown
                     , onType: changeType
                     , onChange: changeDescription
+                    , onKeep: \description' -> do
+                        update _ { showMore = true }
+                        changeDescription description'
                     , onOpen: \field -> update _ { openField = field }
                     -- More and Clear all go once pressed, and hand the focus on
                     -- to the chips they leave.
                     , onMore: do
                         update _ { showMore = true }
-                        liftEffect $ focusSoon "[data-first-more]"
+                        liftEffect $ focusSoon "[data-behind-more]"
                     , onClearAll: do
                         change $ setCurrent (emptyDescription description.type) state.stored
                         liftEffect $ focusSoon ".field-chips .field-chip"

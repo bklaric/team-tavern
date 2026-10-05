@@ -54,15 +54,10 @@ viewer as (
         viewer.online_from / 60 as online_start,
         coalesce(nullif(((viewer.online_to + 59) / 60 - viewer.online_from / 60 + 24) % 24, 0), 24)
             as online_hours,
-        -- The ages a post's owner may be, as the birthdays that give them, so
-        -- no post's age is worked out: a player's within three years of their
-        -- own, a group's or community's inside the range it gives.
-        case when viewer.type = 'player' then $6::date - make_interval(years => viewer.age + 4)
-            else $6::date - make_interval(years => viewer.age_to + 1)
-        end as born_after,
-        case when viewer.type = 'player' then $6::date - make_interval(years => viewer.age - 3)
-            else $6::date - make_interval(years => viewer.age_from)
-        end as born_by
+        -- The ages a group's or community's range lets a player be, as the
+        -- birthdays that give them, so no post's age is worked out.
+        $6::date - make_interval(years => viewer.age_to + 1) as born_after,
+        $6::date - make_interval(years => viewer.age_from) as born_by
     from (
         select
             $3->>'type' as type,
@@ -157,14 +152,16 @@ described as (
 -- The described fields each post type is asked, as masks of their bits. A
 -- field one of the two types isn't asked counts neither way. The booleans, and
 -- those the viewer said yes to, are masks of their own, since whether one is
--- compared depends on both answers.
+-- compared depends on both answers, and so are the ladders, the ordered
+-- fields, since they are compared as one.
 asked as (
     select
         coalesce(bit_or(bit) filter (where 'player' = any(applies_to)), 0) as player,
         coalesce(bit_or(bit) filter (where 'group' = any(applies_to)), 0) as group_,
         coalesce(bit_or(bit) filter (where 'community' = any(applies_to)), 0) as community,
         coalesce(bit_or(bit) filter (where ilk = 'boolean'), 0) as flags,
-        coalesce(bit_or(bit) filter (where said), 0) as said
+        coalesce(bit_or(bit) filter (where said), 0) as said,
+        coalesce(bit_or(bit) filter (where ordered), 0) as ladders
     from described
 ),
 
@@ -252,10 +249,16 @@ candidate as (
                 then 'fit' else 'miss' end
         end as hours_mark,
 
-        -- A microphone is compared only where the viewer gave one: a player
-        -- says they use one, a group or a community that it wants one.
-        case when viewer.microphone then
-            case when post.microphone then 'fit' else 'miss' end
+        -- A microphone is compared only where a group or a community wants
+        -- one, so never between two players. A player who doesn't say they
+        -- use one doesn't, as with a boolean game field, once their
+        -- description says anything.
+        case
+            when viewer.type <> 'player' and viewer.microphone then
+                case when post.microphone then 'fit' else 'miss' end
+            when viewer.type = 'player' and post.ilk <> 'player' and post.microphone
+                and not description.empty then
+                case when viewer.microphone then 'fit' else 'miss' end
         end as mic_mark,
 
         case when viewer.languages <> '{}' then
@@ -278,15 +281,18 @@ candidate as (
                     when country.region_name = any(viewer.regions) then 'fit' else 'miss' end
         end as location_mark,
 
-        -- Two players' ages are near within three years; a player's is inside a
-        -- group's or community's range.
+        -- A player's age is inside a group's or community's range. Two players'
+        -- ages only keep a player under 18 and an adult apart, so between them
+        -- age is compared only where it misses.
         case
             when viewer.type = 'player' and viewer.age is not null and post.ilk <> 'player' then
                 case when post.age_from is null and post.age_to is null then 'missing'
                     when viewer.age between coalesce(post.age_from, 0) and coalesce(post.age_to, 1000)
                     then 'fit' else 'miss' end
-            when post.ilk = 'player' and (viewer.type = 'player' and viewer.age is not null
-                or viewer.type <> 'player' and (viewer.age_from is not null or viewer.age_to is not null)) then
+            when viewer.type = 'player' and post.ilk = 'player' then
+                case when (viewer.age >= 18) <> (owner.birthday <= $6::date - make_interval(years => 18))
+                    then 'miss' end
+            when post.ilk = 'player' and (viewer.age_from is not null or viewer.age_to is not null) then
                 case when owner.birthday is null then 'missing'
                     when owner.birthday > coalesce(viewer.born_after, '-infinity')
                         and owner.birthday <= coalesce(viewer.born_by, 'infinity')
@@ -294,6 +300,7 @@ candidate as (
         end as age_mark
     from visible post
     cross join viewer
+    cross join description
     join player owner on owner.id = post.player_id
     left join country on country.name = owner.country
     cross join lateral (
@@ -403,7 +410,7 @@ answered as (
 ranked as (
     select
         candidate.*,
-        fields.asked,
+        counted.asked,
         coalesce(answered.answered, 0) as answered,
         fields.fitted,
         counts.compared,
@@ -430,12 +437,20 @@ ranked as (
                 else coalesce(answered.fitted, 0)
             end as fitted
     ) fields
+    -- A game that ranks each playlist or role on a ladder of its own asks one
+    -- question of them all: once a ladder both give fits, the others are
+    -- neither marked nor counted. Where none fits, each misses as any field
+    -- does, so the card marks every miss its tier counts.
+    cross join lateral (
+        select fields.asked & ~case when fields.asked & asked.ladders & fields.fitted <> 0
+            then asked.ladders & ~fields.fitted else 0 end as asked
+    ) counted
     cross join lateral (
         select
-            bit_count(fields.asked::bit(32)) + num_nonnulls(
+            bit_count(counted.asked::bit(32)) + num_nonnulls(
                 hours_mark, mic_mark, languages_mark, location_mark, age_mark)
                 as compared,
-            bit_count((fields.asked & ~fields.fitted)::bit(32)) + num_nonnulls(
+            bit_count((counted.asked & ~fields.fitted)::bit(32)) + num_nonnulls(
                 nullif(hours_mark, 'fit'), nullif(mic_mark, 'fit'), nullif(languages_mark, 'fit'),
                 nullif(location_mark, 'fit'), nullif(age_mark, 'fit'))
                 as misses

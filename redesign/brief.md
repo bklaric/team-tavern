@@ -788,7 +788,9 @@ context, so each field can be compared the way the pair of post types calls for.
   carry (5.2), and the bar is where the viewer first meets it.
 - **Decided:** the bar carries only the fields matching compares for the chosen
   type (7.2): the game's fields that lead the card and the account's facts first,
-  and the rest under **More**. Fields that aren't
+  and then the rest as far as the bar's two rows hold them, with **More** for
+  those that don't fit. A chip once shown stays for the type, even when filling
+  a field in widens the bar past two rows. Fields that aren't
   compared, such as a group's size or name, are filled in on the post screen after
   **Publish post**.
 - **Decided:** on a phone the bar is a full-screen modal. The feed updates when the
@@ -843,7 +845,7 @@ the field:
 | Viewer is a | Shown       | Fields compared                                                                 |
 | ----------- | ----------- | -------------------------------------------------------------------------------- |
 | Player      | Groups      | The viewer's roles against the group's needed roles; their rank inside its range; their location against its regions; language, platform, age, hours, microphone, Looking for |
-| Player      | Players     | Rank closeness; location, language, platform, age, hours, microphone, Looking for; the two of you covering two different roles |
+| Player      | Players     | Rank closeness; location, language, platform, hours, Looking for; the two of you covering two different roles; neither under 18 against an adult |
 | Player      | Communities | Location against its regions; language, platform, age, hours, microphone, Looking for            |
 | Group       | Players     | The group's needed roles against the player's roles; the group's rank range against their rank; the rest as above |
 | Community   | Players     | Regions against their location; language, platform, age, hours, microphone, Looking for            |
@@ -858,6 +860,21 @@ the field:
   as TF2's divisions, Faceit levels or CS2's Premier rating, counts one step.
   The width is read from the labels, so relabelling a game's ranks changes it; a
   width the seed states outright waits until usage shows the rule needs one.
+- **Decided:** a game that ranks each playlist, role or league on a ladder of
+  its own, such as Rocket League's 2s and 3s, Overwatch's role ranks or CS2's
+  Premier rating and Faceit level, asks one question of all its ladders: the
+  ranks fit when any ladder both posts give fits, and the other ladders are
+  then neither marked nor counted. A post states the ladders it plays, so a 2s
+  partner who leaves 3s empty, or whose 3s rank is far off, still fits on 2s.
+  When none fits, each compared ladder is marked and counted as any field is.
+- **Decided:** a microphone is a player's fact and a group's or community's
+  want, so it is compared only where a group or a community wants one: a player
+  who uses one fits, and one who doesn't say so misses, as with a yes-or-no game
+  field. Two players are never compared on it.
+- **Decided:** between two players, age only keeps a player under 18 and an
+  adult apart: it misses across that line and is otherwise not compared, so it
+  never counts as a fit. A group's or community's age range is compared as any
+  range is.
 - **Proposed:** between two players, roles fit when the two of you can cover two
   different roles, which is all a duo needs, so the only miss is two players who
   each play one role and it is the same one. Two Mid mains can't duo, a Mid

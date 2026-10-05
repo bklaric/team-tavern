@@ -57,12 +57,8 @@ seat as (
         seat.online_from / 60 as online_start,
         coalesce(nullif(((seat.online_to + 59) / 60 - seat.online_from / 60 + 24) % 24, 0), 24)
             as online_hours,
-        case when seat.type = 'player' then $2::date - make_interval(years => seat.age + 4)
-            else $2::date - make_interval(years => seat.age_to + 1)
-        end as born_after,
-        case when seat.type = 'player' then $2::date - make_interval(years => seat.age - 3)
-            else $2::date - make_interval(years => seat.age_from)
-        end as born_by
+        $2::date - make_interval(years => seat.age_to + 1) as born_after,
+        $2::date - make_interval(years => seat.age_from) as born_by
     from (
         select
             post.id,
@@ -174,7 +170,8 @@ asked as (
         coalesce(bit_or(bit) filter (where 'group' = any(applies_to)), 0) as group_,
         coalesce(bit_or(bit) filter (where 'community' = any(applies_to)), 0) as community,
         coalesce(bit_or(bit) filter (where ilk = 'boolean'), 0) as flags,
-        coalesce(bit_or(bit) filter (where said), 0) as said
+        coalesce(bit_or(bit) filter (where said), 0) as said,
+        coalesce(bit_or(bit) filter (where ordered), 0) as ladders
     from seat
     left join described on described.seat_id = seat.id
     group by seat.id
@@ -207,8 +204,12 @@ marked as (
                 then 'fit' else 'miss' end
         end as hours_mark,
 
-        case when seat.microphone then
-            case when post.microphone then 'fit' else 'miss' end
+        case
+            when seat.type <> 'player' and seat.microphone then
+                case when post.microphone then 'fit' else 'miss' end
+            when seat.type = 'player' and post.ilk <> 'player' and post.microphone
+                and not description.empty then
+                case when seat.microphone then 'fit' else 'miss' end
         end as mic_mark,
 
         case when seat.languages <> '{}' then
@@ -235,14 +236,17 @@ marked as (
                 case when post.age_from is null and post.age_to is null then 'missing'
                     when seat.age between coalesce(post.age_from, 0) and coalesce(post.age_to, 1000)
                     then 'fit' else 'miss' end
-            when post.ilk = 'player' and (seat.type = 'player' and seat.age is not null
-                or seat.type <> 'player' and (seat.age_from is not null or seat.age_to is not null)) then
+            when seat.type = 'player' and post.ilk = 'player' then
+                case when (seat.age >= 18) <> (post.birthday <= $2::date - make_interval(years => 18))
+                    then 'miss' end
+            when post.ilk = 'player' and (seat.age_from is not null or seat.age_to is not null) then
                 case when post.birthday is null then 'missing'
                     when post.birthday > coalesce(seat.born_after, '-infinity')
                         and post.birthday <= coalesce(seat.born_by, 'infinity')
                     then 'fit' else 'miss' end
         end as age_mark
     from seat
+    join description on description.seat_id = seat.id
     cross join this_post post
     -- The candidate's hours moved into the seat's timezone.
     cross join lateral (
@@ -333,11 +337,15 @@ ranked as (
             end as fitted
     ) fields
     cross join lateral (
+        select fields.asked & ~case when fields.asked & asked.ladders & fields.fitted <> 0
+            then asked.ladders & ~fields.fitted else 0 end as asked
+    ) counted
+    cross join lateral (
         select
-            bit_count(fields.asked::bit(32)) + num_nonnulls(
+            bit_count(counted.asked::bit(32)) + num_nonnulls(
                 hours_mark, mic_mark, languages_mark, location_mark, age_mark)
                 as compared,
-            bit_count((fields.asked & ~fields.fitted)::bit(32)) + num_nonnulls(
+            bit_count((counted.asked & ~fields.fitted)::bit(32)) + num_nonnulls(
                 nullif(hours_mark, 'fit'), nullif(mic_mark, 'fit'), nullif(languages_mark, 'fit'),
                 nullif(location_mark, 'fit'), nullif(age_mark, 'fit'))
                 as misses

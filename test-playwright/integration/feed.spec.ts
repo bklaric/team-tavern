@@ -28,9 +28,18 @@ async function describe(page: Page, chip: string, fill: (editor: ReturnType<Page
     await expectSettled(page);
 }
 
+// A player who doesn't say they use a microphone misses the groups and communities that
+// want one, so the description says so. Valorant's player chips all fit in two rows, so
+// none waits behind More.
+async function describeMicrophone(page: Page) {
+    await page.getByRole("button", { name: "Microphone", exact: true }).click();
+    await expectSettled(page);
+}
+
 async function describeRankedPlatinum(page: Page) {
     await describe(page, "Looking for", editor => editor.getByLabel("Ranked").check());
     await describe(page, "Rank", editor => editor.getByRole("combobox").selectOption("platinum-2"));
+    await describeMicrophone(page);
 }
 
 test.describe("the feed", () => {
@@ -54,7 +63,8 @@ test.describe("the feed", () => {
             /^Missing one thing\s*1$/, "ValorantTester",
             olderPosts, "ExpiredTester",
         ]);
-        await expect(card(page, "Night Owls").locator(".fact-fit")).toHaveText(["Fits:Platinum 1 – Diamond 3", "Fits:Ranked"]);
+        await expect(card(page, "Night Owls").locator(".fact-fit"))
+            .toHaveText(["Fits:Platinum 1 – Diamond 3", "Fits:Ranked", "Fits:Microphone required"]);
         await expect(card(page, "ValorantTester").locator(".fact-miss")).toHaveText(["Doesn't fit:Casual"]);
         await expect(card(page, "ValorantTester").locator(".fact-fit")).toHaveText(["Fits:Platinum 1", "Fits:In-game leader"]);
         await expect(page.getByRole("link", { name: "Publish post" })).toHaveAttribute("href", "/games/valorant/post/player?from=feed");
@@ -68,6 +78,39 @@ test.describe("the feed", () => {
             /^Missing one thing\s*1$/, "ValorantTester",
             olderPosts, "ExpiredTester",
         ]);
+    });
+
+    test("shows every chip where they fit in two rows, and keeps those that don't behind More", async ({ page }) => {
+        await page.goto(feedPath);
+        await expect(page.getByRole("button", { name: "Microphone", exact: true })).toBeVisible();
+        await expect(page.getByRole("button", { name: "More", exact: true })).toHaveCount(0);
+
+        // Usually online fits beside the group's chips once they are measured, which is
+        // when what stays behind More is settled.
+        await page.getByLabel("We're a group looking for players").check();
+        await expect(page.getByRole("button", { name: "Usually online", exact: true })).toBeVisible();
+        await expect(page.getByRole("button", { name: "Microphone", exact: true })).toHaveCount(0);
+        await page.getByRole("button", { name: "More", exact: true }).click();
+        await expect(page.getByRole("button", { name: "Microphone", exact: true })).toBeVisible();
+    });
+
+    // Counter-Strike 2's player chips don't all fit, and Microphone is one that waits behind
+    // More, so after a reload it shows only for being on.
+    test("keeps a chip shown for holding something, and the focus on it, once it is emptied", async ({ page }) => {
+        await page.goto("/games/counter-strike-2");
+        await expect(page.getByRole("button", { name: "Wingman rank", exact: true })).toBeVisible();
+        await page.getByRole("button", { name: "More", exact: true }).click();
+        await page.getByRole("button", { name: "Microphone", exact: true }).click();
+        await expectSettled(page);
+
+        await page.reload();
+        const microphone = page.getByRole("button", { name: "Microphone", exact: true });
+        await expect(microphone).toHaveAttribute("aria-pressed", "true");
+        await expect(page.getByRole("button", { name: "More", exact: true })).toBeVisible();
+
+        await microphone.click();
+        await expect(microphone).toHaveAttribute("aria-pressed", "false");
+        await expect(microphone).toBeFocused();
     });
 
     test("keeps a field's editor open while its options are picked by their names", async ({ page }) => {
@@ -84,13 +127,13 @@ test.describe("the feed", () => {
     // ValorantTester can lead; ExpiredTester can't, and Night Owls don't ask for a leader.
     test("fits two players when either can lead, and a group that doesn't ask for a leader either way", async ({ page }) => {
         await page.goto(feedPath);
-        await page.getByRole("button", { name: "More", exact: true }).click();
+        await describeMicrophone(page);
         await page.getByRole("button", { name: "In-game leader", exact: true }).click();
         await expectSettled(page);
 
         await expect(card(page, "ValorantTester").locator(".fact-fit")).toHaveText(["Fits:In-game leader"]);
         await expect(card(page, "ExpiredTester").locator(".fact-fit")).toHaveText(["Fits:In-game leader: you"]);
-        await expect(card(page, "Night Owls").locator(".fact-fit, .fact-miss")).toHaveCount(0);
+        await expect(card(page, "Night Owls").locator(".fact-fit, .fact-miss")).toHaveText(["Fits:Microphone required"]);
         await expect(card(page, "Night Owls")).not.toContainText("leader");
     });
 
@@ -200,6 +243,47 @@ test.describe("the feed", () => {
     });
 });
 
+// Every seeded account was born in 2000. ValorantTester and Night Owls use a microphone,
+// ExpiredTester doesn't, and OverwatchTester ranks mid-ladder, Emerald 3, on every role.
+test.describe("what fits between players", () => {
+    test("holds neither a microphone nor a gap in age between two adults", async ({ page }) => {
+        await page.goto(feedPath);
+        await describe(page, "Rank", editor => editor.getByRole("combobox").selectOption("platinum-2"));
+        await describe(page, "Age", editor => editor.getByLabel("Your age").fill("40"));
+        await describeMicrophone(page);
+
+        await expect(card(page, "ValorantTester").locator(".fact-miss")).toHaveCount(0);
+        await expect(card(page, "ValorantTester").locator(".facts")).not.toContainText("Age");
+        await expect(card(page, "ExpiredTester").locator(".fact-miss")).toHaveText(["Doesn't fit:Gold 1"]);
+    });
+
+    test("keeps a player under 18 and an adult apart", async ({ page }) => {
+        await page.goto(feedPath);
+        await describe(page, "Rank", editor => editor.getByRole("combobox").selectOption("platinum-2"));
+        await describe(page, "Age", editor => editor.getByLabel("Your age").fill("17"));
+
+        await expect(card(page, "ValorantTester").locator(".fact-miss")).toHaveText([/^Doesn't fit:Age \d+$/]);
+    });
+
+    test("misses a group that wants a microphone when the player doesn't say they use one", async ({ page }) => {
+        await page.goto(feedPath);
+        await describe(page, "Rank", editor => editor.getByRole("combobox").selectOption("platinum-2"));
+
+        await expect(card(page, "Night Owls").locator(".fact-miss")).toHaveText(["Doesn't fit:Microphone required"]);
+    });
+
+    test("fits two players whose ranks are near on one ladder, leaving the others unmarked", async ({ page }) => {
+        await page.goto("/games/overwatch");
+        await describe(page, "Tank rank", editor => editor.getByRole("combobox").selectOption("emerald-3"));
+        await describe(page, "DPS rank", editor => editor.getByRole("combobox").selectOption("bronze-5"));
+
+        await expect(feedOrder(page).first()).toHaveText(/^Fits you\s*1$/);
+        await expect(card(page, "OverwatchTester").locator(".fact-fit")).toHaveText(["Fits:Tank rank Emerald 3"]);
+        await expect(card(page, "OverwatchTester").locator(".fact-miss")).toHaveCount(0);
+        await expect(card(page, "OverwatchTester")).toContainText("DPS rank Emerald 3");
+    });
+});
+
 // Chromium reports India's zone by its old name, which Postgres doesn't know. The feed sends
 // the viewer's zone, so it has to name it as the site's list does.
 test.describe("a browser that reports its zone by an old name", () => {
@@ -215,21 +299,27 @@ test.describe("a browser that reports its zone by an old name", () => {
     });
 });
 
-// LeaderlessTester's group Last Call in Counter-Strike 2, Ranked, wants a player who can lead.
+// LeaderlessTester's group Last Call in Counter-Strike 2, Ranked, wants a player who can lead
+// and uses a microphone.
 test.describe("a group that wants an in-game leader", () => {
     test("misses a player who can't lead and fits one who can", async ({ page }) => {
         await page.goto("/games/counter-strike-2");
         await describe(page, "Looking for", editor => editor.getByLabel("Ranked").check());
+        // Wingman rank fits beside the player's chips once they are measured, after which
+        // More stays where it is.
+        await expect(page.getByRole("button", { name: "Wingman rank", exact: true })).toBeVisible();
+        await page.getByRole("button", { name: "More", exact: true }).click();
+        await describeMicrophone(page);
 
         const group = card(page, "Last Call");
-        await expect(group.locator(".fact-fit")).toHaveText(["Fits:Ranked"]);
+        await expect(group.locator(".fact-fit")).toHaveText(["Fits:Ranked", "Fits:Microphone required"]);
         await expect(group.locator(".fact-miss")).toHaveText(["Doesn't fit:Needs an in-game leader"]);
 
-        await page.getByRole("button", { name: "More", exact: true }).click();
         await page.getByRole("button", { name: "In-game leader", exact: true }).click();
         await expectSettled(page);
 
-        await expect(group.locator(".fact-fit")).toHaveText(["Fits:Ranked", "Fits:Needs an in-game leader"]);
+        await expect(group.locator(".fact-fit"))
+            .toHaveText(["Fits:Ranked", "Fits:Microphone required", "Fits:Needs an in-game leader"]);
         await expect(group.locator(".fact-miss")).toHaveCount(0);
     });
 });

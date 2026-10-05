@@ -2,11 +2,13 @@ module TeamTavern.Client.Pages.Feed.Bar (bar, sheet, summaryButton) where
 
 import Prelude
 
-import Data.Array (any, filter, mapMaybe, mapWithIndex, null)
+import Data.Array (all, filter, mapMaybe, mapWithIndex)
 import Data.Maybe (Maybe(..), fromMaybe, isJust, maybe)
 import Data.String (joinWith)
+import Data.Tuple (Tuple(..), snd)
 import Halogen as H
 import Halogen.HTML as HH
+import Halogen.HTML.Elements.Keyed as HK
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.HTML.Properties.ARIA as HPA
@@ -51,8 +53,14 @@ type Bar i =
     , description :: Description
     , openField :: Maybe String
     , showMore :: Boolean
+    -- How many of the fields behind More fit in the bar's two rows beside the
+    -- rest, and are shown without it.
+    , moreShown :: Int
     , onType :: String -> i
     , onChange :: Description -> i
+    -- A change to a field behind More shown only because it holds something,
+    -- which shows the rest first, so emptying it doesn't take it away.
+    , onKeep :: Description -> i
     , onOpen :: Maybe String -> i
     , onMore :: i
     , onClearAll :: i
@@ -61,30 +69,52 @@ type Bar i =
 -- | The description on a desktop: the type, then a chip per field that opens
 -- | its editor in a popover. The feed follows every change.
 bar :: ∀ w i. Bar i -> HH.HTML w i
-bar { ref, fields, description, openField, showMore, onType, onChange, onOpen, onMore, onClearAll } =
+bar { ref, fields, description, openField, showMore, moreShown, onType, onChange, onKeep, onOpen, onMore, onClearAll } =
     HH.section [ HS.class_ "description", HPA.labelledBy "description-heading" ]
     [ HH.div [ HS.class_ "description-heading" ]
         [ HH.h2 [ HP.id "description-heading" ] [ HH.text "Find posts that fit you" ]
         , HH.p_ [ HH.text "Tell us about you, and posts that fit come first." ]
         ]
     , typeChoice "bar-type" description.type onType
-    , HH.div [ HS.class_ "field-chips" ] $
-        (primary <#> chip [])
-        <> mapWithIndex (\index -> chip if index == 0 then [ HP.attr (HH.AttrName "data-first-more") "" ] else [])
-            shownMore
-        <> (if null more || not (null shownMore) then []
-            else [ HH.button [ HS.class_ "field-chip", HP.type_ HP.ButtonButton, HE.onClick $ const onMore ]
+    -- Keyed, since More and filling a field in change which chips are drawn,
+    -- and a chip must keep its element, and so the focus, through that.
+    , HK.div [ HS.class_ "field-chips" ] $
+        (primary <#> \field -> Tuple field.key $ chip [] onChange field)
+        <> (more # filter (\(Tuple index field) -> showMore || fits index || filled field) <#> \(Tuple index field) ->
+            Tuple field.key $
+            chip (if fits index || filled field then [] else [ HP.attr (HH.AttrName "data-behind-more") "" ])
+                (if showMore || fits index then onChange else onKeep)
+                field)
+        <> (if showMore || all (\(Tuple index field) -> fits index || filled field) more then []
+            else [ Tuple "more" $ HH.button [ HS.class_ "field-chip", HP.type_ HP.ButtonButton, HE.onClick $ const onMore ]
                 [ HH.text "More", Icons.chevronDown ] ])
         <> (if isEmpty description then []
-            else [ button Text Small onClearAll [ HH.text "Clear all" ] ])
+            else [ Tuple "clear-all" $ button Text Small onClearAll [ HH.text "Clear all" ] ])
+    -- Every chip, More and Clear all as they would be drawn, unseen, which the
+    -- page measures to tell how many of the fields behind More fit in two rows.
+    , HH.div [ HS.class_ "field-chips field-chips-measure" ] $
+        (primary <#> measured "shown")
+        <> (more <#> snd >>> measured "more")
+        <> [ HH.span [ HS.class_ "field-chip", chipKind "more-button" ] [ HH.text "More", Icons.chevronDown ] ]
+        <> (if isEmpty description then []
+            else [ HH.span [ HS.class_ "button button-text button-small", chipKind "clear" ] [ HH.text "Clear all" ] ])
     ]
     where
     primary = filter (not <<< _.more) fields
-    more = filter _.more fields
-    -- A field under More that holds something stays in view.
-    shownMore = if showMore || any (\field -> isJust $ summary field description) more then more else []
-    -- The first chip More shows is marked, so the focus can go to it.
-    chip marks field
+    more = filter _.more fields # mapWithIndex Tuple
+    fits index = index < moreShown
+    -- A field behind More that holds something stays in view.
+    filled field = isJust $ summary field description
+    chipKind = HP.attr (HH.AttrName "data-chip")
+    measured kind field = let text = summary field description in
+        HH.span
+            ( [ HS.class_ $ "field-chip" <> if isJust text then " field-chip-filled" else "", chipKind kind ]
+            <> if isJust text then [ HP.attr (HH.AttrName "data-filled") "" ] else []
+            )
+            if isToggle field then [ HH.text field.label ]
+            else [ HH.text $ fromMaybe field.label text, Icons.chevronDown ]
+    -- The chips More shows are marked, so the focus can go to the first.
+    chip marks change field
         | isToggle field =
             let on = isJust $ summary field description in
             HH.div [ HS.class_ "field-chip-wrap" ]
@@ -92,7 +122,7 @@ bar { ref, fields, description, openField, showMore, onType, onChange, onOpen, o
                 ( [ HS.class_ $ "field-chip" <> if on then " field-chip-filled" else ""
                   , HP.type_ HP.ButtonButton
                   , HPA.pressed $ show on
-                  , HE.onClick $ const $ onChange $ toggleOf field
+                  , HE.onClick $ const $ change $ toggleOf field
                   ]
                   <> marks
                 )
@@ -123,9 +153,9 @@ bar { ref, fields, description, openField, showMore, onType, onChange, onOpen, o
                     , title: field.label
                     , onClose: onOpen Nothing
                     }
-                    [ editor "bar" field description onChange
+                    [ editor "bar" field description change
                     , HH.div [ HS.class_ "popover-footer" ]
-                        [ button Text Small (onChange $ clearOf field) [ HH.text "Clear" ]
+                        [ button Text Small (change $ clearOf field) [ HH.text "Clear" ]
                         , button Outline Small (onOpen Nothing) [ HH.text "Done" ]
                         ]
                     ]
