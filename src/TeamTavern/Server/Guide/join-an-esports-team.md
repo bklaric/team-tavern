@@ -11,7 +11,7 @@ Most guides to this are careers pieces. They tell you to practise, stream and ne
 
 ## What an esports team is below pro level
 
-An amateur esports team is a group of five players (three in Apex Legends, two or three in Rocket League, six in Marvel Rivals, six or nine in Team Fortress 2) that plays together on a fixed schedule, in its game's team tournament, in a league, or in scrims. Scrims are practice matches against another team, arranged between the two teams.
+An amateur esports team is a group of five players (three in Apex Legends and The Finals, two or three in Rocket League, six in Marvel Rivals, six or nine in Team Fortress 2) that plays together on a fixed schedule, in its game's team tournament, in a league, or in scrims. Scrims are practice matches against another team, arranged between the two teams.
 
 Teams come in three kinds:
 
@@ -104,6 +104,7 @@ Most team formats set a bar for your account, and some cost money. Check yours b
 | **Marvel Rivals: the Championship**, 6–12 players | Platinum 3 in the season's Competitive, and every member on one platform | Once a season |
 | **Counter-Strike 2: ESEA**, 5 players | – | Seasons |
 | **Apex Legends: ALGS Challenger Circuit**, 3 players | – | Open tournaments in each split |
+| **The Finals: the Online Series**, 3 players and a sub | Nothing: anyone can enter | Four cycles a year, May to September in 2026 |
 | **Rocket League: in-game tournaments**, 2 or 3 players | Nothing: they're free and open to everyone | Several every day in each region |
 | **Rainbow Six Siege: Siege Cup**, 5 players | The paid game, not free access | – |
 | **Rainbow Six Siege: Challenger Series**, 5 players | – | Open qualifiers, February to March in 2026 |
@@ -159,6 +160,12 @@ Clash doesn't lead to pro play. Teams that want more than Clash play scrims and 
 
 [Apex Legends players and groups on TeamTavern](/games/apex-legends)
 
+### The Finals
+
+<img class="guide-cover" src="/images/games/400/the-finals.webp" alt="" width="400" height="600" loading="lazy"> The Finals is played in trios. Embark's own competitive season, the [Online Series](https://www.reachthefinals.com/patchnotes/road-to-tgm26), takes teams of three and an optional sub on FACEIT, with no rank required, over four cycles a year in the Americas, EMEA and APAC. It leads to the Grand Major, the yearly LAN final at DreamHack Stockholm, and Embark hasn't announced its 2027 season yet. Most trios start in ranked, where a duo more than 10,000 RS apart can't queue together and a party plays at its best player's rank. [How to play ranked with friends in The Finals](/guides/the-finals-ranked-with-friends) covers who can queue together, how a party is matched and how to find a steady trio.
+
+[The Finals players and groups on TeamTavern](/games/the-finals)
+
 ### Rocket League: tournaments
 
 <img class="guide-cover" src="/images/games/400/rocket-league.webp" alt="" width="400" height="600" loading="lazy"> Rocket League runs its own Competitive Tournaments, free brackets of 32 teams in 2v2 and 3v3, several times a day in every region. [Epic's tournament rules](https://www.epicgames.com/help/rocket-league-c-37599050/gameplay-c-32343914/what-are-competitive-auto-tournaments-in-rocket-league-a12090278) let you register alone and have the game fill your team, but a party enters at its best player's tournament rank, and a duo in 3v3 must be within three ranks of each other, so a regular partner near your rank pays off. Above them is the RLCS, whose 2027 season opens with a Club Championship that gives four places to an open qualifier starting in November. [How Rocket League tournaments work, and how to find a teammate for them](/guides/rocket-league-tournaments) covers the schedule, the entry rules and how to find a partner.
@@ -209,6 +216,7 @@ Pro teams recruit from the top of the same ladders amateur teams play on, and ea
 - **Overwatch:** the FACEIT League, then promotion matches against the bottom OWCS teams.
 - **Marvel Rivals:** the Championship on PC, then the Annual Qualifier for Ignite's Pro Circuit, for the top Factions and the Champion Points leaders.
 - **Apex Legends:** the Challenger Circuit, then the Pro League Qualifier, then the Pro League.
+- **The Finals:** the Online Series, whose leaderboard leaders are invited to the Grand Major, with open qualifiers for the places left.
 - **Rocket League:** for 2027, an open online qualifier for four places in the RLCS Club Championship, beside 20 invited clubs.
 - **Rainbow Six Siege:** the Challenger Series, then the regional league.
 

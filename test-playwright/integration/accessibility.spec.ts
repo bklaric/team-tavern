@@ -57,6 +57,7 @@ for (const [device, viewport] of [["desktop", { width: 1280, height: 800 }], ["p
                 "/guides/make-an-esports-team",
                 "/guides/marvel-rivals-championship-team",
                 "/guides/rocket-league-tournaments",
+                "/guides/the-finals-ranked-with-friends",
             ]) {
                 await page.goto(guide);
                 await expect(page.getByRole("table")).toBeVisible();

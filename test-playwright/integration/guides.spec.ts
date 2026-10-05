@@ -78,6 +78,22 @@ test("the guide to joining a team leads to the Rocket League guide, and that to 
     await expect(page.getByRole("heading", { name: "Rocket League", level: 1 })).toBeVisible();
 });
 
+test("the guide to joining a team leads to The Finals guide, and that to its game's feed", async ({ page }) => {
+    const theFinalsHeading = "How to play ranked with friends in The Finals";
+    await page.goto(guidePath);
+    await expect(page.getByRole("heading", { name: guideHeading, level: 1 })).toBeVisible();
+
+    await page.getByRole("link", { name: theFinalsHeading }).click();
+
+    await expectPage(page, "/guides/the-finals-ranked-with-friends");
+    await expect(page.getByRole("heading", { name: theFinalsHeading, level: 1 })).toBeVisible();
+
+    await page.getByRole("link", { name: "The Finals players and groups on TeamTavern" }).last().click();
+
+    await expectPage(page, "/games/the-finals");
+    await expect(page.getByRole("heading", { name: "The Finals", level: 1 })).toBeVisible();
+});
+
 // The guide's text comes after the page loads, so the page, not the browser,
 // finds the part of it the address names.
 test("an address naming a part of a guide opens the guide at it", async ({ page }) => {

@@ -13,6 +13,8 @@ foreign import marvelRivalsChampionshipTeamText :: String
 
 foreign import rocketLeagueTournamentsText :: String
 
+foreign import theFinalsRankedWithFriendsText :: String
+
 foreign import markdownToHtml :: String -> String
 
 -- | The slug is the guide's URL, so it never changes. `updated` is the date a
@@ -37,7 +39,7 @@ guides = sortBy (flip $ comparing _.updated)
       , description: "Most esports teams are amateur five-stacks playing Premier, Clash, ESEA or Siege Cup. "
             <> "Here's what each game asks of your account, what teams look for, and where to find one."
       , published: "2026-09-29"
-      , updated: "2026-10-04"
+      , updated: "2026-10-06"
       , html: markdownToHtml joinAnEsportsTeamText
       }
     , { slug: "make-an-esports-team"
@@ -46,7 +48,7 @@ guides = sortBy (flip $ comparing _.updated)
       , description: "Starting an amateur team? How to pick your format, recruit for the roles you're missing, "
             <> "run tryouts, find scrims, and the roster rules each game's tournament enforces."
       , published: "2026-09-29"
-      , updated: "2026-10-04"
+      , updated: "2026-10-06"
       , html: markdownToHtml makeAnEsportsTeamText
       }
     , { slug: "marvel-rivals-championship-team"
@@ -66,5 +68,14 @@ guides = sortBy (flip $ comparing _.updated)
       , published: "2026-10-04"
       , updated: "2026-10-04"
       , html: markdownToHtml rocketLeagueTournamentsText
+      }
+    , { slug: "the-finals-ranked-with-friends"
+      , heading: "How to play ranked with friends in The Finals"
+      , title: "The Finals ranked with friends: who can queue together, and how to find a trio"
+      , description: "A duo more than 10,000 RS apart can't queue, a trio can, and a party plays at its best player's rank: "
+            <> "how ranked in The Finals treats friends, and how to find a steady third."
+      , published: "2026-10-06"
+      , updated: "2026-10-06"
+      , html: markdownToHtml theFinalsRankedWithFriendsText
       }
     ]
