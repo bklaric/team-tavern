@@ -5,6 +5,7 @@ import joinAnEsportsTeam from "../../src/TeamTavern/Server/Guide/join-an-esports
 import makeAnEsportsTeam from "../../src/TeamTavern/Server/Guide/make-an-esports-team.md";
 import marvelRivalsChampionshipTeam from "../../src/TeamTavern/Server/Guide/marvel-rivals-championship-team.md";
 import rocketLeagueTournaments from "../../src/TeamTavern/Server/Guide/rocket-league-tournaments.md";
+import theFinalsRankedWithFriends from "../../src/TeamTavern/Server/Guide/the-finals-ranked-with-friends.md";
 
 export const joinAnEsportsTeamText = joinAnEsportsTeam;
 
@@ -13,6 +14,8 @@ export const makeAnEsportsTeamText = makeAnEsportsTeam;
 export const marvelRivalsChampionshipTeamText = marvelRivalsChampionshipTeam;
 
 export const rocketLeagueTournamentsText = rocketLeagueTournaments;
+
+export const theFinalsRankedWithFriendsText = theFinalsRankedWithFriends;
 
 // A heading's id is its text as GitHub makes it, lowercased, punctuation
 // dropped and spaces turned to hyphens, so a link can name the section.
