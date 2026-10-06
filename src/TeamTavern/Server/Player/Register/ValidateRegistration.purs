@@ -26,6 +26,11 @@ type Registration = Variant
         { nickname :: Nickname
         , accessToken :: String
         }
+    , steam ::
+        { nickname :: Nickname
+        , email :: Email
+        , ticket :: String
+        }
     )
 
 validateRegistration'
@@ -42,6 +47,11 @@ validateRegistration' = match
         {nickname: _, accessToken}
         <$> validateNickname nickname
         <#> inj (Proxy :: _ "discord")
+    , steam: \{nickname, email, ticket} ->
+        {nickname: _, email: _, ticket}
+        <$> validateNickname nickname
+        <*> validateEmail email
+        <#> inj (Proxy :: _ "steam")
     }
 
 validateRegistration

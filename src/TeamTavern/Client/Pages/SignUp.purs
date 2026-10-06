@@ -8,7 +8,7 @@ import Data.Array.NonEmpty (elem)
 import Data.Either (Either(..))
 import Data.Foldable (for_)
 import Data.Maybe (Maybe(..), fromMaybe, isJust)
-import Data.String (Pattern(..), contains, length, null, trim)
+import Data.String (length, null, trim)
 import Data.Tuple.Nested ((/\))
 import Data.Variant (inj, match, onMatch)
 import Halogen as H
@@ -24,7 +24,8 @@ import TeamTavern.Client.Pages.Post.Register (Publishing, publishing, publishing
 import TeamTavern.Client.Script.Back (authPath, readBack)
 import TeamTavern.Client.Script.Discord (authorizeWithDiscord)
 import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_)
-import TeamTavern.Client.Shared.AccountErrors (nicknameInvalid, nicknameTaken, passwordShort, somethingWrong)
+import TeamTavern.Client.Script.Steam (authorizeWithSteam)
+import TeamTavern.Client.Shared.AccountErrors (emailError, emailInvalid, nicknameInvalid, nicknameTaken, passwordShort, somethingWrong)
 import TeamTavern.Client.Shared.Fetch (expecting, fetchBody)
 import TeamTavern.Client.Shared.Me (fetchMe)
 import TeamTavern.Client.Shared.Slot (Slot___)
@@ -58,18 +59,13 @@ type State =
     , sending :: Boolean
     }
 
-emailInvalid :: String
-emailInvalid = "Enter your email address."
-
 -- The same checks the server makes, so most mistakes are named before sending.
 validate :: State -> Errors
 validate { email, nickname, password } = noErrors
-    { email = if contains (Pattern "@") email' && contains (Pattern ".") email' then Nothing else Just emailInvalid
+    { email = emailError email
     , nickname = if null $ trim nickname then Just "Choose a nickname." else Nothing
     , password = if length password < 8 then Just passwordShort else Nothing
     }
-    where
-    email' = trim email
 
 component :: ∀ query input output left. H.Component query input output (Async left)
 component = Hooks.component \_ _ -> Hooks.do
@@ -105,6 +101,8 @@ component = Hooks.component \_ _ -> Hooks.do
                                 { email = Just "An account already uses this email. Sign in instead." }
                             , nicknameTaken: const $ failWith noErrors { nickname = Just nicknameTaken }
                             , discordTaken: const $ failWith noErrors { form = Just somethingWrong }
+                            , steamTaken: const $ failWith noErrors { form = Just somethingWrong }
+                            , steamTicket: const $ failWith noErrors { form = Just somethingWrong }
                             }
                         }
                         (const $ failWith noErrors { form = Just somethingWrong })
@@ -133,6 +131,8 @@ component = Hooks.component \_ _ -> Hooks.do
             _, _ -> "Find players, groups and communities, and hear when someone new fits."
         , button Outline Regular (authorizeWithDiscord state.back)
             [ Icons.discord, HH.text "Continue with Discord" ]
+        , button Outline Regular (authorizeWithSteam state.back)
+            [ Icons.steam, HH.text "Continue with Steam" ]
         , rule "or"
         , formTight submit $
             [ textField

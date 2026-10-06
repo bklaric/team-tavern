@@ -5,7 +5,7 @@ import Data.Variant (Variant)
 import Jarilo (type (!), type (/), type (==>), BadRequestJson, Internal_, Literal, NotAuthorized_, OkJson, PostJson_)
 
 -- | Signs the account in with the Discord the access token is for, in its
--- | password's place, leaving its email as it is (brief 11.5).
+-- | password's or Steam's place, leaving its email as it is (brief 11.5).
 type SwitchToDiscord =
     PostJson_ (Literal "account" / Literal "discord") RequestContent
     ==> OkJson OkContent ! BadRequestJson BadContent ! NotAuthorized_ ! Internal_

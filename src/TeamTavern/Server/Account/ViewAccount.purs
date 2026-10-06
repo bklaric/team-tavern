@@ -41,7 +41,11 @@ accountQuery = Query $ """
         ), '[]') as contacts,
         player.email,
         player.email_confirmed as "emailConfirmed",
-        case when player.discord_id is null then 'password' else 'discord' end as "signIn",
+        case
+            when player.discord_id is not null then 'discord'
+            when player.steam_sign_in_id is not null then 'steam'
+            else 'password'
+        end as "signIn",
         jsonb_build_object(
             'matches', player.email_matches,
             'messages', player.email_messages,

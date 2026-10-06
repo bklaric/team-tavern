@@ -18,8 +18,10 @@ import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Infrastructure.ValidateEmail as Email
 import TeamTavern.Server.Player.Domain.Hash (generateHash)
 import TeamTavern.Server.Player.Infrastructure.SendConfirmation (addConfirmation, sendConfirmation)
+import TeamTavern.Server.Player.Infrastructure.SteamTicket (takeSteamTicket)
 import TeamTavern.Server.Player.Register.AddPlayer (addPlayer)
 import TeamTavern.Server.Player.Register.AddPlayerDiscord (addPlayerDiscord)
+import TeamTavern.Server.Player.Register.AddPlayerSteam (addPlayerSteam)
 import TeamTavern.Server.Player.Register.ValidateRegistration (validateRegistration)
 import TeamTavern.Server.Session.Domain.Token as Token
 import TeamTavern.Server.Session.Infrastructure.RevokeSession (revokeSession)
@@ -69,6 +71,19 @@ register environment mailer discordApiUrl pool cookies content =
                     _ -> pure Nothing
 
                 pure {confirmation}
+
+        , steam: \{nickname, email, ticket} -> pool # transaction \client -> do
+            -- A failed registration takes back the spent ticket with the rest.
+            steamId <- takeSteamTicket client ticket
+            id <- addPlayerSteam client { nickname, email, steamId }
+            revokeSession client cookies
+            createSession id token client
+
+            -- Steam gives no address, so the one typed in gets the link.
+            nonce <- addConfirmation client id (Email.toString email)
+
+            pure {confirmation: Just
+                {email: Email.toString email, nickname: unwrap nickname, nonce}}
         }
 
     foreach confirmation $ sendConfirmation mailer

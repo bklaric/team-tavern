@@ -13,13 +13,18 @@ import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Player.Domain.Hash (Hash, generateHash)
 import TeamTavern.Server.Player.Domain.Password (validatePassword')
 
+-- A link holds only while the account signs in with a password. One that has
+-- moved to Discord or Steam since isn't the email's to take back.
 nonceQueryString :: Query
 nonceQueryString = Query """
     update password_reset
     set consumed = true
+    from player
     where password_reset.nonce = $1
     and password_reset.consumed = false
     and extract(epoch from (now() - password_reset.created)) < 3600 -- 1 hour
+    and player.id = password_reset.player_id
+    and player.password_hash is not null
     returning password_reset.player_id as "playerId"
     """
 

@@ -4,6 +4,7 @@ import Jarilo (type (<|>), type (:))
 import TeamTavern.Routes.Account.DeleteAccount (DeleteAccount)
 import TeamTavern.Routes.Account.SwitchToDiscord (SwitchToDiscord)
 import TeamTavern.Routes.Account.SwitchToPassword (SwitchToPassword)
+import TeamTavern.Routes.Account.SwitchToSteam (SwitchToSteam)
 import TeamTavern.Routes.Account.UpdateEmail (UpdateEmail)
 import TeamTavern.Routes.Account.UpdateFacts (UpdateFacts)
 import TeamTavern.Routes.Account.UpdateSwitches (UpdateSwitches)
@@ -69,6 +70,7 @@ type AccountRoutes
     <|> "updateSwitches"   : UpdateSwitches
     <|> "updateEmail"      : UpdateEmail
     <|> "switchToDiscord"  : SwitchToDiscord
+    <|> "switchToSteam"    : SwitchToSteam
     <|> "switchToPassword" : SwitchToPassword
     <|> "deleteAccount"    : DeleteAccount
 

@@ -49,7 +49,8 @@ type Html m slots = H.ComponentHTML (HookM m Unit) (tokens :: Tokens.Slot | slot
 -- | `otherPosts` is whether changing one changes other posts too. `onChange`
 -- | names the field it changes, so the field's error goes with the change.
 -- | `onDiscord` signs up with Discord, which signed out the Discord input
--- | offers (brief 6, step 3).
+-- | offers (brief 6, step 3), and `onSteam` with Steam, which the Steam input
+-- | offers the same way.
 type Context m =
     { game :: ViewGame.OkContent
     , type_ :: String
@@ -65,6 +66,7 @@ type Context m =
     , onChange :: String -> (Draft -> Draft) -> HookM m Unit
     , onUnfold :: String -> HookM m Unit
     , onDiscord :: HookM m Unit
+    , onSteam :: HookM m Unit
     }
 
 idOf :: String -> String
@@ -470,9 +472,13 @@ contactFields context@{ game, type_ } =
             }
     contactField kind =
         accountField context (Contact kind) (contactLabel kind) For (contactHint kind)
-        if kind == "discord" && isNothing context.account
-        then HH.div [ HS.class_ "input-row" ]
-            [ contactInput kind
-            , button Outline Regular context.onDiscord [ Icons.discord, HH.text "Sign up with Discord" ]
-            ]
-        else contactInput kind
+        case kind, context.account of
+            "discord", Nothing -> HH.div [ HS.class_ "input-row" ]
+                [ contactInput kind
+                , button Outline Regular context.onDiscord [ Icons.discord, HH.text "Sign up with Discord" ]
+                ]
+            "steam", Nothing -> HH.div [ HS.class_ "input-row" ]
+                [ contactInput kind
+                , button Outline Regular context.onSteam [ Icons.steam, HH.text "Sign up with Steam" ]
+                ]
+            _, _ -> contactInput kind

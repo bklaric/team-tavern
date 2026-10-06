@@ -10,7 +10,7 @@ import TeamTavern.Client.Pages.Document (adminEmail, document, link, section)
 
 privacy :: ∀ w m. MonadEffect m => HH.HTML w (m Unit)
 privacy =
-    document { title: "Privacy policy", updated: Just "29 September 2026" }
+    document { title: "Privacy policy", updated: Just "6 October 2026" }
     [ section "Who's responsible"
         [ HH.p_
             [ HH.text "TeamTavern, run from Croatia, is responsible for your data. Contact: "
@@ -18,9 +18,9 @@ privacy =
             ]
         ]
     , section "What we keep and why"
-        [ HH.p_ [ HH.text "To sign up you need a nickname, and either an email and a password or a Discord account. Without them we can't make you an account. Everything else is up to you." ]
+        [ HH.p_ [ HH.text "To sign up you need a nickname, and an email and a password, a Discord account, or a Steam account and an email. Without them we can't make you an account. Everything else is up to you." ]
         , HH.ul_
-            [ item "Your account:" "email, nickname, and password (stored hashed), or your Discord id if you sign in with Discord. We keep these to run your account."
+            [ item "Your account:" "email, nickname, and password (stored hashed), or your Discord or Steam id if you sign in with Discord or Steam. We keep these to run your account."
             , item "Your profile and posts:" "what you choose to add, such as birthday, country, languages, timezone, game accounts, online hours and post text. Posts are public. They show your age (never your birthday), country, languages, timezone, online hours and game account links. Your contact details show only to signed-in players. Expired posts stay visible until you delete them."
             , item "Messages:" "kept so that you and the other player can read them."
             , item "Reports and blocks:" "kept to keep the site safe. Each report is also emailed to us."
@@ -53,6 +53,7 @@ privacy =
             , item "Amazon Web Services" "(US) sends our emails from its servers in Germany, including the text of messages you receive."
             , item "Google" "(US) runs the consent dialog and our email, which holds reports, what you send us and our database backups."
             , item "Discord" "(US) is involved only if you sign in with it. We receive your Discord id, username and email."
+            , item "Valve" "(US) is involved only if you sign in with Steam or give a custom Steam profile address. We receive your Steam id, and your Steam profile name when you sign up with Steam."
             ]
         , HH.p_ [ HH.text "Transfers to the US rely on the EU–US Data Privacy Framework or the EU's standard contractual clauses." ]
         , HH.p_ [ HH.text "Ads come from Venatus Media (UK) and its partners. They use data for their own purposes, as far as your consent choice allows, and the consent dialog lists every partner. The EU recognises the UK as protecting data adequately." ]

@@ -1,12 +1,29 @@
 module TeamTavern.Client.Shared.AccountErrors
-    ( nicknameInvalid
+    ( emailError
+    , emailInvalid
+    , nicknameInvalid
     , nicknameTaken
     , passwordShort
     , somethingWrong
     , tooYoung
     ) where
 
+import Prelude
+
+import Data.Maybe (Maybe(..))
+import Data.String (Pattern(..), contains, trim)
+
 -- What the account pages say when what was entered is turned down.
+
+emailInvalid :: String
+emailInvalid = "Enter your email address."
+
+-- | What the page can tell of an address before the server checks it.
+emailError :: String -> Maybe String
+emailError email =
+    if contains (Pattern "@") email' && contains (Pattern ".") email' then Nothing else Just emailInvalid
+    where
+    email' = trim email
 
 nicknameInvalid :: String
 nicknameInvalid = "Use up to 40 letters, digits, dashes, underscores and dots, without spaces."

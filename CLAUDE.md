@@ -209,13 +209,28 @@ has any other name. The development stack calls Steam with
 the placeholder key in `stacks/.env`, which Steam refuses, so a custom address
 fails there unless a real key is put in its place.
 
+Signing in with Steam is OpenID 2.0: Steam sends the browser back to the
+sign-in page with a signed answer, and the server asks Steam's OpenID provider
+whether it signed it, which Steam answers once per sign-in. The server takes an
+answer only within five minutes of its nonce's time, and only once, by the
+nonces it keeps in `steam_nonce`. `STEAM_OPENID_URL`
+in `test.env` points that check at the same `tt-steam` stub, which passes any
+answer once, and its GetPlayerSummaries gives the profile name the nickname
+prompt offers. As with Discord, a spec plays Steam's sign-in page itself
+(`test-playwright/steam.ts`). Steam gives no address, so a player registering
+with it types one in, and the ticket it is registered with lives in
+`steam_ticket` for the hour between Steam's answer and the nickname.
+
 Every Discord button sends the browser back to `/signin`, the one redirect URI
 registered on the Discord app for each origin, and what the player was doing
 rides along in session storage. The sign-in page signs in a player Discord
 knows, and asks one it doesn't for a nickname, which finishes registering them.
 A trip from the account page's Continue with Discord signs nobody in: the
 sign-in page hands its token back to the account page, which moves the account
-from its password to that Discord.
+from its password to that Discord. Steam's buttons go the same way, though
+Steam takes any return address. An account signs in with one of a password, a
+Discord account or a Steam account, and the account page moves it between
+them.
 
 What no test reaches is Discord itself: the redirect URIs registered on the
 Discord app and the real user endpoint. Before a deploy that touches sign-in,
@@ -229,6 +244,13 @@ account:
 2. Sign out, Continue with Discord at <http://localhost:8000/signin>, and land
    signed in without being asked for a nickname.
 3. `docker logs tt-node` shows no Discord errors for either.
+
+Steam's real OpenID provider is out of the tests' reach too. Check it the same
+way with a real Steam account: Continue with Steam at
+<http://localhost:8000/signup> asks for a nickname and an email and lands
+signed in, and Continue with Steam at <http://localhost:8000/signin> then
+signs straight in. The nickname comes up empty there, since the placeholder
+key gets no profile name, and `docker logs tt-node` says so.
 
 `stacks/test-seed/seed.sh` builds the database on the first boot of the Postgres
 volume, which is why `down -v` rather than `down` is what resets it. It applies
@@ -394,7 +416,8 @@ redirects the old site's feed paths to the new ones by `legacy.game_map`.
   email. `DISCORD_API_URL` is optional and defaults to Discord's own API; only
   `stacks/test.env` sets it. `STEAM_API_KEY` is required, and `STEAM_API_URL`
   is optional and defaults to Steam's own Web API; only `stacks/test.env` sets
-  it. `AWS_ENDPOINT_URL_SESV2` is optional too, and the
+  it, and `STEAM_OPENID_URL`, which defaults to Steam's OpenID provider.
+  `AWS_ENDPOINT_URL_SESV2` is optional too, and the
   SES client reads it itself: without it, the development stack only logs its
   email; with it, the server sends there. Only `stacks/test.env` sets it. `WORKER_PERIOD` is optional as well:
   the seconds between the worker's runs, an hour unless `stacks/test.env`'s 2.

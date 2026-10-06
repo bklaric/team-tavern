@@ -3,6 +3,7 @@ import { bornAgo, expectSignedInAs, password, signIn, signOut, signUp, submitPas
 import { discordUser, fakeDiscord, signUpWithDiscord } from "../discord";
 import { body, emails, openMail } from "../mail";
 import { expectPage } from "../pages";
+import { fakeSteam, signUpWithSteam } from "../steam";
 
 // Every account this spec changes or deletes is one it signed up. Posts go into Rainbow Six
 // Siege, whose feed no spec asserts whole. A renamed player writes to OverwatchTester and a
@@ -272,7 +273,7 @@ test.describe("the account page", () => {
         await expect(page.locator(".toast-text")).toHaveText(
             `You sign in with Discord now, and your posts offer Discord ${discord.user.username} as a contact.`);
         await expect(row(page, "Sign-in")).toHaveText("Discord");
-        await expect(signInRow.getByRole("button", { name: "Use a password" })).toBeFocused();
+        await expect(signInRow.getByRole("button", { name: "Change" })).toBeFocused();
 
         await signOut(page);
         await submitPasswordSignIn(page, address);
@@ -282,7 +283,7 @@ test.describe("the account page", () => {
         await expectSignedInAs(page, nickname);
 
         await openAccount(page);
-        await signInRow.getByRole("button", { name: "Use a password" }).click();
+        await signInRow.getByRole("button", { name: "Change" }).click();
         await expect(signInRow.getByText(
             `A password takes Discord's place, and you sign in with ${address}. Discord stays on your posts as a contact.`))
             .toBeVisible();
@@ -330,10 +331,10 @@ test.describe("the account page", () => {
         await openAccount(page);
         await expect(row(page, "Email")).toContainText("No address");
         await expect(page.getByText("None of these is sent without an address.")).toBeVisible();
-        await signInRow.getByRole("button", { name: "Use a password" }).click();
-        // The form puts the focus in its first field a frame after it opens, which
+        await signInRow.getByRole("button", { name: "Change" }).click();
+        // The form puts the focus in its first control a frame after it opens, which
         // would take the typing from a field filled before then.
-        await expect(page.getByLabel("Email", { exact: true })).toBeFocused();
+        await expect(signInRow.getByRole("button", { name: "Continue with Steam" })).toBeFocused();
         await page.getByLabel("Password").fill("a-new-password");
         await signInRow.getByRole("button", { name: "Save", exact: true }).click();
         await expect(signInRow.getByText("Enter your email address.")).toBeVisible();
@@ -349,5 +350,95 @@ test.describe("the account page", () => {
         await expectPage(page, "/");
         await openMail(page, address);
         await expect(emails(page, "Confirm your email")).toHaveCount(1);
+    });
+
+    test("moves the sign-in to Steam, on to Discord and back to Steam, each of which then signs in", async ({ page }) => {
+        const nickname = await signUp(page, "M");
+        const steam = await fakeSteam(page);
+        await fakeDiscord(page, discordUser(null, false));
+        const signInRow = page.locator("#sign-in");
+
+        await openAccount(page);
+        await signInRow.getByRole("button", { name: "Change" }).click();
+        await expect(signInRow.getByText("Steam takes your password's place. Your email stays as it is.")).toBeVisible();
+        await signInRow.getByRole("button", { name: "Continue with Steam" }).click();
+        await expectPage(page, "/account");
+        await expect(page.locator(".toast-text")).toHaveText(
+            "You sign in with Steam now, and your posts offer your Steam profile as a contact.");
+        await expect(row(page, "Sign-in")).toHaveText("Steam");
+        await expect(row(page, "Contacts")).toContainText(steam.steamId);
+        await expect(signInRow.getByRole("button", { name: "Change" })).toBeFocused();
+
+        await signOut(page);
+        await page.goto("/signin");
+        await page.getByRole("button", { name: "Continue with Steam" }).click();
+        await expectPage(page, "/");
+        await expectSignedInAs(page, nickname);
+
+        await openAccount(page);
+        await signInRow.getByRole("button", { name: "Change" }).click();
+        await expect(signInRow.getByRole("button", { name: "Continue with Steam" })).toHaveCount(0);
+        await expect(signInRow.getByText(
+            `A password takes Steam's place, and you sign in with ${nickname.toLowerCase()}@example.com. Steam stays on your posts as a contact.`))
+            .toBeVisible();
+        await signInRow.getByRole("button", { name: "Continue with Discord" }).click();
+        await expectPage(page, "/account");
+        await expect(row(page, "Sign-in")).toHaveText("Discord");
+
+        await signOut(page);
+        await page.goto("/signin");
+        await page.getByRole("button", { name: "Continue with Steam" }).click();
+        await expect(page.getByRole("heading", { name: "Pick a nickname" })).toBeVisible();
+        await page.goto("/signin");
+        await page.getByRole("button", { name: "Continue with Discord" }).click();
+        await expectPage(page, "/");
+        await expectSignedInAs(page, nickname);
+
+        await openAccount(page);
+        await signInRow.getByRole("button", { name: "Change" }).click();
+        await expect(signInRow.getByText("Steam takes Discord's place. Your email stays as it is.")).toBeVisible();
+        await signInRow.getByRole("button", { name: "Continue with Steam" }).click();
+        await expectPage(page, "/account");
+        await expect(page.locator(".toast-text")).toHaveText("You sign in with Steam now.");
+        await expect(row(page, "Sign-in")).toHaveText("Steam");
+    });
+
+    // Whoever else holds a session, perhaps the one the move is meant to lock out, is signed
+    // out with the password; the browser that moved the sign-in stays in.
+    test("ends the account's other sessions when the sign-in moves to Steam", async ({ page, browser }) => {
+        const nickname = await signUp(page, "E");
+        const other = await (await browser.newContext()).newPage();
+        await signIn(other, `${nickname.toLowerCase()}@example.com`);
+        await fakeSteam(page);
+        const signInRow = page.locator("#sign-in");
+
+        await openAccount(page);
+        await signInRow.getByRole("button", { name: "Change" }).click();
+        await signInRow.getByRole("button", { name: "Continue with Steam" }).click();
+        await expectPage(page, "/account");
+        await expect(row(page, "Sign-in")).toHaveText("Steam");
+
+        await other.goto("/");
+        await expect(other.getByRole("banner").getByRole("link", { name: "Sign in" })).toBeVisible();
+        await page.goto("/");
+        await expectSignedInAs(page, nickname);
+    });
+
+    test("refuses a Steam account that signs in to another account", async ({ page, browser }) => {
+        const other = await (await browser.newContext()).newPage();
+        const steam = await fakeSteam(other);
+        await signUpWithSteam(other, steam);
+
+        await signUp(page, "T");
+        await fakeSteam(page, steam.steamId);
+        const signInRow = page.locator("#sign-in");
+        await openAccount(page);
+        await signInRow.getByRole("button", { name: "Change" }).click();
+        await signInRow.getByRole("button", { name: "Continue with Steam" }).click();
+        await expectPage(page, "/account");
+        await expect(signInRow.getByText("This Steam account already signs in to another account.")).toBeVisible();
+        await expect(signInRow.getByRole("button", { name: "Continue with Steam" })).toBeFocused();
+        await signInRow.getByRole("button", { name: "Cancel" }).click();
+        await expect(row(page, "Sign-in")).toHaveText("Email and password");
     });
 });

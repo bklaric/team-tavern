@@ -1,7 +1,9 @@
 import { expect, Page, test } from "@playwright/test";
 import { expectSignedInAs, password, signIn, signOut, submitPasswordSignIn, unique } from "../accounts";
 import { discordUser, fakeDiscord, signUpWithDiscord } from "../discord";
+import { emails, openMail } from "../mail";
 import { expectPage } from "../pages";
+import { fakeSteam, signUpWithSteam, startSteamTrip, steamAnswer, steamId, steamNickname } from "../steam";
 
 async function fillSignUp(page: Page, email: string, nickname: string, password_ = password) {
     await page.getByLabel("Email").fill(email);
@@ -219,6 +221,168 @@ test("a Discord player is not found by a password sign-in or a password reset", 
     await page.getByLabel("Email").fill(email);
     await page.getByRole("button", { name: "Send link" }).click();
     await expect(page.getByText("No account signs in with a password at this email.")).toBeVisible();
+});
+
+test("signing up with Steam asks for an email and comes back through the sign-in page", async ({ page, baseURL }) => {
+    const steam = await fakeSteam(page);
+    const nickname = unique("S");
+    const address = `${nickname.toLowerCase()}@example.com`;
+    await page.goto("/games/valorant");
+    await page.getByRole("link", { name: "Sign up" }).click();
+    await expectPage(page, "/signup");
+    await page.getByRole("button", { name: "Continue with Steam" }).click();
+
+    await expect(page.getByLabel("Nickname")).toHaveValue(steamNickname(steam.steamId));
+    await page.getByLabel("Nickname").fill("");
+    await expect(page.getByText("We took it from Steam; change it if you like.")).toBeVisible();
+    await page.getByLabel("Nickname").fill(nickname);
+    await page.getByRole("button", { name: "Continue" }).click();
+    await expect(page.getByText("Enter your email address.")).toBeVisible();
+    await page.getByLabel("Email").fill(address);
+    await page.getByRole("button", { name: "Continue" }).click();
+
+    await expectPage(page, "/games/valorant");
+    await expectSignedInAs(page, nickname);
+    const [login] = steam.loginRequests;
+    expect(login.searchParams.get("openid.mode")).toBe("checkid_setup");
+    expect(login.searchParams.get("openid.realm")).toBe(baseURL);
+    expect(login.searchParams.get("openid.return_to")).toMatch(new RegExp(`^${baseURL}/signin\\?steam=[0-9a-f]{32}$`));
+
+    await openMail(page, address);
+    await expect(emails(page, "Confirm your email")).toHaveCount(1);
+});
+
+test("the Steam nickname prompt says when the nickname is taken", async ({ page }) => {
+    await fakeSteam(page);
+    await page.goto("/signup");
+    await page.getByRole("button", { name: "Continue with Steam" }).click();
+
+    await page.getByLabel("Nickname").fill("ValorantTester");
+    await page.getByLabel("Email").fill(`${unique("taken")}@example.com`);
+    await page.getByRole("button", { name: "Continue" }).click();
+    await expect(page.getByText("This nickname is taken. Please pick another one.")).toBeVisible();
+
+    const nickname = unique("S");
+    await page.getByLabel("Nickname").fill(nickname);
+    await page.getByRole("button", { name: "Continue" }).click();
+    await expectPage(page, "/");
+    await expectSignedInAs(page, nickname);
+});
+
+test("signing in with Steam to an account signs in without asking for a nickname", async ({ page }) => {
+    const steam = await fakeSteam(page);
+    const nickname = await signUpWithSteam(page, steam);
+    await signOut(page);
+
+    await page.goto("/signin");
+    await page.getByRole("button", { name: "Continue with Steam" }).click();
+
+    await expectPage(page, "/");
+    await expectSignedInAs(page, nickname);
+});
+
+test("turning back at Steam leaves the player on the sign-in page they started from", async ({ page }) => {
+    const steam = await fakeSteam(page);
+    steam.cancel = true;
+    await page.goto("/games/apex-legends");
+    await page.getByRole("link", { name: "Sign in" }).click();
+    await expectPage(page, "/signin");
+    await page.getByRole("button", { name: "Continue with Steam" }).click();
+
+    await expect(page.getByLabel("Email or nickname")).toBeVisible();
+    await expect(page).toHaveURL(/\/signin\?back=%2Fgames%2Fapex-legends$/);
+    await page.getByLabel("Email or nickname").fill("apex-legends@example.com");
+    await page.getByLabel("Password").fill(password);
+    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    await expectPage(page, "/games/apex-legends");
+});
+
+test("turning back at Steam leaves the player on the sign-up page they started from", async ({ page }) => {
+    const steam = await fakeSteam(page);
+    steam.cancel = true;
+    await page.goto("/games/valorant");
+    await page.getByRole("link", { name: "Sign up" }).click();
+    await expectPage(page, "/signup");
+    await page.getByRole("button", { name: "Continue with Steam" }).click();
+
+    await expectPage(page, "/signup");
+    await expect(page.getByRole("heading", { name: "Create your account" })).toBeVisible();
+    const nickname = unique("P");
+    await page.getByLabel("Email").fill(`${nickname.toLowerCase()}@example.com`);
+    await page.getByLabel("Nickname").fill(nickname);
+    await page.getByLabel("Password").fill(password);
+    await page.getByRole("button", { name: "Create account" }).click();
+    await expectPage(page, "/games/valorant");
+});
+
+// The address Steam returns to carries the state the page sent; an answer arriving without
+// it is refused, so a link can't sign someone in as another player.
+test("a Steam answer without the page's state signs nobody in", async ({ page, baseURL }) => {
+    await page.goto(steamAnswer(`${baseURL}/signin?steam=forged`, steamId()));
+
+    await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
+    await expect(page.getByLabel("Email or nickname")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Sign in" })).toBeVisible();
+});
+
+// Another site can get Steam's answer for a player's account, which names that site's page
+// to return to. The server takes only an answer for this site's sign-in page.
+test("a Steam answer for another site signs nobody in", async ({ page, baseURL }) => {
+    const state = "0123456789abcdef0123456789abcdef";
+    await page.goto("/signin");
+    await startSteamTrip(page, state);
+
+    await page.goto(steamAnswer(`${baseURL}/signin?steam=${state}`, steamId(), `http://attacker.test/signin?steam=${state}`));
+
+    await expect(page.getByText("Steam couldn't sign you in. Continue with Steam again.")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Continue with Steam" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Sign in" })).toBeVisible();
+});
+
+// An answer counts only around the time Steam gave it, so one kept from long ago signs
+// nobody in, though Steam has never been asked to check it.
+test("a Steam answer from long ago signs nobody in", async ({ page, baseURL }) => {
+    const state = "0123456789abcdef0123456789abcdef";
+    await page.goto("/signin");
+    await startSteamTrip(page, state);
+    const anHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+
+    await page.goto(steamAnswer(`${baseURL}/signin?steam=${state}`, steamId(), undefined, anHourAgo));
+
+    await expect(page.getByText("Steam couldn't sign you in. Continue with Steam again.")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Sign in" })).toBeVisible();
+});
+
+// Each answer counts once, so one kept from the address bar or a log signs nobody in
+// again. The sign-in page it lands on offers Steam again, which signs in.
+test("a Steam answer signs in once", async ({ page }) => {
+    const steam = await fakeSteam(page);
+    const nickname = await signUpWithSteam(page, steam);
+    await signOut(page);
+    await page.goto("/signin");
+    await page.getByRole("button", { name: "Continue with Steam" }).click();
+    await expect(page.getByRole("button", { name: "Account menu" })).toBeVisible();
+    await signOut(page);
+
+    const answer = steam.answers[steam.answers.length - 1];
+    await startSteamTrip(page, new URL(answer).searchParams.get("steam")!);
+    await page.goto(answer);
+
+    await expect(page.getByText("Steam couldn't sign you in. Continue with Steam again.")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Sign in" })).toBeVisible();
+    await page.getByRole("button", { name: "Continue with Steam" }).click();
+    await expectPage(page, "/");
+    await expectSignedInAs(page, nickname);
+});
+
+test("a Steam player is not found by a password sign-in", async ({ page }) => {
+    const nickname = await signUpWithSteam(page, await fakeSteam(page));
+    await signOut(page);
+
+    for (const emailOrNickname of [nickname, `${nickname.toLowerCase()}@example.com`]) {
+        await submitPasswordSignIn(page, emailOrNickname);
+        await expect(page.getByText("No account exists with this email or nickname.")).toBeVisible();
+    }
 });
 
 test("a password player asks for a reset link", async ({ page }) => {

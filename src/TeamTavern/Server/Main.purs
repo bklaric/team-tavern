@@ -23,6 +23,7 @@ import TeamTavern.Routes.All (AllRoutes)
 import TeamTavern.Server.Account.DeleteAccount (deleteAccount)
 import TeamTavern.Server.Account.SwitchToDiscord (switchToDiscord)
 import TeamTavern.Server.Account.SwitchToPassword (switchToPassword)
+import TeamTavern.Server.Account.SwitchToSteam (switchToSteam)
 import TeamTavern.Server.Account.UpdateEmail (updateEmail)
 import TeamTavern.Server.Account.UpdateFacts (updateFacts)
 import TeamTavern.Server.Account.UpdateSwitches (updateSwitches)
@@ -52,8 +53,10 @@ import TeamTavern.Server.Infrastructure.Environment as Environment
 import TeamTavern.Server.Infrastructure.FetchDiscordUser (DiscordApiUrl(..))
 import TeamTavern.Server.Infrastructure.Log (logStamped, print)
 import TeamTavern.Server.Infrastructure.Postgres (databaseErrorLines)
+import TeamTavern.Server.Infrastructure.RequestOrigin (requestOrigin)
 import TeamTavern.Server.Infrastructure.ResolveSteamId (SteamApi(..))
 import TeamTavern.Server.Infrastructure.Ses (createClient)
+import TeamTavern.Server.Infrastructure.SteamOpenId (SteamOpenIdUrl(..), steamEndpoint)
 import TeamTavern.Server.LlmsTxt.ViewLlmsTxt (viewLlmsTxt)
 import TeamTavern.Server.Notification.ReadNotification (readNotification)
 import TeamTavern.Server.Notification.ReadNotifications (readNotifications)
@@ -143,6 +146,14 @@ loadSteamApi = do
     url <- lift $ lookupEnv "STEAM_API_URL" <#> fromMaybe "https://api.steampowered.com"
     pure $ SteamApi { url, key }
 
+-- | Steam's OpenID provider at `steamcommunity.com` unless STEAM_OPENID_URL
+-- | names another, as the test stack's does.
+loadSteamOpenIdUrl :: Effect SteamOpenIdUrl
+loadSteamOpenIdUrl =
+    lookupEnv "STEAM_OPENID_URL"
+    <#> fromMaybe steamEndpoint
+    <#> SteamOpenIdUrl
+
 -- | Staging and production send through SES and link to their own origin. The
 -- | local stacks link relative to the site they serve, and only log, unless
 -- | AWS_ENDPOINT_URL_SESV2 names something that takes SES's requests, as the
@@ -177,10 +188,10 @@ loadAdminEmail =
     <#> note "Couldn't read variable ADMIN_EMAIL."
     # ExceptT
 
-runServer :: Environment -> Mailer -> DiscordApiUrl -> SteamApi -> AdminEmail -> ClientErrorLimit -> Pool -> Effect Unit
-runServer environment mailer discordApiUrl steamApi adminEmail clientErrorLimit pool = serve (Proxy :: _ AllRoutes) serveOptions
-    { startSession: \{ cookies, body } ->
-        Session.start environment mailer discordApiUrl pool cookies body
+runServer :: Environment -> Mailer -> DiscordApiUrl -> SteamApi -> SteamOpenIdUrl -> AdminEmail -> ClientErrorLimit -> Pool -> Effect Unit
+runServer environment mailer discordApiUrl steamApi steamOpenIdUrl adminEmail clientErrorLimit pool = serve (Proxy :: _ AllRoutes) serveOptions
+    { startSession: \{ cookies, headers, body } ->
+        Session.start environment mailer discordApiUrl steamOpenIdUrl steamApi pool cookies (requestOrigin headers) body
     , endSession: \{ cookies } ->
         Session.end pool cookies
     , forgotPassword: \{ body } ->
@@ -205,6 +216,8 @@ runServer environment mailer discordApiUrl steamApi adminEmail clientErrorLimit 
         updateEmail mailer pool cookies body
     , switchToDiscord: \{ cookies, body } ->
         switchToDiscord discordApiUrl pool cookies body
+    , switchToSteam: \{ cookies, headers, body } ->
+        switchToSteam steamOpenIdUrl pool cookies (requestOrigin headers) body
     , switchToPassword: \{ cookies, body } ->
         switchToPassword mailer pool cookies body
     , deleteAccount: \{ cookies } ->
@@ -280,10 +293,11 @@ main = either log pure =<< runExceptT do
     environment <- loadEnvironment
     discordApiUrl <- lift loadDiscordApiUrl
     steamApi <- loadSteamApi
+    steamOpenIdUrl <- lift loadSteamOpenIdUrl
     adminEmail <- loadAdminEmail
     workerPeriod <- loadWorkerPeriod
     pool <- createPostgresPool
     mailer <- loadMailer environment
     clientErrorLimit <- lift createClientErrorLimit
     lift $ startWorker workerPeriod mailer pool
-    lift $ runServer environment mailer discordApiUrl steamApi adminEmail clientErrorLimit pool
+    lift $ runServer environment mailer discordApiUrl steamApi steamOpenIdUrl adminEmail clientErrorLimit pool

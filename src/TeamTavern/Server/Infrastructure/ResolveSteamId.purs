@@ -1,5 +1,5 @@
 module TeamTavern.Server.Infrastructure.ResolveSteamId
-    (ResolvedAccount, SteamApi(..), VanityContent, resolveSteamContact) where
+    (ResolvedAccount, SteamApi(..), VanityContent, getSteamApi, resolveSteamContact) where
 
 import Prelude
 
@@ -7,17 +7,19 @@ import Async (Async, attempt, left)
 import Data.Array (cons)
 import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
-import Data.Maybe (Maybe(..), fromMaybe, maybe)
+import Data.Maybe (Maybe(..), maybe)
 import Data.String (joinWith)
 import Effect.Class (liftEffect)
+import Foreign.Object (Object)
 import Foreign.Object as Object
-import JSURI (encodeURIComponent)
 import JavaScript.Error (message, name)
 import JavaScript.Web.DOM.AbortSignal (timeout)
 import JavaScript.Web.Fetch.Async (fetch, status, text)
+import JavaScript.Web.URL.URLSearchParams as URLSearchParams
 import TeamTavern.Routes.Shared.Post (AccountContent)
 import TeamTavern.Server.Infrastructure.Log (logStamped)
 import TeamTavern.Shared.Steam (SteamInput(..), readSteamInput)
+import Yoga.JSON (class ReadForeign)
 import Yoga.JSON.Async (readJSON)
 
 -- | Where the Steam Web API lives, `https://api.steampowered.com` outside the
@@ -33,20 +35,29 @@ type VanityContent = { response :: { success :: Int, steamid :: Maybe String } }
 -- | given.
 type ResolvedAccount = { account :: AccountContent, steamUnavailable :: Boolean }
 
--- The URL carries the key, so no error line names it.
-resolveVanity :: SteamApi -> String -> Async (Array String) (Maybe String)
-resolveVanity (SteamApi { url, key }) vanity = do
-    let encode = \value -> encodeURIComponent value # fromMaybe value
-    let vanityUrl = url <> "/ISteamUser/ResolveVanityURL/v1/?key=" <> encode key <> "&vanityurl=" <> encode vanity
-    let failure line = [ "Custom address: " <> vanity, line ]
+-- | Asks the Steam Web API's method at `path` with the key and `params`, and
+-- | reads its answer, which comes with the body it was read from for the log.
+-- | The URL carries the key, so no error line names it.
+getSteamApi :: ∀ content. ReadForeign content =>
+    SteamApi -> String -> Object String -> Async String { content :: content, body :: String }
+getSteamApi (SteamApi { url, key }) path params = do
+    query <- liftEffect $ URLSearchParams.new (Object.insert "key" key params) >>= URLSearchParams.toString
     signal <- liftEffect $ timeout 5000
-    response <- fetch vanityUrl { method: "GET", signal } # attempt >>= case _ of
-        Left error -> left $ failure $ name error <> " " <> message error
+    response <- fetch (url <> path <> "?" <> query) { method: "GET", signal } # attempt >>= case _ of
+        Left error -> left $ name error <> " " <> message error
         Right response -> pure response
-    body <- text response # lmap (message >>> failure)
+    body <- text response # lmap message
     when (status response /= 200) $
-        left $ failure $ "Got status " <> show (status response) <> " with content: " <> body
-    content :: VanityContent <- readJSON body # lmap (show >>> failure)
+        left $ "Got status " <> show (status response) <> " with content: " <> body
+    content <- readJSON body # lmap \errors -> "Got unreadable content: " <> body <> " | " <> show errors
+    pure { content, body }
+
+resolveVanity :: SteamApi -> String -> Async (Array String) (Maybe String)
+resolveVanity steamApi vanity = do
+    let failure line = [ "Custom address: " <> vanity, line ]
+    { content, body } :: { content :: VanityContent, body :: String } <-
+        getSteamApi steamApi "/ISteamUser/ResolveVanityURL/v1/" (Object.singleton "vanityurl" vanity)
+        # lmap failure
     case content.response of
         { success: 1, steamid: Just steamId } -> pure $ Just steamId
         { success: 42 } -> pure Nothing

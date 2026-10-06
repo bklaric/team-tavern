@@ -47,6 +47,7 @@ import TeamTavern.Client.Script.Navigate (navigate_, replaceState)
 import TeamTavern.Client.Script.QueryParams (getQueryParam)
 import TeamTavern.Client.Script.RenderReady (appendRenderReadyNotFound)
 import TeamTavern.Client.Script.Scroll (focusFirstInvalid)
+import TeamTavern.Client.Script.Steam (authorizeWithSteam)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Shared.AccountErrors (somethingWrong, tooYoung)
 import TeamTavern.Client.Shared.Contacts (contactError, contactLabel, steamUnavailable)
@@ -285,11 +286,11 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
             liftEffect $ preventDefault event
             publish
 
-        -- Discord brings the player back here signed in, with the draft.
-        signUpWithDiscord = do
+        -- Discord or Steam brings the player back here signed in, with the draft.
+        signUpWith authorize = do
             state' <- Hooks.get stateId
             liftEffect $ saveDraft handle type_ state'.draft { signedOut = true }
-            authorizeWithDiscord path
+            authorize path
 
         updateExisting = do
             state' <- Hooks.modify stateId \state' -> state'
@@ -522,7 +523,8 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
             , timezone: state.timezone
             , onChange: changeDraft
             , onUnfold: \key -> set \state' -> state' { changing = snoc state'.changing key }
-            , onDiscord: signUpWithDiscord
+            , onDiscord: signUpWith authorizeWithDiscord
+            , onSteam: signUpWith authorizeWithSteam
             }
 
         form game now' =

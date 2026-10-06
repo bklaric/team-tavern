@@ -2,6 +2,7 @@ import { expect, Locator, Page, test } from "@playwright/test";
 import { bornAgo, password, signOut, signUp, unique } from "../accounts";
 import { discordUser, fakeDiscord, signUpWithDiscord } from "../discord";
 import { expectPage } from "../pages";
+import { fakeSteam } from "../steam";
 
 // Posts go into League of Legends, whose feed holds only LeagueOfLegendsTester's seeded
 // player post (`stacks/test-seed/players.sql`): Gold I, Top, Casual, Croatia, English.
@@ -323,6 +324,39 @@ test.describe("posting", () => {
 
         await page.getByRole("button", { name: "Publish post" }).click();
         await expectPage(page, "/games/league-of-legends/post/player/live");
+    });
+
+    // Deadlock offers a Steam contact, and the draft is left unpublished, so no feed or
+    // fit email another spec reads changes.
+    test("signs up with Steam beside the Steam input and comes back to the draft", async ({ page }) => {
+        const steam = await fakeSteam(page);
+        await page.goto("/games/deadlock/post/player");
+        await page.getByLabel("About you and what you're looking for").fill("Mid lane, evenings.");
+
+        await page.getByRole("button", { name: "Sign up with Steam" }).click();
+        await expect(page.getByRole("heading", { name: "Pick a nickname" })).toBeVisible();
+        const nickname = unique("S");
+        await page.getByLabel("Nickname").fill(nickname);
+        await page.getByLabel("Email").fill(`${nickname.toLowerCase()}@example.com`);
+        await page.getByRole("button", { name: "Continue" }).click();
+
+        await expectPage(page, "/games/deadlock/post/player");
+        await expect(page.getByLabel("About you and what you're looking for")).toHaveValue("Mid lane, evenings.");
+        await expect(field(page, "Steam profile").locator(".account-fact")).toContainText(steam.steamId);
+        await expect(page.getByText("You'll create an account next.")).toHaveCount(0);
+    });
+
+    test("comes back to the draft, still signed out, from turning back at Steam", async ({ page }) => {
+        const steam = await fakeSteam(page);
+        steam.cancel = true;
+        await page.goto("/games/deadlock/post/player");
+        await page.getByLabel("About you and what you're looking for").fill("Jungle, mornings.");
+
+        await page.getByRole("button", { name: "Sign up with Steam" }).click();
+
+        await expectPage(page, "/games/deadlock/post/player");
+        await expect(page.getByLabel("About you and what you're looking for")).toHaveValue("Jungle, mornings.");
+        await expect(page.getByText("You'll create an account next. Nothing you've written is lost.")).toBeVisible();
     });
 
     test("publishes once a player new to Discord's sign-up has picked a nickname", async ({ page }) => {

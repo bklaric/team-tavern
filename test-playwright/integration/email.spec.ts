@@ -2,6 +2,7 @@ import { expect, Locator, Page, test } from "@playwright/test";
 import { signIn, signOut, signUp, submitPasswordSignIn } from "../accounts";
 import { body, emails, openMail } from "../mail";
 import { expectPage } from "../pages";
+import { fakeSteam } from "../steam";
 
 // MailTester and QuietTester (`stacks/test-seed/players.sql`) are written to only
 // here; the players writing to them are new to each test. FitsTester and ExpiringTester
@@ -130,6 +131,36 @@ test.describe("email", () => {
         await submitPasswordSignIn(page, address, "a-new-password");
         await expectPage(page, "/");
         await expect(page.getByRole("button", { name: "Account menu" })).toBeVisible();
+    });
+
+    // The address of an account that signs in with Steam is no credential, so a reset link
+    // sent before the account moved to Steam doesn't move it back.
+    test("refuses a reset link once the account signs in with Steam", async ({ page }) => {
+        await fakeSteam(page);
+        const nickname = await signUp(page, "R");
+        const address = `${nickname.toLowerCase()}@example.com`;
+        await page.goto("/forgot-password");
+        await page.getByLabel("Email").fill(address);
+        await page.getByRole("button", { name: "Send link" }).click();
+        await expect(page.getByRole("heading", { name: "Check your email" })).toBeVisible();
+
+        const signInRow = page.locator("#sign-in");
+        await page.goto("/account");
+        await signInRow.getByRole("button", { name: "Change" }).click();
+        await signInRow.getByRole("button", { name: "Continue with Steam" }).click();
+        await expect(page.locator(".toast-text")).toContainText("You sign in with Steam now");
+
+        await openMail(page, address);
+        await body(emails(page, "Password reset")).getByRole("link", { name: "Reset password" }).click();
+        await expectPage(page, "/reset-password");
+        await page.getByLabel("New password").fill("a-new-password");
+        await page.getByRole("button", { name: "Change password" }).click();
+        await expect(page.getByRole("heading", { name: "This link doesn't work" })).toBeVisible();
+
+        await page.goto("/");
+        await signOut(page);
+        await submitPasswordSignIn(page, address, "a-new-password");
+        await expect(page.getByText("No account exists with this email or nickname.")).toBeVisible();
     });
 
     test("tells an owner in the period's email of a post that fits theirs, and opens it", async ({ page, browser }) => {

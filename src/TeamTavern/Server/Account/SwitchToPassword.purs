@@ -20,14 +20,14 @@ import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.Email (Mailer)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Error (Terror(..))
-import TeamTavern.Server.Infrastructure.Postgres (queryFirstInternal, queryNone, transaction)
+import TeamTavern.Server.Infrastructure.Postgres (queryFirstInternal, transaction)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Infrastructure.ValidateEmail (validateEmail')
 import TeamTavern.Server.Infrastructure.ValidateEmail as Email
 import TeamTavern.Server.Player.Domain.Hash (generateHash)
 import TeamTavern.Server.Player.Domain.Password (validatePassword')
 import TeamTavern.Server.Player.Infrastructure.SendConfirmation (addConfirmation, sendConfirmation)
-import TeamTavern.Server.Session.Domain.Token as Token
+import TeamTavern.Server.Session.Infrastructure.RevokeSession (revokeOtherSessions)
 import Type.Proxy (Proxy(..))
 
 heldQuery :: Query
@@ -41,17 +41,10 @@ switchQuery = Query """
     update player
     set password_hash = $2,
         discord_id = null,
+        steam_sign_in_id = null,
         email = coalesce(email, $3::text),
         email_confirmed = email_confirmed and email is not null
     where id = $1
-    """
-
--- The browser that changed the password stays signed in.
-revokeOthersQuery :: Query
-revokeOthersQuery = Query """
-    update session
-    set revoked = true
-    where player_id = $1 and token_hash <> $2
     """
 
 switchToPassword :: ∀ left. Mailer -> Pool -> Cookies -> SwitchToPassword.RequestContent -> Async left _
@@ -61,7 +54,6 @@ switchToPassword mailer pool cookies { password, email } =
     password' <- validatePassword' password
     given <- traverse (validateEmail' >>> map Email.toString) email
     hash <- generateHash password'
-    tokenHash <- Token.hash token
     let playerId = unwrap id
     confirmation <- pool # transaction \client -> do
         held :: { nickname :: String, email :: Maybe String } <-
@@ -73,7 +65,7 @@ switchToPassword mailer pool cookies { password, email } =
                 [ "A password needs an email to sign in with, and the account has none." ]
         void $ client # query switchQuery (playerId : hash :| toNullable taken)
             # lmap (emailTakenOrInternal $ fromMaybe "" $ held.email <|> taken)
-        queryNone client revokeOthersQuery (playerId :| tokenHash)
+        revokeOtherSessions client playerId token
         for taken \email' -> addConfirmation client playerId email' <#>
             { email: email', nickname: held.nickname, nonce: _ }
     foreach confirmation $ sendConfirmation mailer

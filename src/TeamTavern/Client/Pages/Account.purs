@@ -42,9 +42,10 @@ import TeamTavern.Client.Script.Discord (authorizeSwitchToDiscord, takeSwitchTok
 import TeamTavern.Client.Script.Focus (focusSoon)
 import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_)
 import TeamTavern.Client.Script.Scroll (focusCentered, focusFirstInvalid)
+import TeamTavern.Client.Script.Steam (authorizeSwitchToSteam, takeSwitchAssertion)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Script.Unread (announceUnread)
-import TeamTavern.Client.Shared.AccountErrors (nicknameInvalid, nicknameTaken, passwordShort, somethingWrong, tooYoung)
+import TeamTavern.Client.Shared.AccountErrors (emailInvalid, nicknameInvalid, nicknameTaken, passwordShort, somethingWrong, tooYoung)
 import TeamTavern.Client.Shared.Block (block, unblock)
 import TeamTavern.Client.Shared.Contacts (contactError, contactFormat, contactLabel, contactPlaceholder, steamUnavailable)
 import TeamTavern.Client.Shared.Facts (ageOn, dateText, timezoneOptions, timezoneText)
@@ -54,6 +55,7 @@ import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Account.DeleteAccount (DeleteAccount)
 import TeamTavern.Routes.Account.SwitchToDiscord (SwitchToDiscord)
 import TeamTavern.Routes.Account.SwitchToPassword (SwitchToPassword)
+import TeamTavern.Routes.Account.SwitchToSteam (SwitchToSteam)
 import TeamTavern.Routes.Account.UpdateEmail (UpdateEmail)
 import TeamTavern.Routes.Account.UpdateFacts (UpdateFacts)
 import TeamTavern.Routes.Account.UpdateFacts as UpdateFacts
@@ -189,9 +191,6 @@ factsErrors today facts = Object.fromFoldable $ catMaybes
 birthdayInvalid :: String
 birthdayInvalid = "Enter the day you were born."
 
-emailInvalid :: String
-emailInvalid = "Enter your email address."
-
 emailTaken :: String
 emailTaken = "Another account signs in with this email."
 
@@ -274,33 +273,54 @@ component = Hooks.component \_ _ -> Hooks.do
 
         focusSignIn = liftEffect $ focusSoon "#sign-in .data-action .button"
 
-        -- Back from Discord with the token of a switch to it. A Discord that
-        -- signs in to another account is refused in the sign-in form, where the
-        -- player chose it.
+        -- A Discord or Steam account that signs in to another account is
+        -- refused in the sign-in form, where the player chose it.
+        refuseSwitch provider account' = do
+            Hooks.modify_ stateId _
+                { signIn = Just { email: "", password: "" }
+                , errors = Object.singleton "sign-in" $ "This " <> account' <> " already signs in to another account."
+                }
+            liftEffect $ focusSoon $ "#sign-in .account-" <> toLower provider
+
+        switched text = do
+            reload
+            focusSignIn
+            showToast { text, action: Nothing }
+
+        switchFailed provider =
+            showToast { text: provider <> " couldn't take over your sign-in. Try again.", action: Nothing }
+
+        -- Back from Discord with the token of a switch to it.
         switchToDiscord :: String -> HookM (Async left) Unit
         switchToDiscord accessToken = do
             result <- H.lift $ Async.attempt $ fetchBody (expecting [ "badRequest" ] (Proxy :: _ SwitchToDiscord)) { accessToken }
-            let failed = showToast { text: "Discord couldn't take your password's place. Try again.", action: Nothing }
             case hush result of
-                Nothing -> failed
+                Nothing -> switchFailed "Discord"
                 Just response -> response # onMatch
-                    { ok: \{ contact } -> do
-                        reload
-                        focusSignIn
-                        showToast
-                            { text: "You sign in with Discord now"
-                                <> maybe "" (\contact' -> ", and your posts offer Discord " <> contact' <> " as a contact") contact
-                                <> "."
-                            , action: Nothing
-                            }
-                    , badRequest: \_ -> do
-                        Hooks.modify_ stateId _
-                            { signIn = Just { email: "", password: "" }
-                            , errors = Object.singleton "sign-in" "This Discord already signs in to another account."
-                            }
-                        liftEffect $ focusSoon "#sign-in .button-outline"
+                    { ok: \{ contact } -> switched $ "You sign in with Discord now"
+                        <> maybe "" (\contact' -> ", and your posts offer Discord " <> contact' <> " as a contact") contact
+                        <> "."
+                    , badRequest: \_ -> refuseSwitch "Discord" "Discord"
                     }
-                    (const failed)
+                    (const $ switchFailed "Discord")
+
+        -- Back from Steam with its answer for a switch to it.
+        switchToSteam :: Object String -> HookM (Async left) Unit
+        switchToSteam assertion = do
+            result <- H.lift $ Async.attempt $ fetchBody (expecting [ "badRequest" ] (Proxy :: _ SwitchToSteam)) { assertion }
+            case hush result of
+                Nothing -> switchFailed "Steam"
+                Just response -> response # onMatch
+                    { ok: \{ contact } -> switched $ "You sign in with Steam now"
+                        <> maybe "" (const ", and your posts offer your Steam profile as a contact") contact
+                        <> "."
+                    , badRequest: match
+                        { steamTaken: \_ -> refuseSwitch "Steam" "Steam account"
+                        , steamRefused: \_ -> showToast
+                            { text: "Steam couldn't confirm it's your account. Try again.", action: Nothing }
+                        }
+                    }
+                    (const $ switchFailed "Steam")
 
     Hooks.useLifecycleEffect do
         void $ Hooks.fork do
@@ -315,6 +335,7 @@ component = Hooks.component \_ _ -> Hooks.do
                     let landing = CodeUnits.drop 1 hash
                     when (elem landing landings) $ focusCentered landing
                     takeSwitchToken >>= traverse_ switchToDiscord
+                    takeSwitchAssertion >>= traverse_ switchToSteam
         pure Nothing
 
     let focusEdit = liftEffect $ focusSoon "#facts-title ~ .account-actions .button"
@@ -473,8 +494,9 @@ component = Hooks.component \_ _ -> Hooks.do
         setSignIn key change = Hooks.modify_ stateId \state' -> state'
             { signIn = state'.signIn <#> change, errors = Object.delete key state'.errors }
 
-        -- A password account changes its password here; a Discord account
-        -- moves to a password, with the address it holds or the one it gives.
+        -- A password account changes its password here; a Discord or Steam
+        -- account moves to a password, with the address it holds or the one it
+        -- gives.
         saveSignIn :: Event -> HookM (Async left) Unit
         saveSignIn event = do
             liftEffect $ preventDefault event
@@ -484,7 +506,7 @@ component = Hooks.component \_ _ -> Hooks.do
                     let failed errors = do
                             Hooks.modify_ stateId _ { saving = false, errors = errors }
                             liftEffect focusFirstInvalid
-                        wasDiscord = account'.signIn == "discord"
+                        hadPassword = account'.signIn == "password"
                         taken = case account'.email of
                             Just email -> Object.singleton "sign-in" $
                                 "Another account signs in with " <> email <> ". Change your email to sign in with a password."
@@ -503,9 +525,9 @@ component = Hooks.component \_ _ -> Hooks.do
                                 focusSignIn
                                 showToast
                                     { text:
-                                        if wasDiscord
-                                        then "You sign in with your email and password now."
-                                        else "Your password is changed."
+                                        if hadPassword
+                                        then "Your password is changed."
+                                        else "You sign in with your email and password now."
                                     , action: Nothing
                                     }
                             , badRequest: failed <<< match
@@ -658,18 +680,41 @@ component = Hooks.component \_ _ -> Hooks.do
                 , onInput: \value -> setSignIn "sign-in-password" _ { password = value }
                 }
 
-        -- A password account moves to Discord or picks a new password; a
-        -- Discord account moves to a password, which signs in with the
-        -- account's email, so one without an address gives one here.
+        -- What the account signs in with, by the name the page gives it.
+        signInName account' = if account'.signIn == "discord" then "Discord" else "Steam"
+
+        replacedName account' =
+            if account'.signIn == "password" then "your password's" else signInName account' <> "'s"
+
+        switchButton account' provider icon' onClick =
+            HH.div [ HS.class_ "field" ]
+            [ HH.button
+                [ HS.class_ $ "button button-outline account-" <> toLower provider
+                , HP.type_ HP.ButtonButton
+                , HE.onClick $ const onClick
+                ]
+                [ icon', HH.text $ "Continue with " <> provider ]
+            , hint $ provider <> " takes " <> replacedName account' <> " place. Your email stays as it is."
+            ]
+
+        -- The account moves to either of the two ways it doesn't sign in with,
+        -- or a password account picks a new password. A password signs in
+        -- with the account's email, so one without an address gives one here.
         signInForm account' signIn =
             formTight saveSignIn $
             maybe [] (\error -> [ flowError error ]) (errorOf "sign-in")
+            <> (if account'.signIn == "discord" then []
+                else [ switchButton account' "Discord" Icons.discord authorizeSwitchToDiscord ])
+            <> (if account'.signIn == "steam" then []
+                else [ switchButton account' "Steam" Icons.steam authorizeSwitchToSteam ])
+            <> [ rule "or" ]
             <>
-            ( if account'.signIn == "discord"
-                then
-                    [ hint $ "A password takes Discord's place"
+            ( if account'.signIn == "password"
+                then [ passwordField "New password" signIn ]
+                else
+                    [ hint $ "A password takes " <> signInName account' <> "'s place"
                         <> maybe "" (", and you sign in with " <> _) account'.email
-                        <> ". Discord stays on your posts as a contact."
+                        <> ". " <> signInName account' <> " stays on your posts as a contact."
                     ]
                     <> (if isJust account'.email then [] else
                         [ textField
@@ -679,33 +724,18 @@ component = Hooks.component \_ _ -> Hooks.do
                             }
                         ])
                     <> [ passwordField "Password" signIn ]
-                else
-                    [ HH.div [ HS.class_ "field" ]
-                        [ HH.button
-                            [ HS.class_ "button button-outline account-discord"
-                            , HP.type_ HP.ButtonButton
-                            , HE.onClick $ const authorizeSwitchToDiscord
-                            ]
-                            [ Icons.discord, HH.text "Continue with Discord" ]
-                        , hint "Discord takes your password's place. Your email stays as it is."
-                        ]
-                    , rule "or"
-                    , passwordField "New password" signIn
-                    ]
             )
             <> [ formActions "Save" cancelSignIn ]
 
-        signInValue account' = case state.signIn of
-            Just signIn -> [ signInForm account' signIn ]
-            Nothing ->
-                if account'.signIn == "discord"
-                then [ HH.span [ HS.class_ "data-line" ] [ Icons.discord, HH.text "Discord" ] ]
-                else [ HH.text "Email and password" ]
+        signInValue account' = case state.signIn, account'.signIn of
+            Just signIn, _ -> [ signInForm account' signIn ]
+            Nothing, "discord" -> [ HH.span [ HS.class_ "data-line" ] [ Icons.discord, HH.text "Discord" ] ]
+            Nothing, "steam" -> [ HH.span [ HS.class_ "data-line" ] [ Icons.steam, HH.text "Steam" ] ]
+            Nothing, _ -> [ HH.text "Email and password" ]
 
-        signInAction account' =
+        signInAction _ =
             if isJust state.signIn then Nothing
-            else Just $ button Text Small changeSignIn
-                [ HH.text if account'.signIn == "discord" then "Use a password" else "Change" ]
+            else Just $ button Text Small changeSignIn [ HH.text "Change" ]
 
         emailsValue account' = let
             switch' key text note checked change =
