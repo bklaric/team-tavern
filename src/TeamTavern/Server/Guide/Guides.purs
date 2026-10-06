@@ -5,6 +5,8 @@ import Prelude
 import Data.Array (sortBy)
 import Data.Ord (comparing)
 
+foreign import deadlockRankedWithFriendsText :: String
+
 foreign import joinAnEsportsTeamText :: String
 
 foreign import makeAnEsportsTeamText :: String
@@ -39,7 +41,7 @@ guides = sortBy (flip $ comparing _.updated)
       , description: "Most esports teams are amateur five-stacks playing Premier, Clash, ESEA or Siege Cup. "
             <> "Here's what each game asks of your account, what teams look for, and where to find one."
       , published: "2026-09-29"
-      , updated: "2026-10-06"
+      , updated: "2026-10-07"
       , html: markdownToHtml joinAnEsportsTeamText
       }
     , { slug: "make-an-esports-team"
@@ -48,7 +50,7 @@ guides = sortBy (flip $ comparing _.updated)
       , description: "Starting an amateur team? How to pick your format, recruit for the roles you're missing, "
             <> "run tryouts, find scrims, and the roster rules each game's tournament enforces."
       , published: "2026-09-29"
-      , updated: "2026-10-06"
+      , updated: "2026-10-07"
       , html: markdownToHtml makeAnEsportsTeamText
       }
     , { slug: "marvel-rivals-championship-team"
@@ -77,5 +79,14 @@ guides = sortBy (flip $ comparing _.updated)
       , published: "2026-10-06"
       , updated: "2026-10-06"
       , html: markdownToHtml theFinalsRankedWithFriendsText
+      }
+    , { slug: "deadlock-ranked-with-friends"
+      , heading: "How to play ranked with friends in Deadlock"
+      , title: "Deadlock ranked with friends: who can duo, and where a stack plays"
+      , description: "Deadlock ranked takes solos and duos one rank apart, after eight solo calibration games. "
+            <> "Who can queue together, where a stack plays, and how to find a duo."
+      , published: "2026-10-07"
+      , updated: "2026-10-07"
+      , html: markdownToHtml deadlockRankedWithFriendsText
       }
     ]

@@ -52,6 +52,7 @@ import TeamTavern.Server.Infrastructure.Environment as Environment
 import TeamTavern.Server.Infrastructure.FetchDiscordUser (DiscordApiUrl(..))
 import TeamTavern.Server.Infrastructure.Log (logStamped, print)
 import TeamTavern.Server.Infrastructure.Postgres (databaseErrorLines)
+import TeamTavern.Server.Infrastructure.ResolveSteamId (SteamApi(..))
 import TeamTavern.Server.Infrastructure.Ses (createClient)
 import TeamTavern.Server.LlmsTxt.ViewLlmsTxt (viewLlmsTxt)
 import TeamTavern.Server.Notification.ReadNotification (readNotification)
@@ -133,6 +134,15 @@ loadDiscordApiUrl =
     <#> fromMaybe "https://discord.com/api"
     <#> DiscordApiUrl
 
+-- | Steam's Web API at `api.steampowered.com` unless STEAM_API_URL names
+-- | another, as the test stack's does.
+loadSteamApi :: ExceptT String Effect SteamApi
+loadSteamApi = do
+    key <- lookupEnv "STEAM_API_KEY"
+        <#> note "Couldn't read variable STEAM_API_KEY." # ExceptT
+    url <- lift $ lookupEnv "STEAM_API_URL" <#> fromMaybe "https://api.steampowered.com"
+    pure $ SteamApi { url, key }
+
 -- | Staging and production send through SES and link to their own origin. The
 -- | local stacks link relative to the site they serve, and only log, unless
 -- | AWS_ENDPOINT_URL_SESV2 names something that takes SES's requests, as the
@@ -167,8 +177,8 @@ loadAdminEmail =
     <#> note "Couldn't read variable ADMIN_EMAIL."
     # ExceptT
 
-runServer :: Environment -> Mailer -> DiscordApiUrl -> AdminEmail -> ClientErrorLimit -> Pool -> Effect Unit
-runServer environment mailer discordApiUrl adminEmail clientErrorLimit pool = serve (Proxy :: _ AllRoutes) serveOptions
+runServer :: Environment -> Mailer -> DiscordApiUrl -> SteamApi -> AdminEmail -> ClientErrorLimit -> Pool -> Effect Unit
+runServer environment mailer discordApiUrl steamApi adminEmail clientErrorLimit pool = serve (Proxy :: _ AllRoutes) serveOptions
     { startSession: \{ cookies, body } ->
         Session.start environment mailer discordApiUrl pool cookies body
     , endSession: \{ cookies } ->
@@ -188,7 +198,7 @@ runServer environment mailer discordApiUrl adminEmail clientErrorLimit pool = se
     , viewAccount: \{ cookies } ->
         viewAccount pool cookies
     , updateFacts: \{ cookies, body } ->
-        updateFacts pool cookies body
+        updateFacts steamApi pool cookies body
     , updateSwitches: \{ cookies, body } ->
         updateSwitches pool cookies body
     , updateEmail: \{ cookies, body } ->
@@ -214,9 +224,9 @@ runServer environment mailer discordApiUrl adminEmail clientErrorLimit pool = se
     , viewOwnPost: \{ path, cookies } ->
         viewOwnPost pool path.handle path.type cookies
     , createPost: \{ path, cookies, body } ->
-        createPost pool path.handle path.type cookies body
+        createPost steamApi pool path.handle path.type cookies body
     , updatePost: \{ path, cookies, body } ->
-        updatePost pool path.handle path.type cookies body
+        updatePost steamApi pool path.handle path.type cookies body
     , renewPost: \{ path, cookies } ->
         renewPost pool path.handle path.id cookies
     , renewByNonce: \{ body } ->
@@ -269,10 +279,11 @@ main :: Effect Unit
 main = either log pure =<< runExceptT do
     environment <- loadEnvironment
     discordApiUrl <- lift loadDiscordApiUrl
+    steamApi <- loadSteamApi
     adminEmail <- loadAdminEmail
     workerPeriod <- loadWorkerPeriod
     pool <- createPostgresPool
     mailer <- loadMailer environment
     clientErrorLimit <- lift createClientErrorLimit
     lift $ startWorker workerPeriod mailer pool
-    lift $ runServer environment mailer discordApiUrl adminEmail clientErrorLimit pool
+    lift $ runServer environment mailer discordApiUrl steamApi adminEmail clientErrorLimit pool

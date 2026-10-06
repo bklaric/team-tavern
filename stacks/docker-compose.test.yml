@@ -37,6 +37,7 @@ services:
       - tt-postgres
       - tt-discord
       - tt-mail
+      - tt-steam
 
   # Answers the Discord API the node container calls, at DISCORD_API_URL in test.env.
   tt-discord:
@@ -52,6 +53,14 @@ services:
     # Keep in step with the Volta pin in package.json.
     image: node:24.21.0
     command: node /root/dist-test/mail-stub.js
+    volumes:
+      - ../dist-test:/root/dist-test:ro
+
+  # Answers the Steam Web API the node container calls, at STEAM_API_URL in test.env.
+  tt-steam:
+    # Keep in step with the Volta pin in package.json.
+    image: node:24.21.0
+    command: node /root/dist-test/steam-stub.js
     volumes:
       - ../dist-test:/root/dist-test:ro
 

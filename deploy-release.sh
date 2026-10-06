@@ -18,6 +18,16 @@ if [ ! -f release/compose.yml ] || [ ! -f release/server/server.js ] || [ ! -f r
     exit 1
 fi
 
+# Compose refuses to start without a variable the release requires, `${NAME:?}`,
+# and by then the files it runs are already replaced. So the server's .env is
+# checked for each before anything is uploaded.
+required=$(grep -o '\${[A-Z_]*:?' release/compose.yml | tr -d '${:?' | sort -u)
+missing=$(ssh "$host" "cd $remote && for name in $(echo $required); do grep -q \"^\$name=.\" .env || echo \$name; done")
+if [ -n "$missing" ]; then
+    echo "The server's .env doesn't set:" $missing >&2
+    exit 1
+fi
+
 # The index files go up last, so no page is served that names a script or
 # stylesheet still on its way. Hashed names never collide, so the ones they
 # replace stay where they are for pages already open. -mkdir goes on past a

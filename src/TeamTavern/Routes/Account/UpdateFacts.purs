@@ -17,10 +17,12 @@ type RequestContent =
     }
 
 -- | `field` is a fact by its key: `location`, `languages`, `birthday` or
--- | `timezone`.
+-- | `timezone`. `steamUnavailable` is Steam not answering for a custom profile
+-- | address.
 type FactError = Variant
     ( nickname :: {}
     , contact :: { kind :: String }
+    , steamUnavailable :: {}
     , field :: { key :: String }
     )
 

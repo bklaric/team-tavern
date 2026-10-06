@@ -67,6 +67,7 @@ import TeamTavern.Routes.Post.RevealContacts as RevealContacts
 import TeamTavern.Routes.Post.ViewPost (ViewPost)
 import TeamTavern.Routes.Shared.Card (CardRow)
 import TeamTavern.Routes.Shared.Conversation (Conversation)
+import TeamTavern.Shared.Steam (isSteamId, profileUrl)
 import Type.Proxy (Proxy(..))
 import Web.HTML (window)
 import Web.HTML.Location (pathname)
@@ -103,7 +104,7 @@ type PanelView i =
     , actions :: PanelActions i
     }
 
-type ContactRow = { label :: String, value :: String, link :: Boolean }
+type ContactRow = { label :: String, value :: String, link :: Maybe String }
 
 panelRef :: H.RefLabel
 panelRef = H.RefLabel "contact-panel"
@@ -144,11 +145,18 @@ href value
 
 rows :: CardRow -> RevealContacts.OkContent -> Array ContactRow
 rows post { contacts, discord_server, website } =
-    (contacts <#> \{ kind, value } -> { label: contactLabel kind, value, link: kind == "steam" })
+    (contacts <#> \{ kind, value } ->
+        { label: contactLabel kind
+        , value
+        , link: if kind == "steam" && isSteamId value then Just (profileUrl value) else Nothing
+        })
     <> catMaybes
         [ discord_server <#> \value ->
-            { label: if post.type == "community" then "Discord invite" else "Discord server", value, link: true }
-        , website <#> \value -> { label: "Website", value, link: true }
+            { label: if post.type == "community" then "Discord invite" else "Discord server"
+            , value
+            , link: Just (href value)
+            }
+        , website <#> \value -> { label: "Website", value, link: Just (href value) }
         ]
 
 type Props i = { now :: Instant, view :: PanelView i }
@@ -170,10 +178,10 @@ contactRow :: ∀ w i. { copied :: Maybe String, onCopy :: String -> i } -> Cont
 contactRow { copied, onCopy } { label, value, link } =
     HH.div [ HS.class_ "contact-row" ]
     [ HH.span [ HS.class_ "contact-label" ] [ HH.text label ]
-    , if link
-        then HH.a [ HS.class_ "contact-value", HP.href $ href value, HP.target "_blank", HP.rel "noopener" ]
+    , case link of
+        Just url -> HH.a [ HS.class_ "contact-value", HP.href url, HP.target "_blank", HP.rel "noopener" ]
             [ HH.text value, Icons.externalLink ]
-        else HH.span [ HS.class_ "contact-value" ] [ HH.text value ]
+        Nothing -> HH.span [ HS.class_ "contact-value" ] [ HH.text value ]
     , HH.button
         [ HS.class_ "button button-outline button-small"
         , HP.type_ HP.ButtonButton

@@ -11,7 +11,7 @@ Most guides to this are careers pieces. They tell you to practise, stream and ne
 
 ## What an esports team is below pro level
 
-An amateur esports team is a group of five players (three in Apex Legends and The Finals, two or three in Rocket League, six in Marvel Rivals, six or nine in Team Fortress 2) that plays together on a fixed schedule, in its game's team tournament, in a league, or in scrims. Scrims are practice matches against another team, arranged between the two teams.
+An amateur esports team is a group of five players (three in Apex Legends and The Finals, two or three in Rocket League, six in Marvel Rivals and Deadlock, six or nine in Team Fortress 2) that plays together on a fixed schedule, in its game's team tournament, in a league, or in scrims. Scrims are practice matches against another team, arranged between the two teams.
 
 Teams come in three kinds:
 
@@ -100,6 +100,7 @@ Most team formats set a bar for your account, and some cost money. Check yours b
 | **Valorant: Premier**, 5–7 players | SMS verification, one ranked placement ever, and no current bans or restrictions | Stages of 7 weeks, up to 2 matches a week, then playoffs |
 | **League of Legends: Clash**, 5 players | Level 30, ranked placements this year or last, SMS on a mobile number, and a ticket each, for Blue Essence or RP or from the Clash mission | 12 weekends in 2026 |
 | **Dota 2: Battle Cup**, 5 players | Dota Plus, or a $0.99 ticket | Weekly |
+| **Deadlock: the Death Slam League**, 6 players and up to 2 subs | Nothing stated: new teams start in the lowest division | Seasons, with matches on Saturdays, in North America |
 | **Overwatch: FACEIT open qualifier**, 5 players | – | At the start of each OWCS season, in NA and EMEA |
 | **Marvel Rivals: the Championship**, 6–12 players | Platinum 3 in the season's Competitive, and every member on one platform | Once a season |
 | **Counter-Strike 2: ESEA**, 5 players | – | Seasons |
@@ -135,6 +136,12 @@ Clash doesn't lead to pro play. Teams that want more than Clash play scrims and 
 <img class="guide-cover" src="/images/games/400/dota-2.webp" alt="" width="400" height="600" loading="lazy"> The Battle Cup is Dota 2's weekly tournament for teams of five. It's [free for Dota Plus members](https://www.dota2.com/plus), and anyone else can buy a ticket for $0.99. Dota 2 posts on TeamTavern have "Battle Cup" as an answer to "Looking for", so a group that wants a Battle Cup fifth can say so.
 
 [Dota 2 players and groups on TeamTavern](/games/dota-2)
+
+### Deadlock: community leagues
+
+<img class="guide-cover" src="/images/games/400/deadlock.webp" alt="" width="400" height="600" loading="lazy"> Valve runs no tournaments or leagues for Deadlock, so teams of six, with substitutes, play leagues and cups that players run, in custom lobbies. The open one with a way up is the [Death Slam League](https://dse.gg/dsl): new teams start in the lowest of its four divisions and the best move up each season, with matches on Saturdays on North American servers. Most players start in ranked, which takes only solo players and duos at most one rank apart. [How to play ranked with friends in Deadlock](/guides/deadlock-ranked-with-friends) covers who can queue together, where a group plays and how to find a duo.
+
+[Deadlock players and groups on TeamTavern](/games/deadlock)
 
 ### Overwatch
 

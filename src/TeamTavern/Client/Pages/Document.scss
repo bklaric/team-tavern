@@ -216,6 +216,61 @@
     --swatch: var(--players);
 }
 
+/* A chart of gains and losses in one colour, its bars either side of a zero
+   line down the middle of each row. Each bar's --gain is its size in points,
+   positive either way, and the dd's class says which side it goes: five points
+   take 60% of a half, leaving room for the figure at the bar's end. */
+.guide-chart-gain dt {
+    grid-row: auto;
+}
+
+.guide-chart-gain dt span {
+    display: block;
+    color: var(--text-faint);
+}
+
+.guide-chart-gain dd {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
+    min-height: 24px;
+    background: linear-gradient(var(--border), var(--border)) center / 1px 100% no-repeat;
+    --swatch: var(--players);
+}
+
+.guide-chart-gain dd::before {
+    grid-row: 1;
+    width: calc(var(--gain) * 12%);
+}
+
+.guide-chart-gain dd > span {
+    grid-row: 1;
+}
+
+.guide-chart-gain .gain::before,
+.guide-chart-gain .gain > span {
+    grid-column: 2;
+    justify-self: start;
+}
+
+.guide-chart-gain .gain > span {
+    padding-left: calc(var(--gain) * 12% + var(--space-2));
+}
+
+.guide-chart-gain .loss::before,
+.guide-chart-gain .loss > span {
+    grid-column: 1;
+    justify-self: end;
+}
+
+.guide-chart-gain .loss::before {
+    border-radius: var(--radius-small) 0 0 var(--radius-small);
+}
+
+.guide-chart-gain .loss > span {
+    padding-right: calc(var(--gain) * 12% + var(--space-2));
+}
+
 /* The guides index: each guide under a rule, its title, then when it was
    updated, then what it covers. */
 .document .guide-list {

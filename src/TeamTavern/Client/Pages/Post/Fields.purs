@@ -9,7 +9,7 @@ module TeamTavern.Client.Pages.Post.Fields
 
 import Prelude
 
-import Data.Array (delete, elem, filter, null, snoc, sortBy)
+import Data.Array (catMaybes, delete, elem, filter, null, snoc, sortBy)
 import Data.Int as Int
 import Data.Maybe (Maybe(..), fromMaybe, isJust, isNothing, maybe)
 import Data.String (joinWith, toLower)
@@ -34,7 +34,7 @@ import TeamTavern.Client.Components.Stepper (countRow, stepper)
 import TeamTavern.Client.Components.Tokens as Tokens
 import TeamTavern.Client.Icons as Icons
 import TeamTavern.Client.Pages.Post.Draft (Draft)
-import TeamTavern.Client.Shared.Contacts (contactLabel, contactPlaceholder)
+import TeamTavern.Client.Shared.Contacts (contactFormat, contactLabel, contactPlaceholder)
 import TeamTavern.Client.Shared.Facts (dateText, timezoneOptions, timezoneText)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Game.ViewGame as ViewGame
@@ -459,6 +459,9 @@ contactFields context@{ game, type_ } =
         [] -> Nothing
         titles | type_ == "player" -> Just $ "Your card links your " <> joinWith " and " titles <> " profile from it."
         _ -> Nothing
+    contactHint kind = case catMaybes [ contactFormat kind, trackerHint kind ] of
+        [] -> Nothing
+        hints -> Just $ joinWith " " hints
     contactInput kind =
         input [ HP.id $ idOf kind ]
             { value: Object.lookup kind context.draft.contacts # fromMaybe ""
@@ -466,7 +469,7 @@ contactFields context@{ game, type_ } =
             , onInput: \value -> context.onChange kind \draft -> draft { contacts = Object.insert kind value draft.contacts }
             }
     contactField kind =
-        accountField context (Contact kind) (contactLabel kind) For (trackerHint kind)
+        accountField context (Contact kind) (contactLabel kind) For (contactHint kind)
         if kind == "discord" && isNothing context.account
         then HH.div [ HS.class_ "input-row" ]
             [ contactInput kind

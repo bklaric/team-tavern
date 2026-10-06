@@ -3,9 +3,9 @@ import { expectPage, postPath } from "../pages";
 
 const googlebot = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)";
 
-// `Database/Seed/Games/` seeds the thirteen games of the catalogue.
+// `Database/Seed/Games/` seeds the fourteen games of the catalogue.
 const handles = [
-    "apex-legends", "counter-strike-2", "dota-2", "heroes-of-the-storm", "league-of-legends",
+    "apex-legends", "counter-strike-2", "deadlock", "dota-2", "heroes-of-the-storm", "league-of-legends",
     "marvel-rivals", "overwatch", "rainbow-six-siege", "rocket-league", "team-fortress-2", "the-finals",
     "valheim", "valorant",
 ];
@@ -21,6 +21,7 @@ const guidePaths = [
     "/guides/marvel-rivals-championship-team",
     "/guides/rocket-league-tournaments",
     "/guides/the-finals-ranked-with-friends",
+    "/guides/deadlock-ranked-with-friends",
 ];
 
 // Neither robots nor the sitemap is a page, so Caddy answers a bot with the file itself

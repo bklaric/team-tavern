@@ -94,6 +94,23 @@ test("the guide to joining a team leads to The Finals guide, and that to its gam
     await expect(page.getByRole("heading", { name: "The Finals", level: 1 })).toBeVisible();
 });
 
+test("the guide to joining a team leads to the Deadlock guide, and that to its game's feed", async ({ page }) => {
+    const deadlockHeading = "How to play ranked with friends in Deadlock";
+    await page.goto(guidePath);
+    await expect(page.getByRole("heading", { name: guideHeading, level: 1 })).toBeVisible();
+
+    await page.getByRole("link", { name: deadlockHeading }).click();
+
+    await expectPage(page, "/guides/deadlock-ranked-with-friends");
+    await expect(page.getByRole("heading", { name: deadlockHeading, level: 1 })).toBeVisible();
+    await expect(page.getByRole("figure", { name: /^How much more often a duo wins than a solo player/ })).toBeVisible();
+
+    await page.getByRole("link", { name: "Deadlock players and groups on TeamTavern" }).last().click();
+
+    await expectPage(page, "/games/deadlock");
+    await expect(page.getByRole("heading", { name: "Deadlock", level: 1 })).toBeVisible();
+});
+
 // The guide's text comes after the page loads, so the page, not the browser,
 // finds the part of it the address names.
 test("an address naming a part of a guide opens the guide at it", async ({ page }) => {

@@ -49,7 +49,7 @@ import TeamTavern.Client.Script.RenderReady (appendRenderReadyNotFound)
 import TeamTavern.Client.Script.Scroll (focusFirstInvalid)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Shared.AccountErrors (somethingWrong, tooYoung)
-import TeamTavern.Client.Shared.Contacts (contactLabel)
+import TeamTavern.Client.Shared.Contacts (contactError, contactLabel, steamUnavailable)
 import TeamTavern.Client.Shared.Facts (ageOn)
 import TeamTavern.Client.Shared.Fetch (expecting, fetchPath, fetchPathBody, fetchSimple)
 import TeamTavern.Client.Shared.Me (fetchMe)
@@ -153,7 +153,8 @@ serverError = match
     , reach: const $ Just { key: "reach", error: "Add a way to reach you below, or choose another way." }
     , discordServer: const $ Just { key: "discordServer", error: "Check your invite, or choose another way to join." }
     , website: const $ Just { key: "website", error: "Check your website, or choose another way to join." }
-    , contact: \{ kind } -> Just { key: kind, error: "Check this account." }
+    , contact: \{ kind } -> Just { key: kind, error: fromMaybe "Check this account." (contactError kind) }
+    , steamUnavailable: const $ Just { key: "steam", error: steamUnavailable }
     , field: \{ key } -> if key == "birthday" then Just { key, error: tooYoung } else Nothing
     }
 

@@ -26,9 +26,9 @@ Generated, never edited, all git-ignored: `output/` (compiled PureScript),
 
 - **Node and npm** are pinned by Volta in `package.json`; with Volta installed
   the right versions are picked up automatically. The `tt-node` service in
-  both compose files under `stacks/`, and the test stack's `tt-discord` service,
-  pin the same Node version for their containers, and nothing enforces
-  agreement, so change all four together.
+  both compose files under `stacks/`, and the test stack's `tt-discord`,
+  `tt-mail` and `tt-steam` services, pin the same Node version for their
+  containers, and nothing enforces agreement, so change all six together.
 - **purs, spago, sass, esbuild, sharp and Playwright** come from `devDependencies`, so
   setup is `npm install` plus, for the browser Playwright drives,
   `./node_modules/.bin/playwright install chromium`, which downloads Chromium
@@ -98,9 +98,9 @@ under hashed file names. `build-server.sh` bundles the server into
 `release/server/server.js` with `bcrypt`, `pg` and `@aws-sdk/client-sesv2` left
 external, and copies the root `package.json` beside it; the container installs
 that with `--omit=dev`, so the build toolchain never enters the image. It also
-bundles `DiscordStub/Main.purs` into `dist-test/discord-stub.js` and
-`MailStub/Main.purs` into `dist-test/mail-stub.js`, which only the test stack
-runs. `build.sh` then copies in what runs them: `stacks/docker-compose.release.yml`
+bundles `DiscordStub/Main.purs` into `dist-test/discord-stub.js`,
+`MailStub/Main.purs` into `dist-test/mail-stub.js` and `SteamStub/Main.purs`
+into `dist-test/steam-stub.js`, which only the test stack runs. `build.sh` then copies in what runs them: `stacks/docker-compose.release.yml`
 as `release/compose.yml`, every Caddyfile but the test stack's into
 `release/caddy/`, and `backup-database.sh`.
 
@@ -156,9 +156,9 @@ a secure context, so nothing on the site needs HTTPS locally.
 
 `stacks/.env` is committed. The Postgres credentials in it are real, but the
 database is reachable only from inside the compose network, so they are
-usable only by someone already on the server. The AWS key pair is a
-placeholder; the real one lives in the production `.env` on the server and is
-not in the repo.
+usable only by someone already on the server. The AWS key pair and the Steam
+Web API key are placeholders; the real ones live in the production `.env` on
+the server and are not in the repo.
 
 ### The test stack
 
@@ -197,6 +197,17 @@ site's origin, newest first, each email in a frame. A spec reads its player's
 email there and clicks the links in it, which are relative outside production
 and so open the test site. The development stack sets no `AWS_ENDPOINT_URL_SESV2`, and
 its node log shows each email's text instead.
+
+The test stack has no Steam either. A Steam contact is kept as the SteamID64,
+which every Steam tracker takes and the profile's link is built from, so the
+server turns a profile's link into one and asks the Steam Web API's
+ResolveVanityURL for the ID behind a custom `/id/<name>` address. The test
+stack's `tt-steam` service runs `dist-test/steam-stub.js`, and `STEAM_API_URL`
+in `test.env` points the server at it. The stub knows one custom address,
+`gabelogannewell`, fails on `steam-is-down` as Steam does when it's down, and no profile
+has any other name. The development stack calls Steam with
+the placeholder key in `stacks/.env`, which Steam refuses, so a custom address
+fails there unless a real key is put in its place.
 
 Every Discord button sends the browser back to `/signin`, the one redirect URI
 registered on the Discord app for each origin, and what the player was doing
@@ -254,7 +265,7 @@ API within a few seconds.
 
 A server holds no checkout, only a release: `~/team-tavern` is `release/` as
 uploaded, plus the server's own `.env` beside `compose.yml`, which compose reads
-from there. That `.env` sets what `stacks/.env` does, with the real AWS key pair,
+from there. That `.env` sets what `stacks/.env` does, with the real AWS key pair and Steam Web API key,
 `ENVIRONMENT=production` (or `staging`) and no `CADDY_HTTP_PORT`. A release never
 carries one.
 
@@ -381,7 +392,9 @@ redirects the old site's feed paths to the new ones by `legacy.game_map`.
   `compose.yml` hands the node container from the stack's `.env`.
   `ENVIRONMENT` decides the cookie's `Secure` and the origin of the links in an
   email. `DISCORD_API_URL` is optional and defaults to Discord's own API; only
-  `stacks/test.env` sets it. `AWS_ENDPOINT_URL_SESV2` is optional too, and the
+  `stacks/test.env` sets it. `STEAM_API_KEY` is required, and `STEAM_API_URL`
+  is optional and defaults to Steam's own Web API; only `stacks/test.env` sets
+  it. `AWS_ENDPOINT_URL_SESV2` is optional too, and the
   SES client reads it itself: without it, the development stack only logs its
   email; with it, the server sends there. Only `stacks/test.env` sets it. `WORKER_PERIOD` is optional as well:
   the seconds between the worker's runs, an hour unless `stacks/test.env`'s 2.
@@ -487,7 +500,9 @@ same edit to `TablesCurrent.sql`. The script is applied by hand to the
 `tt-postgres` container of the development stack and to production. Before it
 goes out, apply `TablesBase.sql` and the scripts to one scratch database and
 `TablesCurrent.sql` to another, and `pg_dump --schema-only` both: the dumps
-must not differ. Once a script has run everywhere, `TablesBase.sql` is replaced
+must not differ. A data fix SQL alone can't make, such as one that asks Steam,
+is a dated `.js` beside them that runs in the `tt-node` container, as its
+header says, and goes the same way once it has run everywhere. Once a script has run everywhere, `TablesBase.sql` is replaced
 with `TablesCurrent.sql` and the script is deleted. A migration kept past that
 point rots: it may address rows by ids only production has, so nothing can
 replay it and nothing catches it going stale.

@@ -28,6 +28,7 @@ import TeamTavern.Routes.Game.ViewGame as ViewGame
 import TeamTavern.Routes.Shared.Card (CardRow)
 import TeamTavern.Routes.Shared.Description (Description, Hours, Range)
 import TeamTavern.Routes.Shared.Post (AccountContent, PostContent, RequestContent)
+import TeamTavern.Shared.Steam (SteamInput(..), readSteamInput)
 import Web.HTML (window)
 import Web.HTML.Window (localStorage)
 import Web.Storage.Storage (getItem, removeItem, setItem)
@@ -268,7 +269,7 @@ toCard game type_ { nickname, updated, today } draft =
     , trackers:
         if not player then []
         else game.trackers # mapMaybe \{ contact, title, template } ->
-            Object.lookup contact contacts <#> \account -> { title, template, account: trim account }
+            Object.lookup contact contacts >>= trackedAccount contact <#> \account -> { title, template, account }
     , has_discord_server: not player && isJust (blank draft.discordServer)
     , has_website: not player && isJust (blank draft.website)
     , options: draft.options # Object.filter (not <<< null)
@@ -279,3 +280,8 @@ toCard game type_ { nickname, updated, today } draft =
     where
     player = type_ == "player"
     contacts = gameContacts game type_ draft
+    -- A custom Steam address names no ID until the server asks Steam for it.
+    trackedAccount "steam" account = case readSteamInput account of
+        SteamId steamId -> Just steamId
+        _ -> Nothing
+    trackedAccount _ account = Just $ trim account

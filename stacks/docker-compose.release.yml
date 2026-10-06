@@ -49,6 +49,7 @@ services:
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:?}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:?}
       ADMIN_EMAIL: ${ADMIN_EMAIL:?}
+      STEAM_API_KEY: ${STEAM_API_KEY:?}
     volumes:
       - ./server:/root/team-tavern/server
       # Keeps the container's node_modules off the host.
