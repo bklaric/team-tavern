@@ -121,6 +121,7 @@ test.describe("on a phone", () => {
             "marvel-rivals-championship-team",
             "rocket-league-tournaments",
             "the-finals-ranked-with-friends",
+            "deadlock-ranked-with-friends",
         ]) {
             await page.goto(`/guides/${guide}`);
             await expect(page.getByRole("table")).toBeVisible();

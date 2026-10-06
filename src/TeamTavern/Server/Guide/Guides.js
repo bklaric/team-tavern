@@ -1,11 +1,14 @@
 // purs copies only this file into output/, so each guide is imported from where
 // it sits in src/; build-server.sh has esbuild load .md files as text.
 import { marked } from "marked";
+import deadlockRankedWithFriends from "../../src/TeamTavern/Server/Guide/deadlock-ranked-with-friends.md";
 import joinAnEsportsTeam from "../../src/TeamTavern/Server/Guide/join-an-esports-team.md";
 import makeAnEsportsTeam from "../../src/TeamTavern/Server/Guide/make-an-esports-team.md";
 import marvelRivalsChampionshipTeam from "../../src/TeamTavern/Server/Guide/marvel-rivals-championship-team.md";
 import rocketLeagueTournaments from "../../src/TeamTavern/Server/Guide/rocket-league-tournaments.md";
 import theFinalsRankedWithFriends from "../../src/TeamTavern/Server/Guide/the-finals-ranked-with-friends.md";
+
+export const deadlockRankedWithFriendsText = deadlockRankedWithFriends;
 
 export const joinAnEsportsTeamText = joinAnEsportsTeam;
 
