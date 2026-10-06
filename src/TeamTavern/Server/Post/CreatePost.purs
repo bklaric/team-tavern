@@ -28,6 +28,7 @@ import TeamTavern.Server.Infrastructure.GenerateNonce (generateNonce)
 import TeamTavern.Server.Infrastructure.GenerateNonce as Nonce
 import TeamTavern.Server.Infrastructure.Log (print)
 import TeamTavern.Server.Infrastructure.Postgres (databaseErrorLines, transaction)
+import TeamTavern.Server.Infrastructure.ResolveSteamId (SteamApi)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Post.Infrastructure.LoadCatalogue (loadCatalogue)
 import TeamTavern.Server.Post.Infrastructure.NotifyFits (notifyFits)
@@ -84,13 +85,13 @@ insertPost client { playerId, gameId, type_, nonce } { post, summary } = do
 -- | Publishes a post, writing the account facts and contacts it gave to the
 -- | account in the same transaction (brief 6, step 3), and telling the owners
 -- | of the posts it fits (brief 8).
-createPost :: ∀ left. Pool -> String -> String -> Cookies -> RequestContent -> Async left _
-createPost pool handle type_ cookies content =
+createPost :: ∀ left. SteamApi -> Pool -> String -> String -> Cookies -> RequestContent -> Async left _
+createPost steamApi pool handle type_ cookies content =
     sendResponse "Error creating post" do
     { id } <- ensureSignedIn pool cookies
     { gameId, game, countries } <- loadCatalogue pool handle type_
     today <- liftEffect nowDate
-    valid <- validatePost game countries type_ today content
+    valid <- validatePost steamApi game countries type_ today content
     nonce <- generateNonce
     let playerId = unwrap id
     pool # transaction \client -> do

@@ -3,8 +3,10 @@
 -- confirmed, so the email features have someone to send to.
 --
 -- Every account gives the same facts and fills every contact column, so
--- whichever contacts a game offers, its cards have some to show. A post's
--- renewal nonce is derived rather than random, so a boot gives the same one.
+-- whichever contacts a game offers, its cards have some to show. The Steam
+-- contact is a SteamID64, as the server stores it, derived from the nickname.
+-- A post's renewal nonce is derived rather than random, so a boot gives the
+-- same one.
 
 create function seed_player(nickname text, email text) returns integer
 language sql as $$
@@ -17,7 +19,8 @@ language sql as $$
     values
         ( nickname, email, true, '$2b$10$.ooPKTLO.JoL61KIvfsTKu2Nx1awadTkA9C1h/29.mIbi86dhHFwO'
         , date '2000-06-15', array['English'], 'Croatia', 'Europe/Zagreb'
-        , nickname, nickname, nickname || '#EUW', nickname || '#1234', nickname
+        , nickname, '7656119' || lpad(abs(hashtext(nickname)::bigint)::text, 10, '0')
+        , nickname || '#EUW', nickname || '#1234', nickname
         , nickname, nickname || '#1234', nickname, nickname, nickname, nickname, 'SW-1234-5678-9012'
         )
     returning id

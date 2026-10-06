@@ -46,7 +46,7 @@ import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Script.Unread (announceUnread)
 import TeamTavern.Client.Shared.AccountErrors (nicknameInvalid, nicknameTaken, passwordShort, somethingWrong, tooYoung)
 import TeamTavern.Client.Shared.Block (block, unblock)
-import TeamTavern.Client.Shared.Contacts (contactLabel, contactPlaceholder)
+import TeamTavern.Client.Shared.Contacts (contactError, contactFormat, contactLabel, contactPlaceholder, steamUnavailable)
 import TeamTavern.Client.Shared.Facts (ageOn, dateText, timezoneOptions, timezoneText)
 import TeamTavern.Client.Shared.Fetch (expecting, fetchBody, fetchSimple)
 import TeamTavern.Client.Shared.Slot (Slot__I)
@@ -199,8 +199,10 @@ serverErrors :: UpdateFacts.BadContent -> Object String
 serverErrors = match
     { facts: \errors -> Object.fromFoldable $ errors <#> match
         { nickname: \_ -> Tuple "nickname" nicknameInvalid
-        , contact: \{ kind } -> Tuple kind $
-            "Use up to " <> (if kind == "discord" then "37" else "100") <> " characters."
+        , contact: \{ kind } -> Tuple kind $ fromMaybe
+            ("Use up to " <> (if kind == "discord" then "37" else "100") <> " characters.")
+            (contactError kind)
+        , steamUnavailable: \_ -> Tuple "steam" steamUnavailable
         , field: \{ key } -> Tuple key if key == "birthday" then birthdayInvalid else somethingWrong
         }
     , nicknameTaken: \_ -> Object.singleton "nickname" nicknameTaken
@@ -241,8 +243,9 @@ listed items = case unsnoc items of
     _ -> joinWith "" items
 
 contactHint :: ViewAccount.Contact -> String
-contactHint { everyGame, games } =
-    if everyGame then "On all your posts." else "On your " <> listed games <> " posts."
+contactHint { kind, everyGame, games } =
+    maybe "" (_ <> " ") (contactFormat kind)
+    <> if everyGame then "On all your posts." else "On your " <> listed games <> " posts."
 
 hint :: ∀ w i. String -> HH.HTML w i
 hint text = HH.p [ HS.class_ "field-hint" ] [ HH.text text ]

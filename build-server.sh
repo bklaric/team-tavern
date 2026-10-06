@@ -16,3 +16,6 @@ echo "main();" >> dist-test/discord-stub.js
 # And its SES.
 esbuild output/TeamTavern.MailStub.Main/index.js --outfile=dist-test/mail-stub.js --platform=node --bundle --format=cjs
 echo "main();" >> dist-test/mail-stub.js
+# And its Steam Web API.
+esbuild output/TeamTavern.SteamStub.Main/index.js --outfile=dist-test/steam-stub.js --platform=node --bundle --format=cjs
+echo "main();" >> dist-test/steam-stub.js

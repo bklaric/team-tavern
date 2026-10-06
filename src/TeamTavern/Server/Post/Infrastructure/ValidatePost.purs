@@ -27,6 +27,7 @@ import TeamTavern.Routes.Shared.Post (AccountContent, BadContent, PostContent, P
 import TeamTavern.Server.Account.Infrastructure.ValidateAccount (accountChecks, blank, normalizedAccount)
 import TeamTavern.Server.Domain.Paragraph as Paragraph
 import TeamTavern.Server.Infrastructure.Error (Terror(..))
+import TeamTavern.Server.Infrastructure.ResolveSteamId (ResolvedAccount, SteamApi, resolveSteamContact)
 import TeamTavern.Server.Infrastructure.Response (BadRequestTerror)
 import TeamTavern.Shared.Languages (allLanguages)
 import Type.Proxy (Proxy(..))
@@ -123,9 +124,9 @@ answerChecks fields type_ post =
     isOption field key = any (_.key >>> eq key) field.options
 
 checks
-    :: ViewGame.OkContent -> ViewCountries.OkContent -> String -> Date -> RequestContent -> Array String
-    -> Array Checked
-checks game countries type_ today { post, account } summary =
+    :: ViewGame.OkContent -> ViewCountries.OkContent -> String -> Date -> PostContent -> ResolvedAccount
+    -> Array String -> Array Checked
+checks game countries type_ today post resolved@{ account } summary =
     answerChecks game.fields type_ post
     <>
     [ ensure (all (flip elem countries.regions) post.regions) (fieldError "regions")
@@ -161,21 +162,25 @@ checks game countries type_ today { post, account } summary =
     , ensure (post.contactPreference /= "offsite" || not Object.isEmpty account.contacts)
         (inj (Proxy :: _ "reach") {}) "Reached off site with no contact."
     ]
-    <> accountChecks game.contacts countries today account
+    <> accountChecks game.contacts countries today resolved
     where
     preferences =
         if type_ == "community" then [ "discord", "website", "message" ] else [ "message", "offsite", "either" ]
 
 -- | Checks a post against its game and the brief's rules (brief 6, step 3),
 -- | naming every field that is wrong.
+-- | Steam is asked only about a contact the game takes.
 validatePost :: ∀ errors.
-    ViewGame.OkContent -> ViewCountries.OkContent -> String -> Date -> RequestContent
+    SteamApi -> ViewGame.OkContent -> ViewCountries.OkContent -> String -> Date -> RequestContent
     -> Async (BadRequestTerror BadContent errors) ValidPost
-validatePost game countries type_ today content = let
-    content' = normalized type_ content
-    summary = paragraphs content'.post.summary
-    in
-    sequence_ (checks game countries type_ today content' summary)
-    <#> (\_ -> { post: content'.post, summary, account: content'.account })
-    # AsyncVal.fromValidated
-    # lmap (map (inj (Proxy :: _ "post") >>> badRequest_))
+validatePost steamApi game countries type_ today content = do
+    let { post, account } = normalized type_ content
+    resolved <-
+        if elem "steam" game.contacts
+        then resolveSteamContact steamApi account
+        else pure { account, steamUnavailable: false }
+    let summary = paragraphs post.summary
+    sequence_ (checks game countries type_ today post resolved summary)
+        <#> (\_ -> { post, summary, account: resolved.account })
+        # AsyncVal.fromValidated
+        # lmap (map (inj (Proxy :: _ "post") >>> badRequest_))

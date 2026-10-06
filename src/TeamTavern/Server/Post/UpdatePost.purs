@@ -14,6 +14,7 @@ import TeamTavern.Routes.Shared.Post (RequestContent)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotFound, transaction)
+import TeamTavern.Server.Infrastructure.ResolveSteamId (SteamApi)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Post.Infrastructure.ClearExpiry (clearExpiry)
 import TeamTavern.Server.Post.Infrastructure.LoadCatalogue (loadCatalogue)
@@ -54,13 +55,13 @@ updateQuery = Query """
     returning post.id, saved.expired
     """
 
-updatePost :: ∀ left. Pool -> String -> String -> Cookies -> RequestContent -> Async left _
-updatePost pool handle type_ cookies content =
+updatePost :: ∀ left. SteamApi -> Pool -> String -> String -> Cookies -> RequestContent -> Async left _
+updatePost steamApi pool handle type_ cookies content =
     sendResponse "Error updating post" do
     { id } <- ensureSignedIn pool cookies
     { gameId, game, countries } <- loadCatalogue pool handle type_
     today <- liftEffect nowDate
-    { post, summary, account } <- validatePost game countries type_ today content
+    { post, summary, account } <- validatePost steamApi game countries type_ today content
     let playerId = unwrap id
     pool # transaction \client -> do
         writeAccount client playerId account

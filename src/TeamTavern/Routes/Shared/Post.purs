@@ -47,6 +47,7 @@ type RequestContent =
 
 -- | What the post screen names beside a field. `field` is a value only a
 -- | request the screen didn't make can hold, named by its key.
+-- | `steamUnavailable` is Steam not answering for a custom profile address.
 type PostError = Variant
     ( name :: {}
     , summary :: {}
@@ -55,6 +56,7 @@ type PostError = Variant
     , discordServer :: {}
     , website :: {}
     , contact :: { kind :: String }
+    , steamUnavailable :: {}
     , field :: { key :: String }
     )
 
