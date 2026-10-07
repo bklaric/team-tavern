@@ -39,6 +39,7 @@ import TeamTavern.Client.Components.Tokens as Tokens
 import TeamTavern.Client.Icons as Icons
 import TeamTavern.Client.Script.Back (authPath)
 import TeamTavern.Client.Script.Discord (authorizeSwitchToDiscord, takeSwitchToken)
+import TeamTavern.Client.Script.Google (authorizeSwitchToGoogle, takeSwitchCode)
 import TeamTavern.Client.Script.Focus (focusSoon)
 import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_)
 import TeamTavern.Client.Script.Scroll (focusCentered, focusFirstInvalid)
@@ -54,6 +55,7 @@ import TeamTavern.Client.Shared.Slot (Slot__I)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Account.DeleteAccount (DeleteAccount)
 import TeamTavern.Routes.Account.SwitchToDiscord (SwitchToDiscord)
+import TeamTavern.Routes.Account.SwitchToGoogle (SwitchToGoogle)
 import TeamTavern.Routes.Account.SwitchToPassword (SwitchToPassword)
 import TeamTavern.Routes.Account.SwitchToSteam (SwitchToSteam)
 import TeamTavern.Routes.Account.UpdateEmail (UpdateEmail)
@@ -273,8 +275,8 @@ component = Hooks.component \_ _ -> Hooks.do
 
         focusSignIn = liftEffect $ focusSoon "#sign-in .data-action .button"
 
-        -- A Discord or Steam account that signs in to another account is
-        -- refused in the sign-in form, where the player chose it.
+        -- A Discord, Steam or Google account that signs in to another account
+        -- is refused in the sign-in form, where the player chose it.
         refuseSwitch provider account' = do
             Hooks.modify_ stateId _
                 { signIn = Just { email: "", password: "" }
@@ -322,6 +324,22 @@ component = Hooks.component \_ _ -> Hooks.do
                     }
                     (const $ switchFailed "Steam")
 
+        -- Back from Google with the code of a switch to it.
+        switchToGoogle :: String -> HookM (Async left) Unit
+        switchToGoogle code = do
+            result <- H.lift $ Async.attempt $ fetchBody (expecting [ "badRequest" ] (Proxy :: _ SwitchToGoogle)) { code }
+            case hush result of
+                Nothing -> switchFailed "Google"
+                Just response -> response # onMatch
+                    { noContent: \_ -> switched "You sign in with Google now."
+                    , badRequest: match
+                        { googleTaken: \_ -> refuseSwitch "Google" "Google account"
+                        , googleRefused: \_ -> showToast
+                            { text: "Google couldn't confirm it's your account. Try again.", action: Nothing }
+                        }
+                    }
+                    (const $ switchFailed "Google")
+
     Hooks.useLifecycleEffect do
         void $ Hooks.fork do
             page <- H.lift load
@@ -336,6 +354,7 @@ component = Hooks.component \_ _ -> Hooks.do
                     when (elem landing landings) $ focusCentered landing
                     takeSwitchToken >>= traverse_ switchToDiscord
                     takeSwitchAssertion >>= traverse_ switchToSteam
+                    takeSwitchCode >>= traverse_ switchToGoogle
         pure Nothing
 
     let focusEdit = liftEffect $ focusSoon "#facts-title ~ .account-actions .button"
@@ -681,7 +700,10 @@ component = Hooks.component \_ _ -> Hooks.do
                 }
 
         -- What the account signs in with, by the name the page gives it.
-        signInName account' = if account'.signIn == "discord" then "Discord" else "Steam"
+        signInName account' = case account'.signIn of
+            "discord" -> "Discord"
+            "google" -> "Google"
+            _ -> "Steam"
 
         replacedName account' =
             if account'.signIn == "password" then "your password's" else signInName account' <> "'s"
@@ -697,9 +719,10 @@ component = Hooks.component \_ _ -> Hooks.do
             , hint $ provider <> " takes " <> replacedName account' <> " place. Your email stays as it is."
             ]
 
-        -- The account moves to either of the two ways it doesn't sign in with,
-        -- or a password account picks a new password. A password signs in
-        -- with the account's email, so one without an address gives one here.
+        -- The account moves to any of the ways it doesn't sign in with, or a
+        -- password account picks a new password. A password signs in with the
+        -- account's email, so one without an address gives one here. Discord
+        -- and Steam stay on the posts as contacts; Google is none.
         signInForm account' signIn =
             formTight saveSignIn $
             maybe [] (\error -> [ flowError error ]) (errorOf "sign-in")
@@ -707,6 +730,8 @@ component = Hooks.component \_ _ -> Hooks.do
                 else [ switchButton account' "Discord" Icons.discord authorizeSwitchToDiscord ])
             <> (if account'.signIn == "steam" then []
                 else [ switchButton account' "Steam" Icons.steam authorizeSwitchToSteam ])
+            <> (if account'.signIn == "google" then []
+                else [ switchButton account' "Google" Icons.google authorizeSwitchToGoogle ])
             <> [ rule "or" ]
             <>
             ( if account'.signIn == "password"
@@ -714,7 +739,9 @@ component = Hooks.component \_ _ -> Hooks.do
                 else
                     [ hint $ "A password takes " <> signInName account' <> "'s place"
                         <> maybe "" (", and you sign in with " <> _) account'.email
-                        <> ". " <> signInName account' <> " stays on your posts as a contact."
+                        <> "."
+                        <> (if account'.signIn == "google" then ""
+                            else " " <> signInName account' <> " stays on your posts as a contact.")
                     ]
                     <> (if isJust account'.email then [] else
                         [ textField
@@ -731,6 +758,7 @@ component = Hooks.component \_ _ -> Hooks.do
             Just signIn, _ -> [ signInForm account' signIn ]
             Nothing, "discord" -> [ HH.span [ HS.class_ "data-line" ] [ Icons.discord, HH.text "Discord" ] ]
             Nothing, "steam" -> [ HH.span [ HS.class_ "data-line" ] [ Icons.steam, HH.text "Steam" ] ]
+            Nothing, "google" -> [ HH.span [ HS.class_ "data-line" ] [ Icons.google, HH.text "Google" ] ]
             Nothing, _ -> [ HH.text "Email and password" ]
 
         signInAction _ =

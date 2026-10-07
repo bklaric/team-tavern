@@ -50,6 +50,7 @@ services:
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:?}
       ADMIN_EMAIL: ${ADMIN_EMAIL:?}
       STEAM_API_KEY: ${STEAM_API_KEY:?}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:?}
     volumes:
       - ./server:/root/team-tavern/server
       # Keeps the container's node_modules off the host.

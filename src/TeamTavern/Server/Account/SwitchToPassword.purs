@@ -42,6 +42,7 @@ switchQuery = Query """
     set password_hash = $2,
         discord_id = null,
         steam_sign_in_id = null,
+        google_id = null,
         email = coalesce(email, $3::text),
         email_confirmed = email_confirmed and email is not null
     where id = $1

@@ -1,6 +1,7 @@
 import { expect, Page, test } from "@playwright/test";
 import { expectSignedInAs, password, signIn, signOut, submitPasswordSignIn, unique } from "../accounts";
 import { discordUser, fakeDiscord, signUpWithDiscord } from "../discord";
+import { fakeGoogle, googleUser, signUpWithGoogle } from "../google";
 import { emails, openMail } from "../mail";
 import { expectPage } from "../pages";
 import { fakeSteam, signUpWithSteam, startSteamTrip, steamAnswer, steamId, steamNickname } from "../steam";
@@ -417,6 +418,174 @@ test("a Steam player is not found by a password sign-in", async ({ page }) => {
         await submitPasswordSignIn(page, emailOrNickname);
         await expect(page.getByText("No account exists with this email or nickname.")).toBeVisible();
     }
+});
+
+test("signing up with Google takes its name and email and comes back through the sign-in page", async ({ page, baseURL }) => {
+    const address = `${unique("google")}@example.com`;
+    const google = await fakeGoogle(page, googleUser(address, true, "Zoë O'Brien"));
+    const nickname = unique("G");
+    await page.goto("/games/valorant");
+    await page.getByRole("link", { name: "Sign up" }).click();
+    await expectPage(page, "/signup");
+    await page.getByRole("button", { name: "Continue with Google" }).click();
+
+    await expect(page.getByLabel("Nickname")).toHaveValue("ZoOBrien");
+    await expect(page.getByText("We took it from Google; change it if you like.")).toBeVisible();
+    await expect(page.getByLabel("Email")).toHaveCount(0);
+    await page.getByLabel("Nickname").fill(nickname);
+    await page.getByRole("button", { name: "Continue" }).click();
+
+    await expectPage(page, "/games/valorant");
+    await expectSignedInAs(page, nickname);
+    const [authorize] = google.authorizeRequests;
+    expect(authorize.searchParams.get("response_type")).toBe("code");
+    expect(authorize.searchParams.get("scope")).toBe("openid email profile");
+    expect(authorize.searchParams.get("redirect_uri")).toBe(`${baseURL}/signin`);
+    expect(authorize.searchParams.get("state")).toMatch(/^[0-9a-f]{32}$/);
+
+    // Google verified the address, so it needs no confirming.
+    await page.goto("/account");
+    await expect(page.getByText(address)).toBeVisible();
+    await expect(page.getByText("Not confirmed yet.")).toHaveCount(0);
+});
+
+test("signing up with Google with an address it hasn't verified emails a confirmation", async ({ page }) => {
+    const address = `${unique("unverified")}@example.com`;
+    await signUpWithGoogle(page, await fakeGoogle(page, googleUser(address, false)));
+
+    await openMail(page, address);
+    await expect(emails(page, "Confirm your email")).toHaveCount(1);
+    await page.goto("/account");
+    await expect(page.getByText("Not confirmed yet.")).toBeVisible();
+});
+
+test("the Google nickname prompt says when the nickname is taken", async ({ page }) => {
+    const google = await fakeGoogle(page, googleUser(null, false, null));
+    await page.goto("/signup");
+    await page.getByRole("button", { name: "Continue with Google" }).click();
+
+    await expect(page.getByLabel("Nickname")).toHaveValue("");
+    await expect(page.getByText("We took it from Google")).toHaveCount(0);
+    await page.getByLabel("Nickname").fill("ValorantTester");
+    await page.getByRole("button", { name: "Continue" }).click();
+    await expect(page.getByText("This nickname is taken. Please pick another one.")).toBeVisible();
+
+    const nickname = unique("G");
+    await page.getByLabel("Nickname").fill(nickname);
+    await page.getByRole("button", { name: "Continue" }).click();
+    await expectPage(page, "/");
+    await expectSignedInAs(page, nickname);
+    expect(google.authorizeRequests).toHaveLength(1);
+});
+
+test("signing in with Google to an account signs in without asking for a nickname", async ({ page }) => {
+    const google = await fakeGoogle(page, googleUser(`${unique("again")}@example.com`, true));
+    const nickname = await signUpWithGoogle(page, google);
+    await signOut(page);
+
+    await page.goto("/signin");
+    await page.getByRole("button", { name: "Continue with Google" }).click();
+
+    await expectPage(page, "/");
+    await expectSignedInAs(page, nickname);
+});
+
+test("turning back at Google leaves the player on the sign-in page they started from", async ({ page }) => {
+    const google = await fakeGoogle(page, googleUser(null, false));
+    google.cancel = true;
+    await page.goto("/games/apex-legends");
+    await page.getByRole("link", { name: "Sign in" }).click();
+    await expectPage(page, "/signin");
+    await page.getByRole("button", { name: "Continue with Google" }).click();
+
+    await expect(page.getByLabel("Email or nickname")).toBeVisible();
+    await expect(page).toHaveURL(/\/signin\?back=%2Fgames%2Fapex-legends$/);
+    await page.getByLabel("Email or nickname").fill("apex-legends@example.com");
+    await page.getByLabel("Password").fill(password);
+    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    await expectPage(page, "/games/apex-legends");
+});
+
+test("turning back at Google leaves the player on the sign-up page they started from", async ({ page }) => {
+    const google = await fakeGoogle(page, googleUser(null, false));
+    google.cancel = true;
+    await page.goto("/games/valorant");
+    await page.getByRole("link", { name: "Sign up" }).click();
+    await expectPage(page, "/signup");
+    await page.getByRole("button", { name: "Continue with Google" }).click();
+
+    await expectPage(page, "/signup");
+    await expect(page.getByRole("heading", { name: "Create your account" })).toBeVisible();
+    const nickname = unique("P");
+    await page.getByLabel("Email").fill(`${nickname.toLowerCase()}@example.com`);
+    await page.getByLabel("Nickname").fill(nickname);
+    await page.getByLabel("Password").fill(password);
+    await page.getByRole("button", { name: "Create account" }).click();
+    await expectPage(page, "/games/valorant");
+});
+
+// Google and Discord both turn back with an error and the state in the address, so the
+// trip that came back is the one whose state it is, not whichever is read first.
+test("turning back at Google returns to Google's trip while a Discord trip is kept", async ({ page }) => {
+    const google = await fakeGoogle(page, googleUser(null, false));
+    google.cancel = true;
+    await page.goto("/games/apex-legends");
+    await page.getByRole("link", { name: "Sign in" }).click();
+    await expectPage(page, "/signin");
+    await page.evaluate(() => sessionStorage.setItem("tt-discord", JSON.stringify(
+        { state: "0123456789abcdef0123456789abcdef", back: "/", from: "/signup", switching: false })));
+    await page.getByRole("button", { name: "Continue with Google" }).click();
+
+    await expect(page.getByLabel("Email or nickname")).toBeVisible();
+    await expect(page).toHaveURL(/\/signin\?back=%2Fgames%2Fapex-legends$/);
+});
+
+// Google hands back a code for the tab that asked; one arriving without the state the page
+// sent is refused, so a link can't sign someone in as another player.
+test("a Google code without the page's state signs nobody in", async ({ page }) => {
+    const { sub, email, verified: email_verified, name } = googleUser(null, false);
+    const code = encodeURIComponent(JSON.stringify({ sub, email, email_verified, name }));
+
+    await page.goto(`/signin?state=forged&code=${code}`);
+
+    await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
+    await expect(page.getByLabel("Email or nickname")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Sign in" })).toBeVisible();
+});
+
+// Google swaps each code once, so one kept from the address bar or a log signs nobody in
+// again. The sign-in page it lands on offers Google again, which signs in.
+test("a Google code signs in once", async ({ page }) => {
+    const google = await fakeGoogle(page, googleUser(`${unique("once")}@example.com`, true));
+    const nickname = await signUpWithGoogle(page, google);
+    await signOut(page);
+
+    google.replay = true;
+    await page.goto("/signin");
+    await page.getByRole("button", { name: "Continue with Google" }).click();
+
+    await expect(page.getByText("Google couldn't sign you in. Continue with Google again.")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Sign in" })).toBeVisible();
+    google.replay = false;
+    await page.getByRole("button", { name: "Continue with Google" }).click();
+    await expectPage(page, "/");
+    await expectSignedInAs(page, nickname);
+});
+
+test("a Google player is not found by a password sign-in or a password reset", async ({ page }) => {
+    const email = `${unique("googleonly")}@example.com`;
+    const nickname = await signUpWithGoogle(page, await fakeGoogle(page, googleUser(email, true)));
+    await signOut(page);
+
+    for (const emailOrNickname of [nickname, email]) {
+        await submitPasswordSignIn(page, emailOrNickname);
+        await expect(page.getByText("No account exists with this email or nickname.")).toBeVisible();
+    }
+
+    await page.goto("/forgot-password");
+    await page.getByLabel("Email").fill(email);
+    await page.getByRole("button", { name: "Send link" }).click();
+    await expect(page.getByText("No account signs in with a password at this email.")).toBeVisible();
 });
 
 test("a password player asks for a reset link", async ({ page }) => {

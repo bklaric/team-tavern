@@ -6,16 +6,15 @@ import Prelude
 import Async (Async, attempt, left)
 import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
-import Data.Maybe (Maybe(..))
-import Data.Validated as Validated
+import Data.Maybe (Maybe)
 import Foreign.Object as Object
 import Jarilo (internal__)
 import JavaScript.Error (message, name)
 import JavaScript.Web.Fetch.Async (fetch, text)
 import JavaScript.Web.Fetch.Response (status)
-import TeamTavern.Server.Infrastructure.Error (Terror(..), ValidatedTerrorNeaVar)
+import TeamTavern.Server.Infrastructure.Error (Terror(..))
 import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
-import TeamTavern.Server.Infrastructure.ValidateEmail (Email, toString, validateEmail)
+import TeamTavern.Server.Infrastructure.ValidateEmail (VouchedEmail, vouchedEmail)
 import Yoga.JSON.Async (readJSON)
 
 -- | Where Discord's API lives, `https://discord.com/api` outside the test stack.
@@ -31,15 +30,9 @@ type DiscordUserContent =
     , verified :: Maybe Boolean
     }
 
--- | The address Discord gives, and whether Discord verified it, which confirms
--- | it. Discord vouches for owning the address, not for its shape, so it passes
--- | the same validation as an address a player types in.
-discordEmail :: DiscordUserContent -> Maybe { email :: String, confirmed :: Boolean }
-discordEmail { email: Just email, verified } =
-    (validateEmail email :: ValidatedTerrorNeaVar (email :: {}) Email)
-    # Validated.hush
-    <#> \valid -> { email: toString valid, confirmed: verified == Just true }
-discordEmail _ = Nothing
+-- | The address Discord gives, and whether Discord verified it.
+discordEmail :: DiscordUserContent -> Maybe VouchedEmail
+discordEmail { email, verified } = vouchedEmail email verified
 
 -- | What other players type to add the player on Discord: the username alone
 -- | since Discord dropped discriminators, which it now reports as "0".

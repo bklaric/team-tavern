@@ -5,7 +5,7 @@ import Prelude
 import Async (Async, foreach)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
-import Data.Variant (match)
+import Data.Variant (inj, match)
 import Jarilo (noContent)
 import JavaScript.Npm.Pg.Pool (Pool)
 import TeamTavern.Routes.Player.RegisterPlayer as RegisterPlayer
@@ -17,15 +17,18 @@ import TeamTavern.Server.Infrastructure.Postgres (transaction)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Infrastructure.ValidateEmail as Email
 import TeamTavern.Server.Player.Domain.Hash (generateHash)
+import TeamTavern.Server.Player.Domain.Provider (Provider(..))
 import TeamTavern.Server.Player.Infrastructure.SendConfirmation (addConfirmation, sendConfirmation)
-import TeamTavern.Server.Player.Infrastructure.SteamTicket (takeSteamTicket)
+import TeamTavern.Server.Player.Infrastructure.SignInTicket (takeSignInTicket)
 import TeamTavern.Server.Player.Register.AddPlayer (addPlayer)
 import TeamTavern.Server.Player.Register.AddPlayerDiscord (addPlayerDiscord)
+import TeamTavern.Server.Player.Register.AddPlayerGoogle (addPlayerGoogle)
 import TeamTavern.Server.Player.Register.AddPlayerSteam (addPlayerSteam)
 import TeamTavern.Server.Player.Register.ValidateRegistration (validateRegistration)
 import TeamTavern.Server.Session.Domain.Token as Token
 import TeamTavern.Server.Session.Infrastructure.RevokeSession (revokeSession)
 import TeamTavern.Server.Session.Start.CreateSession (createSession)
+import Type.Proxy (Proxy(..))
 
 register :: ∀ left.
     Environment -> Mailer -> DiscordApiUrl -> Pool -> Cookies -> RegisterPlayer.RequestContent -> Async left _
@@ -74,7 +77,7 @@ register environment mailer discordApiUrl pool cookies content =
 
         , steam: \{nickname, email, ticket} -> pool # transaction \client -> do
             -- A failed registration takes back the spent ticket with the rest.
-            steamId <- takeSteamTicket client ticket
+            { providerId: steamId } <- takeSignInTicket client Steam (inj (Proxy :: _ "steamTicket") {}) ticket
             id <- addPlayerSteam client { nickname, email, steamId }
             revokeSession client cookies
             createSession id token client
@@ -84,6 +87,22 @@ register environment mailer discordApiUrl pool cookies content =
 
             pure {confirmation: Just
                 {email: Email.toString email, nickname: unwrap nickname, nonce}}
+
+        , google: \{nickname, ticket} -> pool # transaction \client -> do
+            -- A failed registration takes back the spent ticket with the rest.
+            ticketed <- takeSignInTicket client Google (inj (Proxy :: _ "googleTicket") {}) ticket
+            id <- addPlayerGoogle client nickname ticketed
+            revokeSession client cookies
+            createSession id token client
+
+            -- Google confirms an address it verified; any other gets the link.
+            confirmation <- case ticketed.email of
+                Just {email, confirmed: false} -> do
+                    nonce <- addConfirmation client id email
+                    pure $ Just {email, nickname: unwrap nickname, nonce}
+                _ -> pure Nothing
+
+            pure {confirmation}
         }
 
     foreach confirmation $ sendConfirmation mailer

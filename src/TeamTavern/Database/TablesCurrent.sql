@@ -37,9 +37,10 @@ create table player
     , email varchar(254)
     , email_confirmed boolean not null default false
 
-    -- The sign-in identity: a password, a Discord account or a Steam account,
-    -- one of them only (brief 11.5). The sign-in row on the account page moves
-    -- it between them. The Steam account's column is steam_sign_in_id, last.
+    -- The sign-in identity: a password, a Discord account, a Steam account or
+    -- a Google account, one of them only (brief 11.5). The sign-in row on the
+    -- account page moves it between them. The Steam account's column is
+    -- steam_sign_in_id and the Google account's google_id, last.
     , password_hash character(60)
     , discord_id text unique
 
@@ -80,13 +81,16 @@ create table player
     -- steam_id, the contact, starts out as but may part from.
     , steam_sign_in_id text unique
 
+    -- The subject Google names the account by, which never changes.
+    , google_id text unique
+
     , constraint player_identity_check
-        check (num_nonnulls(password_hash, discord_id, steam_sign_in_id) = 1)
+        check (num_nonnulls(password_hash, discord_id, steam_sign_in_id, google_id) = 1)
     );
 
 -- A password player signs in with the email, so it is unique among those only.
--- A Discord or Steam account is known by its own id, so its address is not a
--- credential and registering with either never fails on one.
+-- A Discord, Steam or Google account is known by its own id, so its address is
+-- not a credential and registering with one never fails on it.
 create unique index player_lower_email_key on player (lower(email)) where password_hash is not null;
 create unique index player_lower_nickname_key on player (lower(nickname));
 
@@ -121,12 +125,16 @@ create table email_confirmation
 
 create index email_confirmation_player_id_idx on email_confirmation (player_id);
 
--- A Steam account new to the site, between Steam vouching for it and the
--- player picking a nickname. Steam answers for a sign-in only once, so the
+-- A Steam or Google account new to the site, between the provider vouching for
+-- it and the player picking a nickname, with the address the provider gave for
+-- it, which Steam never does. Each answers for a sign-in only once, so the
 -- registration that follows shows this instead. It lasts an hour.
-create table steam_ticket
+create table sign_in_ticket
     ( token_hash character(64) not null primary key
-    , steam_id text not null
+    , provider text not null check (provider in ('steam', 'google'))
+    , provider_id text not null
+    , email varchar(254)
+    , email_confirmed boolean not null
     , created timestamptz not null default current_timestamp
     );
 

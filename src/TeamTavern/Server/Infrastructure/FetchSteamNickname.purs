@@ -1,4 +1,4 @@
-module TeamTavern.Server.Infrastructure.FetchSteamNickname (SummariesContent, fetchSteamNickname, nicknameOf) where
+module TeamTavern.Server.Infrastructure.FetchSteamNickname (SummariesContent, fetchSteamNickname) where
 
 import Prelude
 
@@ -6,26 +6,14 @@ import Async (Async, attempt)
 import Data.Array (find)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe, maybe)
-import Data.String (take)
-import Data.String.Regex (Regex, replace)
-import Data.String.Regex.Flags (global)
-import Data.String.Regex.Unsafe (unsafeRegex)
 import Effect.Class (liftEffect)
 import Foreign.Object as Object
 import TeamTavern.Server.Infrastructure.Log (logStamped)
 import TeamTavern.Server.Infrastructure.ResolveSteamId (SteamApi, getSteamApi)
+import TeamTavern.Server.Player.Domain.Nickname (nicknameOf)
 
 -- | What GetPlayerSummaries answers, as far as the site reads it.
 type SummariesContent = { response :: { players :: Array { steamid :: String, personaname :: String } } }
-
--- What a nickname can't hold.
-notNicknameRegex :: Regex
-notNicknameRegex = unsafeRegex "[^A-Za-z0-9_.-]" global
-
--- | A Steam profile name as a nickname: the letters, digits, dashes,
--- | underscores and dots of it, as many as a nickname holds.
-nicknameOf :: String -> String
-nicknameOf = replace notNicknameRegex "" >>> take 40
 
 fetchPersonaName :: SteamApi -> String -> Async String (Maybe String)
 fetchPersonaName steamApi steamId = do

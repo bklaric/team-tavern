@@ -16,16 +16,16 @@ import TeamTavern.Server.Infrastructure.FetchDiscordUser (DiscordApiUrl, discord
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import Type.Proxy (Proxy(..))
 
--- Discord takes the place of the password or Steam, and the email stays. Its
--- username becomes the Discord contact only where the account's posts offer
--- none, since the player may have given another.
+-- Discord takes the place of the password, Steam or Google, and the email
+-- stays. Its username becomes the Discord contact only where the account's
+-- posts offer none, since the player may have given another.
 queryString :: Query
 queryString = Query """
     with held as (
         select discord_tag from player where id = $1 for update
     )
     update player
-    set discord_id = $2, password_hash = null, steam_sign_in_id = null,
+    set discord_id = $2, password_hash = null, steam_sign_in_id = null, google_id = null,
         discord_tag = coalesce(held.discord_tag, $3)
     from held
     where player.id = $1

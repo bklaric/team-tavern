@@ -3,6 +3,7 @@ module TeamTavern.Routes.All where
 import Jarilo (type (<|>), type (:))
 import TeamTavern.Routes.Account.DeleteAccount (DeleteAccount)
 import TeamTavern.Routes.Account.SwitchToDiscord (SwitchToDiscord)
+import TeamTavern.Routes.Account.SwitchToGoogle (SwitchToGoogle)
 import TeamTavern.Routes.Account.SwitchToPassword (SwitchToPassword)
 import TeamTavern.Routes.Account.SwitchToSteam (SwitchToSteam)
 import TeamTavern.Routes.Account.UpdateEmail (UpdateEmail)
@@ -71,6 +72,7 @@ type AccountRoutes
     <|> "updateEmail"      : UpdateEmail
     <|> "switchToDiscord"  : SwitchToDiscord
     <|> "switchToSteam"    : SwitchToSteam
+    <|> "switchToGoogle"   : SwitchToGoogle
     <|> "switchToPassword" : SwitchToPassword
     <|> "deleteAccount"    : DeleteAccount
 

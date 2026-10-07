@@ -31,6 +31,10 @@ type Registration = Variant
         , email :: Email
         , ticket :: String
         }
+    , google ::
+        { nickname :: Nickname
+        , ticket :: String
+        }
     )
 
 validateRegistration'
@@ -52,6 +56,10 @@ validateRegistration' = match
         <$> validateNickname nickname
         <*> validateEmail email
         <#> inj (Proxy :: _ "steam")
+    , google: \{nickname, ticket} ->
+        {nickname: _, ticket}
+        <$> validateNickname nickname
+        <#> inj (Proxy :: _ "google")
     }
 
 validateRegistration

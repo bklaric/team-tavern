@@ -1,4 +1,4 @@
-module TeamTavern.Server.Infrastructure.ValidateEmail (Email, validateEmail, validateEmail', toString) where
+module TeamTavern.Server.Infrastructure.ValidateEmail (Email, VouchedEmail, validateEmail, validateEmail', toString, vouchedEmail) where
 
 import Prelude
 
@@ -8,7 +8,7 @@ import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty as Nea
 import Data.Bifunctor (lmap)
 import Data.Either (fromRight)
-import Data.Maybe (isJust)
+import Data.Maybe (Maybe(..), isJust)
 import Data.String (trim)
 import Data.String.Regex (Regex, match, regex)
 import Data.String.Regex.Flags (unicode)
@@ -52,3 +52,16 @@ validateEmail' email =
 
 toString :: Email -> String
 toString (Email email) = email
+
+-- | An address a site the player signs in with gave, and whether that site
+-- | verified it, which confirms it here.
+type VouchedEmail = { email :: String, confirmed :: Boolean }
+
+-- | The address a site gave, if any, with whether it says it verified it. The
+-- | site vouches for owning the address, not for its shape, so it passes the
+-- | same validation as an address a player types in.
+vouchedEmail :: Maybe String -> Maybe Boolean -> Maybe VouchedEmail
+vouchedEmail email verified = do
+    given <- email
+    valid <- Validated.hush (validateEmail given :: ValidatedTerrorNeaVar (email :: {}) Email)
+    pure { email: toString valid, confirmed: verified == Just true }

@@ -24,6 +24,7 @@ import TeamTavern.Client.Icons as Icons
 import TeamTavern.Client.Pages.Post.Register (Publishing, publishing, publishingPost)
 import TeamTavern.Client.Script.Back (authPath, readBack)
 import TeamTavern.Client.Script.Discord (authorizeWithDiscord, keepSwitchToken, takeDiscordReturn)
+import TeamTavern.Client.Script.Google (authorizeWithGoogle, keepSwitchCode, takeGoogleReturn)
 import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_, replaceState)
 import TeamTavern.Client.Script.Steam (authorizeWithSteam, keepSwitchAssertion, takeSteamReturn)
 import TeamTavern.Client.Shared.AccountErrors (emailError, emailInvalid, nicknameInvalid, nicknameTaken, somethingWrong)
@@ -36,18 +37,20 @@ import TeamTavern.Routes.Session.StartSession (StartSession)
 import Type.Proxy (Proxy(..))
 import Web.Event.Event (preventDefault)
 
--- Discord and Steam send every player they sign in back here. One with an
--- account is signed in and goes on; one without picks a nickname, which is the
--- rest of registering. Steam gives no address, so a Steam player types one in.
+-- Discord, Steam and Google send every player they sign in back here. One with
+-- an account is signed in and goes on; one without picks a nickname, which is
+-- the rest of registering. Steam gives no address, so a Steam player types one
+-- in.
 data Screen
     = Password
     | Returning String
     | Nickname Registering
 
--- `offered` is whether Steam gave a profile name to offer as the nickname.
+-- `offered` is whether Steam or Google gave a name to offer as the nickname.
 data Registering
     = WithDiscord { accessToken :: String }
     | WithSteam { ticket :: String, offered :: Boolean }
+    | WithGoogle { ticket :: String, offered :: Boolean }
 
 -- | `publishing` is the post the page goes on to publish when it is the
 -- | register step of posting, and `post` how that post is named. `contacting`
@@ -66,8 +69,8 @@ type State =
     , sending :: Boolean
     }
 
--- `returning` is what went wrong signing in with Discord or Steam, which the
--- sign-in screen shows above their buttons.
+-- `returning` is what went wrong signing in with Discord, Steam or Google,
+-- which the sign-in screen shows above their buttons.
 type Errors =
     { emailOrNickname :: Maybe String
     , password :: Maybe String
@@ -99,6 +102,9 @@ initialState =
 steamRefused :: String
 steamRefused = "Steam couldn't sign you in. Continue with Steam again."
 
+googleRefused :: String
+googleRefused = "Google couldn't sign you in. Continue with Google again."
+
 isSignIn :: String -> Boolean
 isSignIn path = path == "/signin" || isJust (stripPrefix (Pattern "/signin?") path)
 
@@ -109,6 +115,7 @@ validateRegistering registering { nickname, email } = noErrors
     , email = case registering of
         WithSteam _ -> emailError email
         WithDiscord _ -> Nothing
+        WithGoogle _ -> Nothing
     }
 
 component :: ∀ query input output left. H.Component query input output (Async left)
@@ -165,6 +172,14 @@ component = Hooks.component \_ _ -> Hooks.do
                 }
                 (const failed)
 
+        startGoogleSession code back =
+            startSession "Google" back (inj (Proxy :: _ "google") { code }) \failed -> onMatch
+                { unknownGoogle: \{ nickname, ticket } ->
+                    set _ { screen = Nickname $ WithGoogle { ticket, offered: not $ null nickname }, nickname = nickname }
+                , googleRefused: const $ returnFailed back googleRefused
+                }
+                (const failed)
+
         submitPassword event = do
             H.liftEffect $ preventDefault event
             let errors = noErrors
@@ -206,6 +221,8 @@ component = Hooks.component \_ _ -> Hooks.do
                             inj (Proxy :: _ "discord") { nickname: trim state.nickname, accessToken }
                         WithSteam { ticket } ->
                             inj (Proxy :: _ "steam") { nickname: trim state.nickname, email: trim state.email, ticket }
+                        WithGoogle { ticket } ->
+                            inj (Proxy :: _ "google") { nickname: trim state.nickname, ticket }
                 case result of
                     Right response -> response # onMatch
                         { noContent: const $ navigateReplace_ state.back
@@ -225,14 +242,18 @@ component = Hooks.component \_ _ -> Hooks.do
                                 { form = Just "This Steam account already has a TeamTavern account. Sign in with Steam instead." }
                             , steamTicket: const $ failWith noErrors
                                 { form = Just "Steam's sign-in has run out. Go back and continue with Steam again." }
+                            , googleTaken: const $ failWith noErrors
+                                { form = Just "This Google account already has a TeamTavern account. Sign in with Google instead." }
+                            , googleTicket: const $ failWith noErrors
+                                { form = Just "Google's sign-in has run out. Go back and continue with Google again." }
                             , emailTaken: const $ failWith noErrors { form = Just somethingWrong }
                             }
                         }
                         (const $ failWith noErrors { form = Just somethingWrong })
                     Left _ -> failWith noErrors { form = Just somethingWrong }
 
-        -- Turned back at Discord or Steam: the page the trip set out from,
-        -- which may be this one.
+        -- Turned back at Discord, Steam or Google: the page the trip set out
+        -- from, which may be this one.
         turnedBack { from }
             | isSignIn from = do
                 liftEffect $ replaceState {} from
@@ -240,21 +261,27 @@ component = Hooks.component \_ _ -> Hooks.do
             | otherwise = navigateReplace_ from
 
     Hooks.useLifecycleEffect do
+        googleReturn <- takeGoogleReturn
         discordReturn <- takeDiscordReturn
         steamReturn <- takeSteamReturn
-        case discordReturn, steamReturn of
-            Just { accessToken: Just accessToken, trip: { back, switching: true } }, _ -> do
+        case googleReturn, discordReturn, steamReturn of
+            Just { code: Just code, trip: { back, switching: true } }, _, _ -> do
+                keepSwitchCode code
+                navigateReplace_ back
+            Just { code: Just code, trip: { back } }, _, _ -> void $ Hooks.fork $ startGoogleSession code back
+            Just { trip }, _, _ -> turnedBack trip
+            _, Just { accessToken: Just accessToken, trip: { back, switching: true } }, _ -> do
                 keepSwitchToken accessToken
                 navigateReplace_ back
-            Just { accessToken: Just accessToken, trip: { back } }, _ ->
+            _, Just { accessToken: Just accessToken, trip: { back } }, _ ->
                 void $ Hooks.fork $ startDiscordSession accessToken back
-            Just { trip }, _ -> turnedBack trip
-            _, Just { assertion: Just assertion, trip: { back, switching: true } } -> do
+            _, Just { trip }, _ -> turnedBack trip
+            _, _, Just { assertion: Just assertion, trip: { back, switching: true } } -> do
                 keepSwitchAssertion assertion
                 navigateReplace_ back
-            _, Just { assertion: Just assertion, trip: { back } } -> void $ Hooks.fork $ startSteamSession assertion back
-            _, Just { trip } -> turnedBack trip
-            Nothing, Nothing -> readBack >>= showPassword
+            _, _, Just { assertion: Just assertion, trip: { back } } -> void $ Hooks.fork $ startSteamSession assertion back
+            _, _, Just { trip } -> turnedBack trip
+            Nothing, Nothing, Nothing -> readBack >>= showPassword
         pure Nothing
 
     let formError = case state.errors.form of
@@ -277,6 +304,8 @@ component = Hooks.component \_ _ -> Hooks.do
                 [ Icons.discord, HH.text "Continue with Discord" ]
             , button Outline Regular (authorizeWithSteam state.back)
                 [ Icons.steam, HH.text "Continue with Steam" ]
+            , button Outline Regular (authorizeWithGoogle state.back)
+                [ Icons.google, HH.text "Continue with Google" ]
             , rule "or"
             , formTight submitPassword $
                 [ textField
@@ -307,7 +336,8 @@ component = Hooks.component \_ _ -> Hooks.do
             , flowLead case registering of
                 WithDiscord _ -> "It's shown on your posts and your messages. We took it from Discord; change it if you like."
                 WithSteam { offered: true } -> "It's shown on your posts and your messages. We took it from Steam; change it if you like."
-                WithSteam _ -> "It's shown on your posts and your messages."
+                WithGoogle { offered: true } -> "It's shown on your posts and your messages. We took it from Google; change it if you like."
+                _ -> "It's shown on your posts and your messages."
             , formTight (submitNickname registering) $
                 [ textField
                     { id: "signin-nickname", label: "Nickname"
@@ -318,6 +348,7 @@ component = Hooks.component \_ _ -> Hooks.do
                 ]
                 <> (case registering of
                     WithDiscord _ -> []
+                    WithGoogle _ -> []
                     WithSteam _ ->
                         [ textField
                             { id: "signin-steam-email", label: "Email"

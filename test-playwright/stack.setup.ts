@@ -8,7 +8,7 @@ import { repositoryRoot, rethrowComposeError, testStack, waitForApi } from "./st
 // them it answers nothing and the wait below is all that would notice, a minute later.
 const builtBundles = [
     "release/client/index.html", "release/server/server.js", "release/caddy/base.Caddyfile",
-    "dist-test/discord-stub.js", "dist-test/mail-stub.js"];
+    "dist-test/discord-stub.js", "dist-test/mail-stub.js", "dist-test/steam-stub.js", "dist-test/google-stub.js"];
 
 setup("boot the test stack", async ({ request }) => {
     const missing = builtBundles.filter(bundle => !fs.existsSync(path.join(repositoryRoot, bundle)));

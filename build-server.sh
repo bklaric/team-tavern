@@ -19,3 +19,6 @@ echo "main();" >> dist-test/mail-stub.js
 # And its Steam Web API.
 esbuild output/TeamTavern.SteamStub.Main/index.js --outfile=dist-test/steam-stub.js --platform=node --bundle --format=cjs
 echo "main();" >> dist-test/steam-stub.js
+# And its Google token endpoint.
+esbuild output/TeamTavern.GoogleStub.Main/index.js --outfile=dist-test/google-stub.js --platform=node --bundle --format=cjs
+echo "main();" >> dist-test/google-stub.js

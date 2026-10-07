@@ -44,6 +44,7 @@ accountQuery = Query $ """
         case
             when player.discord_id is not null then 'discord'
             when player.steam_sign_in_id is not null then 'steam'
+            when player.google_id is not null then 'google'
             else 'password'
         end as "signIn",
         jsonb_build_object(

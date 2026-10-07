@@ -18,9 +18,9 @@ privacy =
             ]
         ]
     , section "What we keep and why"
-        [ HH.p_ [ HH.text "To sign up you need a nickname, and an email and a password, a Discord account, or a Steam account and an email. Without them we can't make you an account. Everything else is up to you." ]
+        [ HH.p_ [ HH.text "To sign up you need a nickname, and an email and a password, a Discord account, a Google account, or a Steam account and an email. Without them we can't make you an account. Everything else is up to you." ]
         , HH.ul_
-            [ item "Your account:" "email, nickname, and password (stored hashed), or your Discord or Steam id if you sign in with Discord or Steam. We keep these to run your account."
+            [ item "Your account:" "email, nickname, and password (stored hashed), or your Discord, Steam or Google id if you sign in with Discord, Steam or Google. We keep these to run your account."
             , item "Your profile and posts:" "what you choose to add, such as birthday, country, languages, timezone, game accounts, online hours and post text. Posts are public. They show your age (never your birthday), country, languages, timezone, online hours and game account links. Your contact details show only to signed-in players. Expired posts stay visible until you delete them."
             , item "Messages:" "kept so that you and the other player can read them."
             , item "Reports and blocks:" "kept to keep the site safe. Each report is also emailed to us."
@@ -51,7 +51,7 @@ privacy =
         [ HH.ul_
             [ item "Hetzner" "(Germany) hosts the site and database."
             , item "Amazon Web Services" "(US) sends our emails from its servers in Germany, including the text of messages you receive."
-            , item "Google" "(US) runs the consent dialog and our email, which holds reports, what you send us and our database backups."
+            , item "Google" "(US) runs the consent dialog and our email, which holds reports, what you send us and our database backups. If you sign in with Google, we receive your Google id, name and email."
             , item "Discord" "(US) is involved only if you sign in with it. We receive your Discord id, username and email."
             , item "Valve" "(US) is involved only if you sign in with Steam or give a custom Steam profile address. We receive your Steam id, and your Steam profile name when you sign up with Steam."
             ]

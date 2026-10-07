@@ -1,6 +1,7 @@
 import { expect, Page, test } from "@playwright/test";
 import { bornAgo, expectSignedInAs, password, signIn, signOut, signUp, submitPasswordSignIn, unique } from "../accounts";
 import { discordUser, fakeDiscord, signUpWithDiscord } from "../discord";
+import { fakeGoogle, googleUser, signUpWithGoogle } from "../google";
 import { body, emails, openMail } from "../mail";
 import { expectPage } from "../pages";
 import { fakeSteam, signUpWithSteam } from "../steam";
@@ -454,6 +455,110 @@ test.describe("the account page", () => {
         await expectPage(page, "/account");
         await expect(signInRow.getByText("This Steam account already signs in to another account.")).toBeVisible();
         await expect(signInRow.getByRole("button", { name: "Continue with Steam" })).toBeFocused();
+        await signInRow.getByRole("button", { name: "Cancel" }).click();
+        await expect(row(page, "Sign-in")).toHaveText("Email and password");
+    });
+
+    test("moves the sign-in to Google, on to Steam and back to Google, each of which then signs in", async ({ page }) => {
+        const nickname = await signUp(page, "M");
+        const address = `${nickname.toLowerCase()}@example.com`;
+        await fakeGoogle(page, googleUser(`${unique("elsewhere")}@example.com`, true));
+        await fakeSteam(page);
+        const signInRow = page.locator("#sign-in");
+
+        await openAccount(page);
+        await signInRow.getByRole("button", { name: "Change" }).click();
+        await expect(signInRow.getByText("Google takes your password's place. Your email stays as it is.")).toBeVisible();
+        await signInRow.getByRole("button", { name: "Continue with Google" }).click();
+        await expectPage(page, "/account");
+        await expect(page.locator(".toast-text")).toHaveText("You sign in with Google now.");
+        await expect(row(page, "Sign-in")).toHaveText("Google");
+        await expect(row(page, "Email")).toContainText(address);
+        await expect(signInRow.getByRole("button", { name: "Change" })).toBeFocused();
+
+        await signOut(page);
+        await submitPasswordSignIn(page, address);
+        await expect(page.getByText("No account exists with this email or nickname.")).toBeVisible();
+        await page.getByRole("button", { name: "Continue with Google" }).click();
+        await expectPage(page, "/");
+        await expectSignedInAs(page, nickname);
+
+        await openAccount(page);
+        await signInRow.getByRole("button", { name: "Change" }).click();
+        await expect(signInRow.getByRole("button", { name: "Continue with Google" })).toHaveCount(0);
+        await expect(signInRow.getByText(`A password takes Google's place, and you sign in with ${address}.`, { exact: true }))
+            .toBeVisible();
+        await signInRow.getByRole("button", { name: "Continue with Steam" }).click();
+        await expectPage(page, "/account");
+        await expect(row(page, "Sign-in")).toHaveText("Steam");
+
+        await signOut(page);
+        await page.goto("/signin");
+        await page.getByRole("button", { name: "Continue with Google" }).click();
+        await expect(page.getByRole("heading", { name: "Pick a nickname" })).toBeVisible();
+        await page.goto("/signin");
+        await page.getByRole("button", { name: "Continue with Steam" }).click();
+        await expectPage(page, "/");
+        await expectSignedInAs(page, nickname);
+
+        await openAccount(page);
+        await signInRow.getByRole("button", { name: "Change" }).click();
+        await expect(signInRow.getByText("Google takes Steam's place. Your email stays as it is.")).toBeVisible();
+        await signInRow.getByRole("button", { name: "Continue with Google" }).click();
+        await expectPage(page, "/account");
+        await expect(page.locator(".toast-text")).toHaveText("You sign in with Google now.");
+        await expect(row(page, "Sign-in")).toHaveText("Google");
+    });
+
+    test("keeps the sign-in as it was when the player turns back at Google", async ({ page }) => {
+        await signUp(page, "K");
+        const google = await fakeGoogle(page, googleUser(null, false));
+        google.cancel = true;
+        const signInRow = page.locator("#sign-in");
+
+        await openAccount(page);
+        await signInRow.getByRole("button", { name: "Change" }).click();
+        await signInRow.getByRole("button", { name: "Continue with Google" }).click();
+
+        await expectPage(page, "/account");
+        await expect(page.getByRole("heading", { name: "Shown on your posts" })).toBeVisible();
+        await expect(row(page, "Sign-in")).toHaveText("Email and password");
+        await expect(page.locator(".toast-text")).toHaveCount(0);
+    });
+
+    test("ends the account's other sessions when the sign-in moves to Google", async ({ page, browser }) => {
+        const nickname = await signUp(page, "E");
+        const other = await (await browser.newContext()).newPage();
+        await signIn(other, `${nickname.toLowerCase()}@example.com`);
+        await fakeGoogle(page, googleUser(null, false));
+        const signInRow = page.locator("#sign-in");
+
+        await openAccount(page);
+        await signInRow.getByRole("button", { name: "Change" }).click();
+        await signInRow.getByRole("button", { name: "Continue with Google" }).click();
+        await expectPage(page, "/account");
+        await expect(row(page, "Sign-in")).toHaveText("Google");
+
+        await other.goto("/");
+        await expect(other.getByRole("banner").getByRole("link", { name: "Sign in" })).toBeVisible();
+        await page.goto("/");
+        await expectSignedInAs(page, nickname);
+    });
+
+    test("refuses a Google account that signs in to another account", async ({ page, browser }) => {
+        const other = await (await browser.newContext()).newPage();
+        const user = googleUser(null, false);
+        await signUpWithGoogle(other, await fakeGoogle(other, user));
+
+        await signUp(page, "T");
+        await fakeGoogle(page, user);
+        const signInRow = page.locator("#sign-in");
+        await openAccount(page);
+        await signInRow.getByRole("button", { name: "Change" }).click();
+        await signInRow.getByRole("button", { name: "Continue with Google" }).click();
+        await expectPage(page, "/account");
+        await expect(signInRow.getByText("This Google account already signs in to another account.")).toBeVisible();
+        await expect(signInRow.getByRole("button", { name: "Continue with Google" })).toBeFocused();
         await signInRow.getByRole("button", { name: "Cancel" }).click();
         await expect(row(page, "Sign-in")).toHaveText("Email and password");
     });

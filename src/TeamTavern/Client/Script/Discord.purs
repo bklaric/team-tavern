@@ -9,12 +9,12 @@ module TeamTavern.Client.Script.Discord
 import Prelude
 
 import Control.Alt ((<|>))
-import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Maybe (Maybe(..), fromMaybe, isJust)
 import Effect.Class (class MonadEffect, liftEffect)
 import JSURI (decodeURIComponent, encodeURIComponent)
 import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.QueryParams (getFragmentParam, getQueryParam)
-import TeamTavern.Client.Script.Trip (Trip, keepSwitch, setOut, takeSwitch, takeTrip)
+import TeamTavern.Client.Script.Trip (Trip, keepSwitch, setOut, takeReturn, takeSwitch)
 import Web.HTML (window)
 import Web.HTML.Location (origin)
 import Web.HTML.Window (location)
@@ -53,6 +53,8 @@ authorize trip = liftEffect do
 -- | is nothing when the player turned back at Discord, which sends `error`
 -- | with the state instead. OAuth puts those in the fragment for a token, but
 -- | Discord doesn't document where it puts them, so the query is read too.
+-- | Any provider sends an error, so one is Discord's only with the state of
+-- | the trip to Discord this tab kept.
 takeDiscordReturn :: ∀ effect. MonadEffect effect => effect (Maybe { accessToken :: Maybe String, trip :: Trip })
 takeDiscordReturn = do
     let param name = do
@@ -64,7 +66,7 @@ takeDiscordReturn = do
     returnedState <- param "state"
     liftEffect case accessToken, error of
         Nothing, Nothing -> pure Nothing
-        _, _ -> takeTrip storageKey returnedState <#> map { accessToken, trip: _ }
+        _, _ -> takeReturn storageKey { ownMark: isJust accessToken, returnedState } <#> map { accessToken, trip: _ }
 
 -- | Keeps the token of a trip that switches the account to Discord for the
 -- | account page.

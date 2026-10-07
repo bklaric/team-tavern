@@ -22,6 +22,7 @@ import JavaScript.Npm.Pg.Pool.Events as PoolEvents
 import TeamTavern.Routes.All (AllRoutes)
 import TeamTavern.Server.Account.DeleteAccount (deleteAccount)
 import TeamTavern.Server.Account.SwitchToDiscord (switchToDiscord)
+import TeamTavern.Server.Account.SwitchToGoogle (switchToGoogle)
 import TeamTavern.Server.Account.SwitchToPassword (switchToPassword)
 import TeamTavern.Server.Account.SwitchToSteam (switchToSteam)
 import TeamTavern.Server.Account.UpdateEmail (updateEmail)
@@ -51,6 +52,7 @@ import TeamTavern.Server.Infrastructure.Email (Mailer(..))
 import TeamTavern.Server.Infrastructure.Environment (Environment(..))
 import TeamTavern.Server.Infrastructure.Environment as Environment
 import TeamTavern.Server.Infrastructure.FetchDiscordUser (DiscordApiUrl(..))
+import TeamTavern.Server.Infrastructure.GoogleSignIn (GoogleClient(..), googleEndpoint)
 import TeamTavern.Server.Infrastructure.Log (logStamped, print)
 import TeamTavern.Server.Infrastructure.Postgres (databaseErrorLines)
 import TeamTavern.Server.Infrastructure.RequestOrigin (requestOrigin)
@@ -154,6 +156,15 @@ loadSteamOpenIdUrl =
     <#> fromMaybe steamEndpoint
     <#> SteamOpenIdUrl
 
+-- | Google's token endpoint unless GOOGLE_TOKEN_URL names another, as the test
+-- | stack's does.
+loadGoogleClient :: ExceptT String Effect GoogleClient
+loadGoogleClient = do
+    secret <- lookupEnv "GOOGLE_CLIENT_SECRET"
+        <#> note "Couldn't read variable GOOGLE_CLIENT_SECRET." # ExceptT
+    tokenUrl <- lift $ lookupEnv "GOOGLE_TOKEN_URL" <#> fromMaybe googleEndpoint
+    pure $ GoogleClient { tokenUrl, secret }
+
 -- | Staging and production send through SES and link to their own origin. The
 -- | local stacks link relative to the site they serve, and only log, unless
 -- | AWS_ENDPOINT_URL_SESV2 names something that takes SES's requests, as the
@@ -188,10 +199,10 @@ loadAdminEmail =
     <#> note "Couldn't read variable ADMIN_EMAIL."
     # ExceptT
 
-runServer :: Environment -> Mailer -> DiscordApiUrl -> SteamApi -> SteamOpenIdUrl -> AdminEmail -> ClientErrorLimit -> Pool -> Effect Unit
-runServer environment mailer discordApiUrl steamApi steamOpenIdUrl adminEmail clientErrorLimit pool = serve (Proxy :: _ AllRoutes) serveOptions
+runServer :: Environment -> Mailer -> DiscordApiUrl -> SteamApi -> SteamOpenIdUrl -> GoogleClient -> AdminEmail -> ClientErrorLimit -> Pool -> Effect Unit
+runServer environment mailer discordApiUrl steamApi steamOpenIdUrl googleClient adminEmail clientErrorLimit pool = serve (Proxy :: _ AllRoutes) serveOptions
     { startSession: \{ cookies, headers, body } ->
-        Session.start environment mailer discordApiUrl steamOpenIdUrl steamApi pool cookies (requestOrigin headers) body
+        Session.start environment mailer discordApiUrl steamOpenIdUrl steamApi googleClient pool cookies (requestOrigin headers) body
     , endSession: \{ cookies } ->
         Session.end pool cookies
     , forgotPassword: \{ body } ->
@@ -218,6 +229,8 @@ runServer environment mailer discordApiUrl steamApi steamOpenIdUrl adminEmail cl
         switchToDiscord discordApiUrl pool cookies body
     , switchToSteam: \{ cookies, headers, body } ->
         switchToSteam steamOpenIdUrl pool cookies (requestOrigin headers) body
+    , switchToGoogle: \{ cookies, headers, body } ->
+        switchToGoogle googleClient pool cookies (requestOrigin headers) body
     , switchToPassword: \{ cookies, body } ->
         switchToPassword mailer pool cookies body
     , deleteAccount: \{ cookies } ->
@@ -294,10 +307,11 @@ main = either log pure =<< runExceptT do
     discordApiUrl <- lift loadDiscordApiUrl
     steamApi <- loadSteamApi
     steamOpenIdUrl <- lift loadSteamOpenIdUrl
+    googleClient <- loadGoogleClient
     adminEmail <- loadAdminEmail
     workerPeriod <- loadWorkerPeriod
     pool <- createPostgresPool
     mailer <- loadMailer environment
     clientErrorLimit <- lift createClientErrorLimit
     lift $ startWorker workerPeriod mailer pool
-    lift $ runServer environment mailer discordApiUrl steamApi steamOpenIdUrl adminEmail clientErrorLimit pool
+    lift $ runServer environment mailer discordApiUrl steamApi steamOpenIdUrl googleClient adminEmail clientErrorLimit pool

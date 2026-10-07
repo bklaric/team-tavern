@@ -27,8 +27,9 @@ Generated, never edited, all git-ignored: `output/` (compiled PureScript),
 - **Node and npm** are pinned by Volta in `package.json`; with Volta installed
   the right versions are picked up automatically. The `tt-node` service in
   both compose files under `stacks/`, and the test stack's `tt-discord`,
-  `tt-mail` and `tt-steam` services, pin the same Node version for their
-  containers, and nothing enforces agreement, so change all six together.
+  `tt-mail`, `tt-steam` and `tt-google` services, pin the same Node version for
+  their containers, and nothing enforces agreement, so change all seven
+  together.
 - **purs, spago, sass, esbuild, sharp and Playwright** come from `devDependencies`, so
   setup is `npm install` plus, for the browser Playwright drives,
   `./node_modules/.bin/playwright install chromium`, which downloads Chromium
@@ -99,8 +100,9 @@ under hashed file names. `build-server.sh` bundles the server into
 external, and copies the root `package.json` beside it; the container installs
 that with `--omit=dev`, so the build toolchain never enters the image. It also
 bundles `DiscordStub/Main.purs` into `dist-test/discord-stub.js`,
-`MailStub/Main.purs` into `dist-test/mail-stub.js` and `SteamStub/Main.purs`
-into `dist-test/steam-stub.js`, which only the test stack runs. `build.sh` then copies in what runs them: `stacks/docker-compose.release.yml`
+`MailStub/Main.purs` into `dist-test/mail-stub.js`, `SteamStub/Main.purs`
+into `dist-test/steam-stub.js` and `GoogleStub/Main.purs` into
+`dist-test/google-stub.js`, which only the test stack runs. `build.sh` then copies in what runs them: `stacks/docker-compose.release.yml`
 as `release/compose.yml`, every Caddyfile but the test stack's into
 `release/caddy/`, and `backup-database.sh`.
 
@@ -156,9 +158,9 @@ a secure context, so nothing on the site needs HTTPS locally.
 
 `stacks/.env` is committed. The Postgres credentials in it are real, but the
 database is reachable only from inside the compose network, so they are
-usable only by someone already on the server. The AWS key pair and the Steam
-Web API key are placeholders; the real ones live in the production `.env` on
-the server and are not in the repo.
+usable only by someone already on the server. The AWS key pair, the Steam
+Web API key and the Google OAuth client's secret are placeholders; the real
+ones live in the production `.env` on the server and are not in the repo.
 
 ### The test stack
 
@@ -219,7 +221,23 @@ answer once, and its GetPlayerSummaries gives the profile name the nickname
 prompt offers. As with Discord, a spec plays Steam's sign-in page itself
 (`test-playwright/steam.ts`). Steam gives no address, so a player registering
 with it types one in, and the ticket it is registered with lives in
-`steam_ticket` for the hour between Steam's answer and the nickname.
+`sign_in_ticket` for the hour between Steam's answer and the nickname.
+
+The test stack has no Google either. Signing in with Google is OAuth's
+authorization code flow: Google sends the browser back to the sign-in page with
+a code, and the server swaps it at Google's token endpoint, with the OAuth
+client's `GOOGLE_CLIENT_SECRET`, for an ID token that names the account, its
+address and its name. Google swaps a code once, so the ticket a player new to
+the site registers with lives in `sign_in_ticket`, as Steam's does, with the
+address Google gave. The test stack's `tt-google` service
+runs `dist-test/google-stub.js`, and `GOOGLE_TOKEN_URL` in `test.env` points
+the server at it. The stub takes the code for the account itself, the JSON of
+the claims its ID token carries and the redirect URI it was given for, and
+swaps each once, for that URI and the client and secret the server has, as
+Google does. As with Discord, a spec
+plays Google's sign-in page itself (`test-playwright/google.ts`). The client ID
+is public and lives in `Shared/Google.purs`, which the pages and the server
+both read.
 
 Every Discord button sends the browser back to `/signin`, the one redirect URI
 registered on the Discord app for each origin, and what the player was doing
@@ -227,10 +245,11 @@ rides along in session storage. The sign-in page signs in a player Discord
 knows, and asks one it doesn't for a nickname, which finishes registering them.
 A trip from the account page's Continue with Discord signs nobody in: the
 sign-in page hands its token back to the account page, which moves the account
-from its password to that Discord. Steam's buttons go the same way, though
-Steam takes any return address. An account signs in with one of a password, a
-Discord account or a Steam account, and the account page moves it between
-them.
+from its password to that Discord. Steam's and Google's buttons go the same
+way, though Steam takes any return address, while Google, like Discord, takes
+only the `/signin` registered on its OAuth client for each origin. An account
+signs in with one of a password, a Discord account, a Steam account or a Google
+account, and the account page moves it between them.
 
 What no test reaches is Discord itself: the redirect URIs registered on the
 Discord app and the real user endpoint. Before a deploy that touches sign-in,
@@ -251,6 +270,14 @@ way with a real Steam account: Continue with Steam at
 signed in, and Continue with Steam at <http://localhost:8000/signin> then
 signs straight in. The nickname comes up empty there, since the placeholder
 key gets no profile name, and `docker logs tt-node` says so.
+
+Google's real token endpoint and the redirect URIs registered on its OAuth
+client are out of reach too. Google refuses the placeholder secret in
+`stacks/.env`, so put the client's real one in its place locally, without
+committing it, and check the same way with a real Google account: Continue
+with Google at <http://localhost:8000/signup> asks for a nickname, prefilled
+from the Google name, and lands signed in, and Continue with Google at
+<http://localhost:8000/signin> then signs straight in.
 
 `stacks/test-seed/seed.sh` builds the database on the first boot of the Postgres
 volume, which is why `down -v` rather than `down` is what resets it. It applies
@@ -287,7 +314,7 @@ API within a few seconds.
 
 A server holds no checkout, only a release: `~/team-tavern` is `release/` as
 uploaded, plus the server's own `.env` beside `compose.yml`, which compose reads
-from there. That `.env` sets what `stacks/.env` does, with the real AWS key pair and Steam Web API key,
+from there. That `.env` sets what `stacks/.env` does, with the real AWS key pair, Steam Web API key and Google client secret,
 `ENVIRONMENT=production` (or `staging`) and no `CADDY_HTTP_PORT`. A release never
 carries one.
 
@@ -417,6 +444,8 @@ redirects the old site's feed paths to the new ones by `legacy.game_map`.
   `stacks/test.env` sets it. `STEAM_API_KEY` is required, and `STEAM_API_URL`
   is optional and defaults to Steam's own Web API; only `stacks/test.env` sets
   it, and `STEAM_OPENID_URL`, which defaults to Steam's OpenID provider.
+  `GOOGLE_CLIENT_SECRET` is required, and `GOOGLE_TOKEN_URL` is optional and
+  defaults to Google's own token endpoint; only `stacks/test.env` sets it.
   `AWS_ENDPOINT_URL_SESV2` is optional too, and the
   SES client reads it itself: without it, the development stack only logs its
   email; with it, the server sends there. Only `stacks/test.env` sets it. `WORKER_PERIOD` is optional as well:

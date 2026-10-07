@@ -8,7 +8,10 @@ import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty as Nea
 import Data.Bifunctor (lmap)
 import Data.Newtype (class Newtype)
-import Data.String (trim)
+import Data.String (take, trim)
+import Data.String.Regex (Regex, replace)
+import Data.String.Regex.Flags (global)
+import Data.String.Regex.Unsafe (unsafeRegex)
 import Data.Validated as Validated
 import Data.Variant (Variant, inj)
 import Jarilo (badRequest_)
@@ -37,6 +40,16 @@ type NicknameErrors = NonEmptyArray NicknameError
 
 maxLength :: Int
 maxLength = 40
+
+-- What a nickname can't hold.
+notNicknameRegex :: Regex
+notNicknameRegex = unsafeRegex "[^A-Za-z0-9_.-]" global
+
+-- | A name another site knows the player by as a nickname, which the nickname
+-- | prompt offers: the letters, digits, dashes, underscores and dots of it, as
+-- | many as a nickname holds.
+nicknameOf :: String -> String
+nicknameOf = replace notNicknameRegex "" >>> take maxLength
 
 validateNickname :: ∀ errors.
     String -> ValidatedTerrorNeaVar (nickname :: {} | errors) Nickname

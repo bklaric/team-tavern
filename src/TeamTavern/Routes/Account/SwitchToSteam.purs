@@ -6,7 +6,7 @@ import Foreign.Object (Object)
 import Jarilo (type (!), type (/), type (==>), BadRequestJson, Internal_, Literal, NotAuthorized_, OkJson, PostJson_)
 
 -- | Signs the account in with the Steam account Steam vouched for, in place of
--- | its password or Discord, leaving its email as it is (brief 11.5).
+-- | its password, Discord or Google, leaving its email as it is (brief 11.5).
 type SwitchToSteam =
     PostJson_ (Literal "account" / Literal "steam") RequestContent
     ==> OkJson OkContent ! BadRequestJson BadContent ! NotAuthorized_ ! Internal_

@@ -23,6 +23,7 @@ import TeamTavern.Client.Icons as Icons
 import TeamTavern.Client.Pages.Post.Register (Publishing, publishing, publishingPost)
 import TeamTavern.Client.Script.Back (authPath, readBack)
 import TeamTavern.Client.Script.Discord (authorizeWithDiscord)
+import TeamTavern.Client.Script.Google (authorizeWithGoogle)
 import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_)
 import TeamTavern.Client.Script.Steam (authorizeWithSteam)
 import TeamTavern.Client.Shared.AccountErrors (emailError, emailInvalid, nicknameInvalid, nicknameTaken, passwordShort, somethingWrong)
@@ -103,6 +104,8 @@ component = Hooks.component \_ _ -> Hooks.do
                             , discordTaken: const $ failWith noErrors { form = Just somethingWrong }
                             , steamTaken: const $ failWith noErrors { form = Just somethingWrong }
                             , steamTicket: const $ failWith noErrors { form = Just somethingWrong }
+                            , googleTaken: const $ failWith noErrors { form = Just somethingWrong }
+                            , googleTicket: const $ failWith noErrors { form = Just somethingWrong }
                             }
                         }
                         (const $ failWith noErrors { form = Just somethingWrong })
@@ -133,6 +136,8 @@ component = Hooks.component \_ _ -> Hooks.do
             [ Icons.discord, HH.text "Continue with Discord" ]
         , button Outline Regular (authorizeWithSteam state.back)
             [ Icons.steam, HH.text "Continue with Steam" ]
+        , button Outline Regular (authorizeWithGoogle state.back)
+            [ Icons.google, HH.text "Continue with Google" ]
         , rule "or"
         , formTight submit $
             [ textField

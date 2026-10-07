@@ -17,7 +17,7 @@ import JSURI (decodeURIComponent)
 import JavaScript.Web.URL.URLSearchParams as URLSearchParams
 import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.QueryParams (getQueryParam)
-import TeamTavern.Client.Script.Trip (Trip, keepSwitch, setOut, takeSwitch, takeTrip)
+import TeamTavern.Client.Script.Trip (Trip, keepSwitch, setOut, takeReturn, takeSwitch)
 import Web.HTML (window)
 import Web.HTML.Location (origin)
 import Web.HTML.Window (location)
@@ -75,7 +75,7 @@ takeSteamReturn = do
         Just _ -> do
             params <- openIdParams
             let assertion = if Object.lookup "openid.mode" params == Just "id_res" then Just params else Nothing
-            takeTrip storageKey returnedState <#> map { assertion, trip: _ }
+            takeReturn storageKey { ownMark: true, returnedState } <#> map { assertion, trip: _ }
 
 -- | Keeps the answer of a trip that switches the account to Steam for the
 -- | account page.

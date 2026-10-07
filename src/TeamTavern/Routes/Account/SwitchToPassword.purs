@@ -4,7 +4,7 @@ import Data.Maybe (Maybe)
 import Data.Variant (Variant)
 import Jarilo (type (!), type (/), type (==>), BadRequestJson, Internal_, Literal, NoContent, NotAuthorized_, PutJson_)
 
--- | Signs the account in with its email and the password, in Discord's or Steam's place,
+-- | Signs the account in with its email and the password, in Discord's, Steam's or Google's place,
 -- | or changes the password of an account that has one (brief 11.5). `email`
 -- | is asked of an account without an address, and ignored where it has one.
 -- | Every other session of the account ends.

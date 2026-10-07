@@ -24,7 +24,7 @@ type Switches =
     , renewals :: Boolean
     }
 
--- | `signIn` is `password`, `discord` or `steam`. `conversations` counts those on the
+-- | `signIn` is `password`, `discord`, `steam` or `google`. `conversations` counts those on the
 -- | player's posts and those they started, which deleting the account deletes.
 type OkContent =
     { nickname :: String

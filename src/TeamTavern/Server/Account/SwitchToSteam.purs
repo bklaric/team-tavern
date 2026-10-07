@@ -16,16 +16,16 @@ import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Infrastructure.SteamOpenId (SteamOpenIdUrl, verifySteamReturn)
 import Type.Proxy (Proxy(..))
 
--- Steam takes the place of the password or Discord, and the email stays. Its
--- SteamID64 becomes the Steam contact only where the account's posts offer
--- none, since the player may have given another.
+-- Steam takes the place of the password, Discord or Google, and the email
+-- stays. Its SteamID64 becomes the Steam contact only where the account's posts
+-- offer none, since the player may have given another.
 queryString :: Query
 queryString = Query """
     with held as (
         select steam_id from player where id = $1 for update
     )
     update player
-    set steam_sign_in_id = $2, password_hash = null, discord_id = null,
+    set steam_sign_in_id = $2, password_hash = null, discord_id = null, google_id = null,
         steam_id = coalesce(held.steam_id, $2)
     from held
     where player.id = $1
