@@ -193,6 +193,40 @@ test("signing in with Discord to an account signs in without asking for a nickna
     await expectSignedInAs(page, nickname);
 });
 
+test("turning back at Discord leaves the player on the sign-in page they started from", async ({ page }) => {
+    const discord = await fakeDiscord(page, discordUser(null, false));
+    discord.cancel = true;
+    await page.goto("/games/apex-legends");
+    await page.getByRole("link", { name: "Sign in" }).click();
+    await expectPage(page, "/signin");
+    await page.getByRole("button", { name: "Continue with Discord" }).click();
+
+    await expect(page.getByLabel("Email or nickname")).toBeVisible();
+    await expect(page).toHaveURL(/\/signin\?back=%2Fgames%2Fapex-legends$/);
+    await page.getByLabel("Email or nickname").fill("apex-legends@example.com");
+    await page.getByLabel("Password").fill(password);
+    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    await expectPage(page, "/games/apex-legends");
+});
+
+test("turning back at Discord leaves the player on the sign-up page they started from", async ({ page }) => {
+    const discord = await fakeDiscord(page, discordUser(null, false));
+    discord.cancel = true;
+    await page.goto("/games/valorant");
+    await page.getByRole("link", { name: "Sign up" }).click();
+    await expectPage(page, "/signup");
+    await page.getByRole("button", { name: "Continue with Discord" }).click();
+
+    await expectPage(page, "/signup");
+    await expect(page.getByRole("heading", { name: "Create your account" })).toBeVisible();
+    const nickname = unique("P");
+    await page.getByLabel("Email").fill(`${nickname.toLowerCase()}@example.com`);
+    await page.getByLabel("Nickname").fill(nickname);
+    await page.getByLabel("Password").fill(password);
+    await page.getByRole("button", { name: "Create account" }).click();
+    await expectPage(page, "/games/valorant");
+});
+
 // Discord hands back a token for the tab that asked; one arriving without the state the
 // page sent is refused, so a link can't sign someone in as another player.
 test("a Discord token without the page's state signs nobody in", async ({ page }) => {

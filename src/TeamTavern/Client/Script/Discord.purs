@@ -8,11 +8,12 @@ module TeamTavern.Client.Script.Discord
 
 import Prelude
 
+import Control.Alt ((<|>))
 import Data.Maybe (Maybe(..), fromMaybe)
 import Effect.Class (class MonadEffect, liftEffect)
 import JSURI (decodeURIComponent, encodeURIComponent)
 import TeamTavern.Client.Script.Navigate (hardNavigate)
-import TeamTavern.Client.Script.QueryParams (getFragmentParam)
+import TeamTavern.Client.Script.QueryParams (getFragmentParam, getQueryParam)
 import TeamTavern.Client.Script.Trip (Trip, keepSwitch, setOut, takeSwitch, takeTrip)
 import Web.HTML (window)
 import Web.HTML.Location (origin)
@@ -48,14 +49,22 @@ authorize trip = liftEffect do
         <> "&state=" <> state
         <> "&prompt=none"
 
--- | The access token Discord came back with, and the trip it came back from.
-takeDiscordReturn :: ∀ effect. MonadEffect effect => effect (Maybe { accessToken :: String, trip :: Trip })
+-- | What Discord came back with and the trip it came back from. `accessToken`
+-- | is nothing when the player turned back at Discord, which sends `error`
+-- | with the state instead. OAuth puts those in the fragment for a token, but
+-- | Discord doesn't document where it puts them, so the query is read too.
+takeDiscordReturn :: ∀ effect. MonadEffect effect => effect (Maybe { accessToken :: Maybe String, trip :: Trip })
 takeDiscordReturn = do
+    let param name = do
+            fragment <- getFragmentParam name
+            query <- getQueryParam name
+            pure $ (fragment <|> query) >>= decodeURIComponent
     accessToken <- getFragmentParam "access_token" <#> (_ >>= decodeURIComponent)
-    returnedState <- getFragmentParam "state" <#> (_ >>= decodeURIComponent)
-    liftEffect case accessToken of
-        Nothing -> pure Nothing
-        Just accessToken' -> takeTrip storageKey returnedState <#> map { accessToken: accessToken', trip: _ }
+    error <- param "error"
+    returnedState <- param "state"
+    liftEffect case accessToken, error of
+        Nothing, Nothing -> pure Nothing
+        _, _ -> takeTrip storageKey returnedState <#> map { accessToken, trip: _ }
 
 -- | Keeps the token of a trip that switches the account to Discord for the
 -- | account page.

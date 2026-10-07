@@ -231,24 +231,29 @@ component = Hooks.component \_ _ -> Hooks.do
                         (const $ failWith noErrors { form = Just somethingWrong })
                     Left _ -> failWith noErrors { form = Just somethingWrong }
 
+        -- Turned back at Discord or Steam: the page the trip set out from,
+        -- which may be this one.
+        turnedBack { from }
+            | isSignIn from = do
+                liftEffect $ replaceState {} from
+                readBack >>= showPassword
+            | otherwise = navigateReplace_ from
+
     Hooks.useLifecycleEffect do
         discordReturn <- takeDiscordReturn
         steamReturn <- takeSteamReturn
         case discordReturn, steamReturn of
-            Just { accessToken, trip: { back, switching: true } }, _ -> do
+            Just { accessToken: Just accessToken, trip: { back, switching: true } }, _ -> do
                 keepSwitchToken accessToken
                 navigateReplace_ back
-            Just { accessToken, trip: { back } }, _ -> void $ Hooks.fork $ startDiscordSession accessToken back
+            Just { accessToken: Just accessToken, trip: { back } }, _ ->
+                void $ Hooks.fork $ startDiscordSession accessToken back
+            Just { trip }, _ -> turnedBack trip
             _, Just { assertion: Just assertion, trip: { back, switching: true } } -> do
                 keepSwitchAssertion assertion
                 navigateReplace_ back
             _, Just { assertion: Just assertion, trip: { back } } -> void $ Hooks.fork $ startSteamSession assertion back
-            -- Turned back at Steam: the page the trip set out from, which may
-            -- be this one.
-            _, Just { trip: { from } } | isSignIn from -> do
-                liftEffect $ replaceState {} from
-                readBack >>= showPassword
-            _, Just { trip: { from } } -> navigateReplace_ from
+            _, Just { trip } -> turnedBack trip
             Nothing, Nothing -> readBack >>= showPassword
         pure Nothing
 

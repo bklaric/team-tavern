@@ -13,23 +13,24 @@ export function discordUser(email: string | null, verified: boolean): DiscordUse
 // page named in `redirect_uri` with an access token and the page's `state` in the fragment.
 // This plays Discord's part: it answers with a token for whichever user is set at the time,
 // which the discord service in the test stack reads back as that user (see
-// `DiscordStub/Main.purs`), and records each authorize URL so a test can check what the
-// page asked for.
-export type FakeDiscord = { user: DiscordUser, authorizeRequests: URL[] };
+// `DiscordStub/Main.purs`), or turns back as a player does who cancels at Discord, and
+// records each authorize URL so a test can check what the page asked for.
+export type FakeDiscord = { user: DiscordUser, cancel: boolean, authorizeRequests: URL[] };
 
 export async function fakeDiscord(page: Page, user: DiscordUser): Promise<FakeDiscord> {
-    const discord: FakeDiscord = { user, authorizeRequests: [] };
+    const discord: FakeDiscord = { user, cancel: false, authorizeRequests: [] };
     await page.route(url => url.hostname === "discord.com" && url.pathname === "/api/oauth2/authorize", route => {
         const authorize = new URL(route.request().url());
         discord.authorizeRequests.push(authorize);
         const { id, username, email, verified } = discord.user;
         const token = encodeURIComponent(JSON.stringify({ id, username, discriminator: "0", email, verified }));
         const state = encodeURIComponent(authorize.searchParams.get("state") ?? "");
+        const answer = discord.cancel
+            ? `error=access_denied&error_description=The+resource+owner+or+authorization+server+denied+the+request&state=${state}`
+            : `token_type=Bearer&access_token=${token}&state=${state}`;
         return route.fulfill({
             status: 302,
-            headers: {
-                location: `${authorize.searchParams.get("redirect_uri")}#token_type=Bearer&access_token=${token}&state=${state}`,
-            },
+            headers: { location: `${authorize.searchParams.get("redirect_uri")}#${answer}` },
         });
     });
     return discord;

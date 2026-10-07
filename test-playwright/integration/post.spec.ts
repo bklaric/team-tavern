@@ -359,6 +359,19 @@ test.describe("posting", () => {
         await expect(page.getByText("You'll create an account next. Nothing you've written is lost.")).toBeVisible();
     });
 
+    test("comes back to the draft, still signed out, from turning back at Discord", async ({ page }) => {
+        const discord = await fakeDiscord(page, discordUser(null, false));
+        discord.cancel = true;
+        await page.goto("/games/league-of-legends/post/player");
+        await page.getByLabel("About you and what you're looking for").fill("Support, weekends.");
+
+        await page.getByRole("button", { name: "Sign up with Discord" }).click();
+
+        await expectPage(page, "/games/league-of-legends/post/player");
+        await expect(page.getByLabel("About you and what you're looking for")).toHaveValue("Support, weekends.");
+        await expect(page.getByText("You'll create an account next. Nothing you've written is lost.")).toBeVisible();
+    });
+
     test("publishes once a player new to Discord's sign-up has picked a nickname", async ({ page }) => {
         await fakeDiscord(page, discordUser(null, false));
         await page.goto("/games/league-of-legends/post/player");

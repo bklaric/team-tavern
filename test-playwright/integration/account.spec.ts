@@ -306,6 +306,22 @@ test.describe("the account page", () => {
         await expectSignedInAs(page, nickname);
     });
 
+    test("keeps the sign-in as it was when the player turns back at Discord", async ({ page }) => {
+        await signUp(page, "K");
+        const discord = await fakeDiscord(page, discordUser(null, false));
+        discord.cancel = true;
+        const signInRow = page.locator("#sign-in");
+
+        await openAccount(page);
+        await signInRow.getByRole("button", { name: "Change" }).click();
+        await signInRow.getByRole("button", { name: "Continue with Discord" }).click();
+
+        await expectPage(page, "/account");
+        await expect(page.getByRole("heading", { name: "Shown on your posts" })).toBeVisible();
+        await expect(row(page, "Sign-in")).toHaveText("Email and password");
+        await expect(page.locator(".toast-text")).toHaveCount(0);
+    });
+
     test("refuses a Discord that signs in to another account", async ({ page, browser }) => {
         const other = await (await browser.newContext()).newPage();
         const user = discordUser(null, false);
