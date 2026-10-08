@@ -4,6 +4,7 @@ import Prelude
 
 import Async (Async)
 import Async as Async
+import Control.Alt ((<|>))
 import Control.Parallel (parallel, sequential)
 import Data.Array (catMaybes, elem, filter, mapMaybe, null, snoc, sortWith, unsnoc)
 import Data.Foldable (traverse_)
@@ -44,7 +45,7 @@ import TeamTavern.Client.Script.Focus (focusSoon)
 import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_)
 import TeamTavern.Client.Script.Scroll (focusCentered, focusFirstInvalid)
 import TeamTavern.Client.Script.Steam (authorizeSwitchToSteam, takeSwitchAssertion)
-import TeamTavern.Client.Script.Timezone (getClientTimezone)
+import TeamTavern.Client.Script.Timezone (getListedTimezone)
 import TeamTavern.Client.Script.Unread (announceUnread)
 import TeamTavern.Client.Shared.AccountErrors (emailInvalid, nicknameInvalid, nicknameTaken, passwordShort, somethingWrong, tooYoung)
 import TeamTavern.Client.Shared.Block (block, unblock)
@@ -158,13 +159,13 @@ load = do
 blank :: String -> Maybe String
 blank value = if trim value == "" then Nothing else Just value
 
-factsOf :: String -> ViewAccount.OkContent -> Facts
+factsOf :: Maybe String -> ViewAccount.OkContent -> Facts
 factsOf clientTimezone account' =
     { nickname: account'.nickname
     , birthday: fromMaybe "" account'.birthday
     , country: fromMaybe "" account'.country
     , languages: account'.languages
-    , timezone: fromMaybe clientTimezone account'.timezone
+    , timezone: account'.timezone <|> clientTimezone # fromMaybe ""
     , contacts: Object.fromFoldable $ account'.contacts # mapMaybe \{ kind, value } -> value <#> Tuple kind
     }
 
@@ -361,7 +362,7 @@ component = Hooks.component \_ _ -> Hooks.do
 
         startEditing = Hooks.get stateId >>= _.page >>> case _ of
             Loaded { account: account' } -> do
-                clientTimezone <- getClientTimezone
+                clientTimezone <- getListedTimezone
                 Hooks.modify_ stateId _ { facts = Just $ factsOf clientTimezone account', errors = Object.empty }
                 liftEffect $ focusSoon "#account-nickname"
             _ -> pure unit
@@ -610,7 +611,7 @@ component = Hooks.component \_ _ -> Hooks.do
                     [ select [ HP.id "account-timezone" ]
                         { options: timezoneOptions
                         , value: facts.timezone
-                        , placeholder: Nothing
+                        , placeholder: if facts.timezone == "" then Just "Choose a timezone" else Nothing
                         , onChange: \value -> setFacts "timezone" _ { timezone = value }
                         }
                     ]

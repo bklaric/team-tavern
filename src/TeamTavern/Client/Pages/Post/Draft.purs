@@ -1,6 +1,7 @@
 module TeamTavern.Client.Pages.Post.Draft
     ( Draft
     , clearDraft
+    , draftTimezone
     , emptyDraft
     , fromContent
     , fromDescription
@@ -29,6 +30,7 @@ import TeamTavern.Routes.Shared.Card (CardRow)
 import TeamTavern.Routes.Shared.Description (Description, Hours, Range)
 import TeamTavern.Routes.Shared.Post (AccountContent, PostContent, RequestContent)
 import TeamTavern.Shared.Steam (SteamInput(..), readSteamInput)
+import TeamTavern.Shared.Timezones (listedTimezone)
 import Web.HTML (window)
 import Web.HTML.Window (localStorage)
 import Web.Storage.Storage (getItem, removeItem, setItem)
@@ -190,10 +192,16 @@ gameContacts game type_ draft =
 bothHours :: Hours -> Maybe { from :: String, to :: String }
 bothHours { from, to } = { from: _, to: _ } <$> from <*> to
 
+-- | The zone the draft's hours are in: the one it holds, else the browser's
+-- | where the list has it. It isn't kept in the draft, which would carry it
+-- | over the account's own when the account is laid over it.
+draftTimezone :: String -> Draft -> Maybe String
+draftTimezone browserTimezone draft = draft.timezone <|> listedTimezone browserTimezone
+
 -- | The request publishing the draft sends. The account facts go with it where
--- | the post type shows them, and the timezone always, since the hours are in
--- | it.
-toRequest :: ViewGame.OkContent -> String -> String -> Draft -> RequestContent
+-- | the post type shows them, and the timezone wherever there is one, since
+-- | the hours are in it.
+toRequest :: ViewGame.OkContent -> String -> Maybe String -> Draft -> RequestContent
 toRequest game type_ timezone draft =
     { post:
         { options: draft.options
@@ -218,7 +226,7 @@ toRequest game type_ timezone draft =
         { country: if player then draft.country else Nothing
         , languages: if player then draft.languages else []
         , birthday: if player then draft.birthday else Nothing
-        , timezone: Just timezone
+        , timezone: timezone
         , contacts: gameContacts game type_ draft <#> trim
         }
     }

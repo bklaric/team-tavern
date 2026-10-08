@@ -35,7 +35,7 @@ import TeamTavern.Client.Components.Overlay (Presentation(..), overlay, useOverl
 import TeamTavern.Client.Icons as Icons
 import TeamTavern.Client.Pages.Feed.Description (current, loadStored)
 import TeamTavern.Client.Pages.Placeholder (placeholder)
-import TeamTavern.Client.Pages.Post.Draft (Draft, clearDraft, emptyDraft, fromContent, fromDescription, gameContacts, loadDraft, saveDraft, toCard, toRequest, withAccount)
+import TeamTavern.Client.Pages.Post.Draft (Draft, clearDraft, draftTimezone, emptyDraft, fromContent, fromDescription, gameContacts, loadDraft, saveDraft, toCard, toRequest, withAccount)
 import TeamTavern.Client.Pages.Post.Fields (cardFields, contactFields, contactKeys, wordsField)
 import TeamTavern.Client.Pages.Post.Register (registerBack)
 import TeamTavern.Client.Script.Back (authPath)
@@ -96,6 +96,7 @@ type State =
     , previewOpen :: Boolean
     , previewExpanded :: Boolean
     , ownExpanded :: Boolean
+    -- The browser's zone, which the previews show hours in.
     , timezone :: String
     , now :: Maybe { instant :: Instant, iso :: String, date :: Date }
     }
@@ -119,8 +120,8 @@ days _ = 30
 
 -- The checks the server makes that the screen can name before sending
 -- (brief 6, step 3).
-validate :: ViewGame.OkContent -> String -> Date -> Draft -> Object String
-validate game type_ today draft = Object.fromFoldable $ foldl (\errors (key /\ error) -> maybe errors (snoc errors <<< (key /\ _)) error) []
+validate :: ViewGame.OkContent -> String -> Date -> String -> Draft -> Object String
+validate game type_ today browserTimezone draft = Object.fromFoldable $ foldl (\errors (key /\ error) -> maybe errors (snoc errors <<< (key /\ _)) error) []
     [ "birthday" /\
         (if type_ == "player" && maybe false (_ < 16) (draft.birthday >>= ageOn today) then Just tooYoung else Nothing)
     , "name" /\ (if community && trim draft.name == "" then Just "Give your community a name." else Nothing)
@@ -136,6 +137,9 @@ validate game type_ today draft = Object.fromFoldable $ foldl (\errors (key /\ e
         then Just $ "Add your " <> accounts <> " below, or choose another way." else Nothing)
     , "hours" /\
         (if isJust draft.online.from /= isJust draft.online.to then Just "Choose both times, or neither." else Nothing)
+    , "timezone" /\
+        (if isJust draft.online.from && isJust draft.online.to && isNothing (draftTimezone browserTimezone draft)
+        then Just noTimezone else Nothing)
     ]
     where
     community = type_ == "community"
@@ -156,8 +160,14 @@ serverError = match
     , website: const $ Just { key: "website", error: "Check your website, or choose another way to join." }
     , contact: \{ kind } -> Just { key: kind, error: fromMaybe "Check this account." (contactError kind) }
     , steamUnavailable: const $ Just { key: "steam", error: steamUnavailable }
-    , field: \{ key } -> if key == "birthday" then Just { key, error: tooYoung } else Nothing
+    , field: \{ key } -> case key of
+        "birthday" -> Just { key, error: tooYoung }
+        "timezone" -> Just { key, error: noTimezone }
+        _ -> Nothing
     }
+
+noTimezone :: String
+noTimezone = "Choose the timezone your hours are in."
 
 component :: ∀ query output left. H.Component query Input output (Async left)
 component = Hooks.component \_ { handle, type_ } -> Hooks.do
@@ -240,7 +250,7 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
             state' <- Hooks.get stateId
             unless state'.sending $ for_ state'.game \game -> do
                 today <- liftEffect nowDate
-                let errors = validate game type_ today state'.draft
+                let errors = validate game type_ today state'.timezone state'.draft
                 if not Object.isEmpty errors
                 then do
                     set _ { errors = errors, previewOpen = false }
@@ -252,7 +262,7 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
                     navigate_ $ authPath "/signup" $ registerBack path
                 else do
                     set _ { sending = true, formError = Nothing, previewOpen = false }
-                    let request = toRequest game type_ (fromMaybe state'.timezone state'.draft.timezone) state'.draft
+                    let request = toRequest game type_ (draftTimezone state'.timezone state'.draft) state'.draft
                         editing = state'.draft.editing
                     result <- H.lift $ Async.attempt
                         if editing

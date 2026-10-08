@@ -25,6 +25,7 @@ import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.Error (Terror(..), elaborate)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotFound, queryMany)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
+import TeamTavern.Shared.Timezones (postgresTimezone)
 import Yoga.JSON (writeImpl)
 import Yoga.JSON.Async (read)
 
@@ -65,10 +66,13 @@ viewFeed pool handle cookies request =
         # lmap (elaborate ("Can't find game: " <> handle))
     viewer <- checkSignedIn pool cookies <#> map (_.id >>> unwrap)
     now <- liftEffect Date.now
+    -- A zone Postgres doesn't know fails `at time zone`, so it goes as none.
+    let description = request.description
+            { timezone = request.description.timezone >>= postgresTimezone }
     rows :: Array Foreign <- queryMany pool feedQuery
         ( handle
         : toNullable viewer
-        : writeImpl request.description
+        : writeImpl description
         : shownTypes request
         : toNullable (writeImpl <$> request.cursor)
         : now

@@ -4,7 +4,6 @@ import Prelude
 
 import Async (Async)
 import Async as Async
-import Control.Alt ((<|>))
 import Data.Array (elem, filter, find, init, last, length, null, snoc, take)
 import Data.Either (hush)
 import Data.Maybe (Maybe(..), isJust, maybe)
@@ -108,7 +107,6 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
         set = Hooks.modify_ stateId
 
         load = do
-            timezone <- getClientTimezone
             game <- H.lift $ Async.attempt (fetchPath (Proxy :: _ ViewGame) { handle })
                 <#> (hush >=> onMatch { ok: Just } (const Nothing))
             own <- H.lift $ Async.attempt (fetchPath (Proxy :: _ ViewOwnDescriptions) { handle })
@@ -116,10 +114,11 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
             case game, own <#> find (_.type >>> eq type_) of
                 Just game', Just (Just { id, name, description }) -> do
                     host' <- liftEffect $ window >>= location >>= host
-                    let description' = description { timezone = description.timezone <|> Just timezone }
-                        ownPath = "/games/" <> handle <> "/posts/" <> show id
+                    let ownPath = "/games/" <> handle <> "/posts/" <> show id
+                        -- The post's description as the fit worker reads it,
+                        -- hours with no zone included.
                         batch cursor = H.lift $ Async.attempt
-                            (fetchPathBody (Proxy :: _ ViewFeed) { handle } { description: description', showing: [], cursor })
+                            (fetchPathBody (Proxy :: _ ViewFeed) { handle } { description, showing: [], cursor })
                             <#> (hush >=> onMatch { ok: Just } (const Nothing))
                         -- The fits come first, so the batches are followed
                         -- only while they still hold fits.
@@ -139,7 +138,7 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
                             { screen = Ready
                                 { game: game'
                                 , own: { path: ownPath, address: host' <> ownPath, name }
-                                , description: description'
+                                , description
                                 , fits: filter fits posts
                                 , fitCount: count
                                 , posts

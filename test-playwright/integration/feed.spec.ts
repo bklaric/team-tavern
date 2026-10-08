@@ -1,6 +1,7 @@
 import { expect, Page, test } from "@playwright/test";
 import { signIn } from "../accounts";
 import { expectPage } from "../pages";
+import { reportZone } from "../zones";
 
 // Valorant's seeded posts (`stacks/test-seed/players.sql`): ValorantTester's player post
 // (Platinum 1, Duelist, Casual), GroupTester's group Night Owls (Platinum 1 to Diamond 3,
@@ -284,18 +285,57 @@ test.describe("what fits between players", () => {
     });
 });
 
-// Chromium reports India's zone by its old name, which Postgres doesn't know. The feed sends
-// the viewer's zone, so it has to name it as the site's list does.
+// Hours the viewer gives go with their browser's zone, which Postgres has to know to move
+// the posts' hours into it. ValorantTester is online 19:00–23:00 in Zagreb; each viewer's
+// hour below falls in that once moved into the viewer's zone, and outside it as it stands.
+async function describeHours(page: Page, from: string, to: string) {
+    await describe(page, "Usually online", async editor => {
+        await editor.getByLabel("From").selectOption(from);
+        await editor.getByLabel("To").selectOption(to);
+    });
+}
+
+const valorantTesterHours = (page: Page) =>
+    card(page, "ValorantTester").locator(".fact-fit, .fact-miss").filter({ hasText: "–" });
+
+// Chromium reports India's zone by its old name, which Postgres doesn't know.
 test.describe("a browser that reports its zone by an old name", () => {
     test.use({ timezoneId: "Asia/Calcutta" });
 
-    test("is shown the feed", async ({ page }) => {
+    test("has the feed's hours moved into its zone", async ({ page }) => {
         await page.goto(feedPath);
         expect(await page.evaluate(() => Intl.DateTimeFormat().resolvedOptions().timeZone)).toBe("Asia/Calcutta");
-        await expectSettled(page);
+        await describeHours(page, "00:00", "01:00");
 
-        await expect(feedOrder(page)).toHaveText(
-            ["Radiant Rising", "Night Owls", "ValorantTester", olderPosts, "ExpiredTester"]);
+        await expect(valorantTesterHours(page)).toHaveClass(/fact-fit/);
+    });
+});
+
+// A browser from before Kyiv's rename knows its zone only as Europe/Kiev, so that is the
+// name its hours are shown by.
+test.describe("a browser that knows its zone only by an old name", () => {
+    test.use({ locale: "en-GB" });
+
+    test("has the feed's hours moved into its zone, and shown in it", async ({ page }) => {
+        await reportZone(page, "Europe/Kiev", ["Europe/Kyiv"]);
+        await page.goto(feedPath);
+        await describeHours(page, "23:00", "00:00");
+
+        await expect(valorantTesterHours(page)).toHaveClass(/fact-fit/);
+        await expect(valorantTesterHours(page)).toContainText("20:00–00:00");
+    });
+});
+
+// A zone neither the list nor Postgres knows goes as none, and the hours are compared as
+// they stand.
+test.describe("a browser that reports a zone nobody knows", () => {
+    test("is shown the feed, its hours unmoved", async ({ page }) => {
+        await reportZone(page, "Mars/Olympus_Mons");
+        await page.goto(feedPath);
+        await describeHours(page, "23:00", "00:00");
+
+        await expect(valorantTesterHours(page)).toHaveClass(/fact-miss/);
+        await expect(feedOrder(page)).toContainText(["ValorantTester", olderPosts, "ExpiredTester"]);
     });
 });
 

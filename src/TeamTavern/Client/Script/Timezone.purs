@@ -1,26 +1,20 @@
-module TeamTavern.Client.Script.Timezone (getClientTimezone) where
+module TeamTavern.Client.Script.Timezone (getClientTimezone, getListedTimezone) where
 
 import Prelude
 
-import Data.Array (find)
-import Data.Maybe (Maybe(..), fromMaybe)
-import Effect (Effect)
+import Data.Maybe (Maybe)
 import Effect.Class (class MonadEffect, liftEffect)
-import TeamTavern.Shared.Timezones (allTimezones)
+import JavaScript.Intl.DateTimeFormat as DateTimeFormat
+import TeamTavern.Shared.Timezones (listedTimezone)
 
-foreign import browserTimezone :: Effect String
-
--- | The name Intl gives a zone, whichever of its names it is asked with: the
--- | one the browser reports its own zone by.
-foreign import intlName :: String -> String
-
--- | The browser's zone as the site's list names it. Browsers report some zones
--- | by their old names (Asia/Calcutta, Europe/Kiev), which Postgres doesn't
--- | know, so the zone is the list's entry that Intl takes for the same one.
+-- | The browser's zone by the name it gives it, the one name its own Intl is
+-- | sure to know, which times are shown in. The list may have the zone under a
+-- | name the browser is too old to know (Europe/Kyiv for its Europe/Kiev).
 getClientTimezone :: ∀ effect. MonadEffect effect => effect String
-getClientTimezone = liftEffect do
-    browser <- browserTimezone
-    let names = allTimezones <#> _.name
-    pure case find (_ == browser) names of
-        Just name -> name
-        Nothing -> names # find (intlName >>> (_ == browser)) # fromMaybe browser
+getClientTimezone = liftEffect $ DateTimeFormat.new__ <#> DateTimeFormat.resolvedOptions <#> _.timeZone
+
+-- | The browser's zone as the list names it, which a form starts from, or
+-- | nothing where the list doesn't have it, as with the UTC that privacy modes
+-- | report.
+getListedTimezone :: ∀ effect. MonadEffect effect => effect (Maybe String)
+getListedTimezone = getClientTimezone <#> listedTimezone

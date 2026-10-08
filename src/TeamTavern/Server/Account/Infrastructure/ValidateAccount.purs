@@ -22,7 +22,7 @@ import TeamTavern.Server.Infrastructure.Error (Terror(..))
 import TeamTavern.Server.Infrastructure.ResolveSteamId (ResolvedAccount)
 import TeamTavern.Shared.Languages (allLanguages)
 import TeamTavern.Shared.Steam (isSteamId)
-import TeamTavern.Shared.Timezones (allTimezones)
+import TeamTavern.Shared.Timezones (isListedTimezone)
 import Type.Proxy (Proxy(..))
 
 -- | A check of the account's facts and contacts, naming a fact by its key and
@@ -71,7 +71,7 @@ accountChecks contactKinds countries today { account, steamUnavailable } =
         ("Unknown languages: " <> joinWith ", " account.languages)
     , ensure (maybe true (\birthday -> parseDate birthday # maybe false (sixteenOn today)) account.birthday)
         (fieldError "birthday") ("Birthday isn't 16 years ago or earlier: " <> fromMaybe "" account.birthday)
-    , ensure (maybe true (\timezone -> any (_.name >>> eq timezone) allTimezones) account.timezone)
+    , ensure (maybe true isListedTimezone account.timezone)
         (fieldError "timezone") ("Unknown timezone: " <> fromMaybe "" account.timezone)
     ]
     <> (Object.toUnfoldable account.contacts <#> \(Tuple kind value) ->

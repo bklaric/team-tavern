@@ -3,6 +3,7 @@ import { bornAgo, password, signOut, signUp, unique } from "../accounts";
 import { discordUser, fakeDiscord, signUpWithDiscord } from "../discord";
 import { expectPage } from "../pages";
 import { fakeSteam } from "../steam";
+import { reportZone } from "../zones";
 
 // Posts go into League of Legends, whose feed holds only LeagueOfLegendsTester's seeded
 // player post (`stacks/test-seed/players.sql`): Gold I, Top, Casual, Croatia, English.
@@ -455,5 +456,61 @@ test.describe("posting", () => {
         await page.getByRole("link", { name: /^Valorant/ }).click();
         await expectPage(page, "/games/valorant/post/group");
         await expect(page.getByRole("heading", { name: "Tell players about your group" })).toBeVisible();
+    });
+});
+
+// The timezone a new post starts from is the browser's, as the list names it.
+test.describe("a post's timezone", () => {
+    const timezone = (page: Page) => page.getByLabel("Timezone");
+
+    test.describe("in a zone Chromium names by an old name", () => {
+        test.use({ timezoneId: "Africa/Asmara" });
+
+        test("starts from the list's zone for the same place", async ({ page }) => {
+            await page.goto("/games/league-of-legends/post/player");
+            expect(await page.evaluate(() => Intl.DateTimeFormat().resolvedOptions().timeZone)).toBe("Africa/Asmera");
+
+            await expect(timezone(page)).toHaveValue("Africa/Asmara");
+            await expect(timezone(page).locator("option:checked")).toHaveText("Eritrea");
+        });
+    });
+
+    test("starts from the list's zone in a browser that can't map an old name", async ({ page }) => {
+        await reportZone(page, "Europe/Kiev");
+        await page.goto("/games/league-of-legends/post/player");
+
+        await expect(timezone(page)).toHaveValue("Europe/Kyiv");
+        await expect(timezone(page).locator("option:checked")).toHaveText("Ukraine: Kyiv");
+    });
+
+    test.describe("in a zone the list doesn't have", () => {
+        test.use({ timezoneId: "UTC" });
+
+        test("is left for the player to choose, and the post publishes without one", async ({ page }) => {
+            await signUp(page);
+            await page.goto("/games/league-of-legends/post/player");
+            await expect(timezone(page)).toHaveValue("");
+            await expect(timezone(page).locator("option:checked")).toHaveText("Choose a timezone");
+
+            await page.getByLabel("Discord", { exact: true }).fill("rift.owl");
+            await page.getByRole("button", { name: "Publish post" }).click();
+            await expectPage(page, "/games/league-of-legends/post/player/live");
+        });
+
+        test("is asked for once the post has hours", async ({ page }) => {
+            await signUp(page);
+            await page.goto("/games/league-of-legends/post/player");
+            await field(page, "Usually online").getByLabel("From").selectOption("20:00");
+            await field(page, "Usually online").getByLabel("To").selectOption("23:00");
+            await page.getByRole("button", { name: "Publish post" }).click();
+
+            await expect(field(page, "Timezone")).toContainText("Choose the timezone your hours are in.");
+            await expect(timezone(page)).toBeFocused();
+            await expectPage(page, "/games/league-of-legends/post/player");
+
+            await timezone(page).selectOption("Europe/Zagreb");
+            await page.getByRole("button", { name: "Publish post" }).click();
+            await expectPage(page, "/games/league-of-legends/post/player/live");
+        });
     });
 });

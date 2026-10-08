@@ -248,7 +248,8 @@ marked as (
     from seat
     join description on description.seat_id = seat.id
     cross join this_post post
-    -- The candidate's hours moved into the seat's timezone.
+    -- The candidate's hours moved into the seat's timezone. Where either side
+    -- has no timezone, the hours stay as they are.
     cross join lateral (
         select
             shifted.online_from / 60 as online_start,
@@ -261,7 +262,7 @@ marked as (
                 ((date_part('epoch', post.online_to)::integer / 60 + shift.minutes) % 1440 + 1440) % 1440
                     as online_to
             from (
-                select seat.utc_offset - coalesce(post.utc_offset, seat.utc_offset) as minutes
+                select coalesce(seat.utc_offset - post.utc_offset, 0) as minutes
             ) shift
         ) shifted
     ) theirs

@@ -141,7 +141,7 @@ checks game countries type_ today post resolved@{ account } summary =
         (fieldError "size") "Group numbers are out of range."
     , ensure (post.online # maybe true \{ from, to } -> isTime from && isTime to)
         (inj (Proxy :: _ "hours") {}) "Online hours aren't times."
-    , ensure (isNothing post.online || isJust account.timezone) (inj (Proxy :: _ "hours") {})
+    , ensure (isNothing post.online || isJust account.timezone) (fieldError "timezone")
         "Online hours have no timezone."
     , ensure (type_ /= "community" || isJust post.name) (inj (Proxy :: _ "name") {})
         "A community has no name."

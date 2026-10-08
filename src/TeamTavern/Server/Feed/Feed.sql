@@ -26,7 +26,7 @@
 -- options holds a player's point on an ordered field, and ranges a group's or
 -- community's. A player gives a country and an age, a group or a community the
 -- regions and ages it wants. timezone is the viewer's, which the online hours
--- are in; it is required with them.
+-- are in; without it, they are compared with the posts' as they stand.
 --
 -- Matching cannot be indexed: whether a post fits depends on the description,
 -- so every post a batch may reach is compared and sorted. Active posts come
@@ -215,7 +215,7 @@ reach as (
 ),
 
 -- The owners' timezones as offsets at now, worked out once for each rather
--- than for each post, and only when the viewer gives their hours.
+-- than for each post, and only when the viewer gives their hours in a zone.
 zone as (
     select
         owner.timezone as name,
@@ -224,7 +224,7 @@ zone as (
     from visible
     join player owner on owner.id = visible.player_id
     cross join viewer
-    where viewer.online_from is not null and owner.timezone is not null
+    where viewer.online_from is not null and viewer.utc_offset is not null and owner.timezone is not null
         and (not visible.expired or (select expired_reached from reach))
     group by owner.timezone
 ),
@@ -308,7 +308,7 @@ candidate as (
     ) languages
     left join zone on zone.name = owner.timezone
     -- The post's hours moved into the viewer's timezone, as an arc like the
-    -- viewer's. Hours with no timezone are taken to be the viewer's.
+    -- viewer's. Where either side has no timezone, the hours stay as they are.
     cross join lateral (
         select
             shifted.online_from / 60 as online_start,
@@ -321,7 +321,7 @@ candidate as (
                 ((date_part('epoch', post.online_to)::integer / 60 + shift.minutes) % 1440 + 1440) % 1440
                     as online_to
             from (
-                select viewer.utc_offset - coalesce(zone.utc_offset, viewer.utc_offset) as minutes
+                select coalesce(viewer.utc_offset - zone.utc_offset, 0) as minutes
             ) shift
         ) shifted
     ) theirs

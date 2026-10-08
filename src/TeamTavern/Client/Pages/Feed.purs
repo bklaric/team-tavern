@@ -239,10 +239,10 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
         load cursor = do
             request <- liftEffect $ Ref.modify (_ + 1) requestRef
             state' <- Hooks.modify stateId _ { busy = true }
-            timezone <- getClientTimezone
-            let description = current state'.stored
+            -- Hours carry the zone they were given in, which a post's own
+            -- description may lack, as the fit worker reads it.
             result <- H.lift $ Async.attempt $ fetchPathBody (expecting [ "notFound" ] (Proxy :: _ ViewFeed)) { handle }
-                { description: description { timezone = description.timezone <|> Just timezone }
+                { description: current state'.stored
                 , showing: if state'.segment == "all" then [] else [ state'.segment ]
                 , cursor
                 }
@@ -553,6 +553,7 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
                     { ref: popoverRef
                     , fields
                     , description
+                    , timezone: state.viewer <#> _.timezone
                     , openField: state.openField
                     , showMore: state.showMore
                     , moreShown: state.moreShown
@@ -591,6 +592,7 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
                     { ref: sheetRef
                     , fields
                     , description
+                    , timezone: state.viewer <#> _.timezone
                     , onType: changeType
                     , onChange: changeDescription
                     , onClose: closeSheet

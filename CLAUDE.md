@@ -579,9 +579,15 @@ the same shape for the rest.
 city names and the country names of `Seed/Countries.sql`; it fails on a country
 it can't name and on a zone the Postgres image in the compose files doesn't
 know. The picker names a zone by its country, and by country and city where the
-country has several. A zone the list drops that the old site offered needs a
-row in `redesign/import/mapping.sql`'s `timezone_map`, or the import carries it
-in as a name the picker doesn't offer.
+country has several. Browsers name zones as CLDR does, by old names such as
+`Africa/Asmera` that Postgres doesn't know, so the module also carries CLDR's
+other names for each place: `listedTimezone` gives the list's name for any of
+them, which the forms start from and leave empty where the list has none, and
+`postgresTimezone` also passes the names outside the list that Postgres knows
+(`UTC`, `Etc/GMT-3`), for the feed, which drops any other rather than fail. A
+zone the list drops that the old site offered needs a row in
+`redesign/import/mapping.sql`'s `timezone_map`, or the import carries it in as
+a name the picker doesn't offer.
 
 A game's handle is its common title, without a publisher prefix, lowercased,
 apostrophes dropped and every other run of non-alphanumerics a single hyphen:

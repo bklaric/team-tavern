@@ -211,8 +211,9 @@ clear field description = case field.kind of
 
 -- | One field's control, in a desktop popover or the phone's sheet. `id`
 -- | keeps its inputs' names apart from the other place the field is edited.
-editor :: ∀ w i. String -> BarField -> Description -> (Description -> i) -> HH.HTML w i
-editor id field description onChange =
+-- | Hours given here are in the viewer's `timezone`.
+editor :: ∀ w i. String -> Maybe String -> BarField -> Description -> (Description -> i) -> HH.HTML w i
+editor id timezone field description onChange =
     HH.div [ HS.class_ "editor" ] case field.kind of
     Choose { multiple, all } ->
         [ options multiple (chosen field description) \value ->
@@ -281,8 +282,7 @@ editor id field description onChange =
         ]
     Online ->
         let online = description.online # fromMaybe { from: Nothing, to: Nothing }
-            -- Hours given here are in the viewer's own timezone.
-            setOnline online' = onChange description { online = Just online', timezone = Nothing }
+            setOnline online' = onChange description { online = Just online', timezone = timezone }
         in
         [ hoursRange
             { name: field.label

@@ -51,6 +51,8 @@ type Bar i =
     { ref :: H.RefLabel
     , fields :: Array BarField
     , description :: Description
+    -- The viewer's, which hours given in the bar are in.
+    , timezone :: Maybe String
     , openField :: Maybe String
     , showMore :: Boolean
     -- How many of the fields behind More fit in the bar's two rows beside the
@@ -69,7 +71,7 @@ type Bar i =
 -- | The description on a desktop: the type, then a chip per field that opens
 -- | its editor in a popover. The feed follows every change.
 bar :: ∀ w i. Bar i -> HH.HTML w i
-bar { ref, fields, description, openField, showMore, moreShown, onType, onChange, onKeep, onOpen, onMore, onClearAll } =
+bar { ref, fields, description, timezone, openField, showMore, moreShown, onType, onChange, onKeep, onOpen, onMore, onClearAll } =
     HH.section [ HS.class_ "description", HPA.labelledBy "description-heading" ]
     [ HH.div [ HS.class_ "description-heading" ]
         [ HH.h2 [ HP.id "description-heading" ] [ HH.text "Find posts that fit you" ]
@@ -153,7 +155,7 @@ bar { ref, fields, description, openField, showMore, moreShown, onType, onChange
                     , title: field.label
                     , onClose: onOpen Nothing
                     }
-                    [ editor "bar" field description change
+                    [ editor "bar" timezone field description change
                     , HH.div [ HS.class_ "popover-footer" ]
                         [ button Text Small (change $ clearOf field) [ HH.text "Clear" ]
                         , button Outline Small (onOpen Nothing) [ HH.text "Done" ]
@@ -185,18 +187,19 @@ sheet :: ∀ w i.
     { ref :: H.RefLabel
     , fields :: Array BarField
     , description :: Description
+    , timezone :: Maybe String
     , onType :: String -> i
     , onChange :: Description -> i
     , onClose :: i
     }
     -> HH.HTML w i
-sheet { ref, fields, description, onType, onChange, onClose } =
+sheet { ref, fields, description, timezone, onType, onChange, onClose } =
     overlay { ref, presentation: FullScreen, title: "Tell us about you", onClose }
     ( [ typeChoice "sheet-type" description.type onType ]
     <> (fields <#> \field ->
         HH.div [ HS.class_ "sheet-field" ]
         [ HH.h3_ [ HH.text field.label ]
-        , editor "sheet" field description onChange
+        , editor "sheet" timezone field description onChange
         ])
     )
     [ button Primary Regular onClose [ HH.text "Show posts" ] ]

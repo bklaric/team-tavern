@@ -33,7 +33,7 @@ import TeamTavern.Client.Components.Range (ageRange, hoursHint, hoursRange, opti
 import TeamTavern.Client.Components.Stepper (countRow, stepper)
 import TeamTavern.Client.Components.Tokens as Tokens
 import TeamTavern.Client.Icons as Icons
-import TeamTavern.Client.Pages.Post.Draft (Draft)
+import TeamTavern.Client.Pages.Post.Draft (Draft, draftTimezone)
 import TeamTavern.Client.Shared.Contacts (contactFormat, contactLabel, contactPlaceholder)
 import TeamTavern.Client.Shared.Facts (dateText, timezoneOptions, timezoneText)
 import TeamTavern.Client.Snippets.Class as HS
@@ -310,13 +310,14 @@ timeFields context@{ draft } =
         (Just "Your hours are in this timezone. Everyone else sees them in theirs.")
         (select [ HP.id $ idOf "timezone" ]
             { options: timezoneOptions
-            , value: fromMaybe context.timezone draft.timezone
-            , placeholder: Nothing
-            , onChange: \value -> context.onChange "timezone" _ { timezone = Just value }
+            , value: fromMaybe "" timezone
+            , placeholder: if isNothing timezone then Just "Choose a timezone" else Nothing
+            , onChange: \value -> context.onChange "timezone" _ { timezone = blank value }
             })
     ]
     where
     blank value = if value == "" then Nothing else Just value
+    timezone = draftTimezone context.timezone draft
 
 -- | The post's fields, the game's among them, with nothing behind a click
 -- | (brief 6, step 3).
