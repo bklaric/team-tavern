@@ -3,7 +3,8 @@ module TeamTavern.Server.Player.ViewMe (viewMe) where
 import Prelude
 
 import Async (Async)
-import Jarilo (ok)
+import Data.Variant (Variant)
+import Jarilo (InternalRow_, NotAuthorizedRow_, OkRow, ok)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..), (:))
 import TeamTavern.Routes.Player.ViewMe as ViewMe
@@ -15,6 +16,7 @@ import TeamTavern.Server.Infrastructure.Environment (Environment)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstInternal, queryMany)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Notification.Infrastructure.Visible (visibleNotification)
+import Type.Row (type (+))
 
 -- The conversations about the player's posts and those they started, each
 -- counted once however much is unread in it (brief 11.4), and the unread
@@ -57,7 +59,8 @@ gamesQuery = Query """
 
 -- The header asks on every page, so the answer renews the session cookie,
 -- which then lapses when the session does.
-viewMe :: ∀ left. Environment -> Pool -> Cookies -> Async left _
+viewMe :: ∀ left. Environment -> Pool -> Cookies
+    -> Async left (Variant (OkRow ViewMe.OkContent + NotAuthorizedRow_ + InternalRow_ + ()))
 viewMe environment pool cookies =
     sendResponse "Error viewing the signed-in player" do
     {id, token} <- ensureSignedIn pool cookies

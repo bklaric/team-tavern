@@ -5,10 +5,11 @@ import Prelude
 import Async (Async, foreach)
 import Data.Bifunctor (lmap)
 import Data.Newtype (unwrap)
-import Jarilo (ok_)
+import Data.Variant (Variant)
+import Jarilo (BadRequestRow_, InternalRow_, NotAuthorizedRow_, NotFoundRow_, OkRow, ok_)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..), (:), (:|))
-import TeamTavern.Routes.Shared.Conversation (MessageContent)
+import TeamTavern.Routes.Shared.Conversation (Conversation, MessageContent)
 import TeamTavern.Server.Block.Infrastructure.Blocked (blockedBetween)
 import TeamTavern.Server.Conversation.Infrastructure.PostMessage (postMessage, validateMessage)
 import TeamTavern.Server.Conversation.Infrastructure.SendMessageEmail (sendMessageEmail)
@@ -18,6 +19,7 @@ import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Error (elaborate)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstInternal, queryFirstNotFound, queryNone, transaction)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
+import Type.Row (type (+))
 
 -- Nobody messages their own post, or a post of a player either has blocked.
 postQuery :: Query
@@ -41,7 +43,8 @@ conversationQuery = Query """
     select id from conversation where post_id = $1 and messager_id = $2
     """
 
-sendMessage :: ∀ left. Mailer -> Pool -> String -> Int -> Cookies -> MessageContent -> Async left _
+sendMessage :: ∀ left. Mailer -> Pool -> String -> Int -> Cookies -> MessageContent
+    -> Async left (Variant (OkRow Conversation + BadRequestRow_ + NotAuthorizedRow_ + NotFoundRow_ + InternalRow_ + ()))
 sendMessage mailer pool handle postId cookies { content } =
     sendResponse "Error sending message" do
     { id } <- ensureSignedIn pool cookies

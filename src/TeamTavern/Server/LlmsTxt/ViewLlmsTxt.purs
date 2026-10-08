@@ -5,7 +5,8 @@ import Prelude
 import Async (Async)
 import Data.Foldable (fold, foldMap)
 import Data.Map (Map)
-import Jarilo (ok_)
+import Data.Variant (Variant)
+import Jarilo (InternalRow_, OkRow, ok_)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..))
 import TeamTavern.Server.Guide.Guides (guides)
@@ -13,6 +14,7 @@ import TeamTavern.Server.Infrastructure.Postgres (queryMany_)
 import TeamTavern.Server.Infrastructure.RequestOrigin (requestOrigin)
 import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
+import Type.Row (type (+))
 
 type Game = { title :: String, handle :: String }
 
@@ -49,7 +51,7 @@ llmsTxt origin games = fold
     , link origin "Sitemap" "/sitemap.xml"
     ]
 
-viewLlmsTxt :: ∀ left. Pool -> Map String String -> Async left _
+viewLlmsTxt :: ∀ left. Pool -> Map String String -> Async left (Variant (OkRow String + InternalRow_ + ()))
 viewLlmsTxt pool headers =
     sendResponse "Error viewing llms.txt" do
     games <- loadGames pool

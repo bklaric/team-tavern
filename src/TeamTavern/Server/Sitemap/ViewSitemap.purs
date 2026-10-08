@@ -8,7 +8,8 @@ import Data.Foldable (fold, foldMap, maximum)
 import Data.Map (Map)
 import Data.Maybe (Maybe(..))
 import Data.String (Pattern(..), Replacement(..), replaceAll)
-import Jarilo (ok_)
+import Data.Variant (Variant)
+import Jarilo (InternalRow_, OkRow, ok_)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..))
 import TeamTavern.Server.Guide.Guides (guides)
@@ -17,6 +18,7 @@ import TeamTavern.Server.Infrastructure.RequestOrigin (requestOrigin)
 import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Shared.Thin (thin)
+import Type.Row (type (+))
 
 type Game = { handle :: String }
 
@@ -83,7 +85,7 @@ sitemap origin' games posts = fold
     ]
 
 -- A post that says too little is kept out as well, until its owner says more.
-viewSitemap :: ∀ left. Pool -> Map String String -> Async left _
+viewSitemap :: ∀ left. Pool -> Map String String -> Async left (Variant (OkRow String + InternalRow_ + ()))
 viewSitemap pool headers =
     sendResponse "Error viewing sitemap" do
     games <- loadGames pool

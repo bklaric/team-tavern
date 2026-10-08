@@ -5,7 +5,8 @@ import Prelude
 import Async (Async)
 import Data.Bifunctor (lmap)
 import Data.Newtype (unwrap)
-import Jarilo (noContent_)
+import Data.Variant (Variant)
+import Jarilo (BadRequestRow_, InternalRow_, NoContentRow_, NotAuthorizedRow_, NotFoundRow_, noContent_)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..), (:), (:|))
 import TeamTavern.Routes.Shared.Report (Report)
@@ -18,6 +19,7 @@ import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Error (elaborate)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotFound, transaction)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
+import Type.Row (type (+))
 
 -- The posts a contact panel opens on: not the viewer's own, and not one
 -- hidden by a block.
@@ -41,7 +43,8 @@ reportedQuery = Query $ """
         and not """ <> blockedBetween "$3" "post.player_id" <> """
     """
 
-reportPost :: ∀ left. Mailer -> AdminEmail -> Pool -> String -> Int -> Cookies -> Report -> Async left _
+reportPost :: ∀ left. Mailer -> AdminEmail -> Pool -> String -> Int -> Cookies -> Report
+    -> Async left (Variant (NoContentRow_ + BadRequestRow_ + NotAuthorizedRow_ + NotFoundRow_ + InternalRow_ + ()))
 reportPost mailer adminEmail pool handle postId cookies body =
     sendResponse "Error reporting post" do
     { id } <- ensureSignedIn pool cookies

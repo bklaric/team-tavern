@@ -9,13 +9,15 @@ import Data.Map as Map
 import Data.Maybe (fromMaybe, maybe)
 import Data.String as String
 import Data.Time.Duration (Milliseconds(..))
+import Data.Variant (Variant)
 import Effect (Effect)
 import Effect.Now (now)
 import Effect.Ref (Ref)
 import Effect.Ref as Ref
-import Jarilo (noContent_)
+import Jarilo (NoContentRow_, noContent_)
 import TeamTavern.Routes.ClientError.ReportClientError as ReportClientError
 import TeamTavern.Server.Infrastructure.Log (logStamped)
+import Type.Row (type (+))
 
 -- | Anyone can send a report, so at most this many a minute reach the log, and
 -- | the rest are counted.
@@ -51,7 +53,8 @@ admit (ClientErrorLimit ref) = do
     else Ref.write minute { dropped = minute.dropped + 1 } ref $> false
 
 reportClientError :: ∀ left.
-    ClientErrorLimit -> Map String String -> ReportClientError.RequestContent -> Async left _
+    ClientErrorLimit -> Map String String -> ReportClientError.RequestContent
+    -> Async left (Variant (NoContentRow_ + ()))
 reportClientError limit headers { page, request, failure, bundle } = do
     fromEffect do
         admitted <- admit limit

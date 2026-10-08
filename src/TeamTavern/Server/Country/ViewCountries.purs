@@ -3,13 +3,15 @@ module TeamTavern.Server.Country.ViewCountries (loadCountries, viewCountries) wh
 import Prelude
 
 import Async (Async)
-import Jarilo (ok_)
+import Data.Variant (Variant)
+import Jarilo (InternalRow_, OkRow, ok_)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..))
 import TeamTavern.Routes.Country.ViewCountries as ViewCountries
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstInternal_)
 import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
+import Type.Row (type (+))
 
 loadCountriesQuery :: Query
 loadCountriesQuery = Query """
@@ -26,7 +28,7 @@ loadCountriesQuery = Query """
 loadCountries :: ∀ errors. Pool -> Async (InternalTerror_ errors) ViewCountries.OkContent
 loadCountries pool = queryFirstInternal_ pool loadCountriesQuery
 
-viewCountries :: ∀ left. Pool -> Async left _
+viewCountries :: ∀ left. Pool -> Async left (Variant (OkRow ViewCountries.OkContent + InternalRow_ + ()))
 viewCountries pool =
     sendResponse "Error viewing countries" do
     ok_ <$> loadCountries pool

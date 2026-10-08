@@ -4,7 +4,8 @@ import Prelude
 
 import Async (Async)
 import Data.Newtype (unwrap)
-import Jarilo (ok_)
+import Data.Variant (Variant)
+import Jarilo (InternalRow_, NotAuthorizedRow_, OkRow, ok_)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..), (:))
 import TeamTavern.Routes.Notification.ViewNotifications as ViewNotifications
@@ -13,6 +14,7 @@ import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Postgres (queryMany)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Notification.Infrastructure.Visible (visibleNotification)
+import Type.Row (type (+))
 
 -- The list scrolls rather than pages (brief 11.3), so it holds the newest 50.
 notificationsQuery :: Query
@@ -49,7 +51,8 @@ notificationsQuery = Query $ """
     limit 50
     """
 
-viewNotifications :: ∀ left. Pool -> Cookies -> Async left _
+viewNotifications :: ∀ left. Pool -> Cookies
+    -> Async left (Variant (OkRow ViewNotifications.OkContent + NotAuthorizedRow_ + InternalRow_ + ()))
 viewNotifications pool cookies =
     sendResponse "Error viewing notifications" do
     { id } <- ensureSignedIn pool cookies

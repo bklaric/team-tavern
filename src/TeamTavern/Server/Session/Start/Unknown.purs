@@ -9,10 +9,10 @@ import Prelude
 import Async (Async, left)
 import Control.Parallel (parallel, sequential)
 import Data.Maybe (Maybe(..))
-import Data.Variant (inj)
-import Jarilo (badRequest_)
+import Data.Variant (Variant, inj)
+import Jarilo (BadRequestRow, InternalRow_, badRequest_)
 import JavaScript.Npm.Pg.Pool (Pool)
-import TeamTavern.Server.Infrastructure.Error (Terror(..))
+import TeamTavern.Server.Infrastructure.Error (Terror(..), TerrorVar)
 import TeamTavern.Server.Infrastructure.FetchDiscordUser (DiscordUserContent)
 import TeamTavern.Server.Infrastructure.FetchSteamNickname (fetchSteamNickname)
 import TeamTavern.Server.Infrastructure.GoogleSignIn (GoogleUser)
@@ -20,16 +20,22 @@ import TeamTavern.Server.Infrastructure.ResolveSteamId (SteamApi)
 import TeamTavern.Server.Player.Domain.Provider (Provider(..))
 import TeamTavern.Server.Player.Infrastructure.SignInTicket (addSignInTicket)
 import Type.Proxy (Proxy(..))
+import Type.Row (type (+))
+
+-- | A ticket to register with and the nickname to offer.
+type Unknown = { ticket :: String, nickname :: String }
 
 -- | The Discord username, which the nickname prompt offers. Discord's token
 -- | serves again for registering.
-unknownDiscord :: ∀ a. DiscordUserContent -> Async _ a
+unknownDiscord :: ∀ a other errors. DiscordUserContent ->
+    Async (TerrorVar (BadRequestRow (Variant (unknownDiscord :: { nickname :: String } | other)) + errors)) a
 unknownDiscord { id, username } = left $ Terror
     (badRequest_ $ inj (Proxy :: _ "unknownDiscord") { nickname: username })
     [ "No account signs in with Discord: " <> id ]
 
 -- | A ticket and the Steam profile name to offer as a nickname.
-unknownSteam :: ∀ a. SteamApi -> Pool -> String -> Async _ a
+unknownSteam :: ∀ a other errors. SteamApi -> Pool -> String ->
+    Async (TerrorVar (InternalRow_ + BadRequestRow (Variant (unknownSteam :: Unknown | other)) + errors)) a
 unknownSteam steamApi pool steamId = do
     unknown <- sequential $ { ticket: _, nickname: _ }
         <$> parallel (addSignInTicket pool Steam { providerId: steamId, email: Nothing })
@@ -40,7 +46,8 @@ unknownSteam steamApi pool steamId = do
 
 -- | A ticket, which carries the address Google gave, and the Google name to
 -- | offer as a nickname.
-unknownGoogle :: ∀ a. Pool -> GoogleUser -> Async _ a
+unknownGoogle :: ∀ a other errors. Pool -> GoogleUser ->
+    Async (TerrorVar (InternalRow_ + BadRequestRow (Variant (unknownGoogle :: Unknown | other)) + errors)) a
 unknownGoogle pool { googleId, email, nickname } = do
     ticket <- addSignInTicket pool Google { providerId: googleId, email }
     left $ Terror

@@ -7,7 +7,8 @@ import Data.Foldable (for_)
 import Data.Maybe (Maybe)
 import Data.Newtype (unwrap)
 import Data.Traversable (for)
-import Jarilo (ok_)
+import Data.Variant (Variant)
+import Jarilo (InternalRow_, NotAuthorizedRow_, OkRow, ok_)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..), (:), (:|))
 import TeamTavern.Routes.Conversation.ViewPostConversation as ViewPostConversation
@@ -17,6 +18,7 @@ import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstMaybe)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
+import Type.Row (type (+))
 
 conversationQuery :: Query
 conversationQuery = Query $ """
@@ -28,7 +30,8 @@ conversationQuery = Query $ """
         and not """ <> blockedBetween "post.player_id" "conversation.messager_id" <> """
     """
 
-viewPostConversation :: ∀ left. Pool -> String -> Int -> Cookies -> Async left _
+viewPostConversation :: ∀ left. Pool -> String -> Int -> Cookies
+    -> Async left (Variant (OkRow ViewPostConversation.OkContent + NotAuthorizedRow_ + InternalRow_ + ()))
 viewPostConversation pool handle postId cookies =
     sendResponse "Error viewing post conversation" do
     { id } <- ensureSignedIn pool cookies

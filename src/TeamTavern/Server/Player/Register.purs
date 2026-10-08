@@ -5,8 +5,8 @@ import Prelude
 import Async (Async, foreach)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
-import Data.Variant (inj, match)
-import Jarilo (noContent)
+import Data.Variant (Variant, inj, match)
+import Jarilo (BadRequestRow, InternalRow_, NoContentRow_, noContent)
 import JavaScript.Npm.Pg.Pool (Pool)
 import TeamTavern.Routes.Player.RegisterPlayer as RegisterPlayer
 import TeamTavern.Server.Infrastructure.Cookie (Cookies, setCookieHeader)
@@ -29,9 +29,11 @@ import TeamTavern.Server.Session.Domain.Token as Token
 import TeamTavern.Server.Session.Infrastructure.RevokeSession (revokeSession)
 import TeamTavern.Server.Session.Start.CreateSession (createSession)
 import Type.Proxy (Proxy(..))
+import Type.Row (type (+))
 
 register :: ∀ left.
-    Environment -> Mailer -> DiscordApiUrl -> Pool -> Cookies -> RegisterPlayer.RequestContent -> Async left _
+    Environment -> Mailer -> DiscordApiUrl -> Pool -> Cookies -> RegisterPlayer.RequestContent
+    -> Async left (Variant (NoContentRow_ + BadRequestRow RegisterPlayer.BadContent + InternalRow_ + ()))
 register environment mailer discordApiUrl pool cookies content =
     sendResponse "Error registering player" do
     -- Validate register model.

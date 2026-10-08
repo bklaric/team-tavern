@@ -5,7 +5,8 @@ import Prelude
 import Async (Async)
 import Data.Bifunctor (lmap)
 import Data.Newtype (unwrap)
-import Jarilo (noContent_)
+import Data.Variant (Variant)
+import Jarilo (InternalRow_, NoContentRow_, NotAuthorizedRow_, NotFoundRow_, noContent_)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..), (:|))
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
@@ -13,6 +14,7 @@ import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Error (elaborate)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotFound)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
+import Type.Row (type (+))
 
 -- The viewer never finds themselves, so `block_not_self` can't fire.
 blockQuery :: Query
@@ -28,7 +30,8 @@ blockQuery = Query """
     select id from target
     """
 
-block :: ∀ left. Pool -> String -> Cookies -> Async left _
+block :: ∀ left. Pool -> String -> Cookies
+    -> Async left (Variant (NoContentRow_ + NotAuthorizedRow_ + NotFoundRow_ + InternalRow_ + ()))
 block pool nickname cookies =
     sendResponse "Error blocking player" do
     { id } <- ensureSignedIn pool cookies

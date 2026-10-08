@@ -5,7 +5,8 @@ import Prelude
 import Async (Async)
 import Data.Array (filter, nubByEq, partition)
 import Data.Newtype (unwrap)
-import Jarilo (ok_)
+import Data.Variant (Variant)
+import Jarilo (InternalRow_, NotAuthorizedRow_, OkRow, ok_)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..), (:))
 import TeamTavern.Routes.Conversation.ViewInbox (InboxRow)
@@ -16,6 +17,7 @@ import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Postgres (queryMany)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
+import Type.Row (type (+))
 
 -- Every conversation the viewer is a side of, latest message first, but those
 -- a block hides from both sides.
@@ -75,7 +77,7 @@ inboxQuery = Query $ """
     order by last.created desc, conversation.id desc
     """
 
-type Row = { own :: Boolean | InboxRowFields }
+type ConversationRow = { own :: Boolean | InboxRowFields }
 
 type InboxRowFields =
     ( id :: Int
@@ -85,16 +87,17 @@ type InboxRowFields =
     , unread :: Boolean
     )
 
-row :: Row -> InboxRow
+row :: ConversationRow -> InboxRow
 row { id, post, other, last, unread } = { id, post, other, last, unread }
 
 -- The own posts come in the order of their latest conversation, since the
 -- rows do.
-viewInbox :: ∀ left. Pool -> Cookies -> Async left _
+viewInbox :: ∀ left. Pool -> Cookies
+    -> Async left (Variant (OkRow ViewInbox.OkContent + NotAuthorizedRow_ + InternalRow_ + ()))
 viewInbox pool cookies =
     sendResponse "Error viewing inbox" do
     { id } <- ensureSignedIn pool cookies
-    rows :: Array Row <- queryMany pool inboxQuery (unwrap id : [])
+    rows :: Array ConversationRow <- queryMany pool inboxQuery (unwrap id : [])
     let { yes: own, no: messaged } = partition _.own rows
         groups = own # nubByEq (\one other -> one.post.id == other.post.id) <#> \{ post } ->
             { post, conversations: own # filter (\own' -> own'.post.id == post.id) <#> row }

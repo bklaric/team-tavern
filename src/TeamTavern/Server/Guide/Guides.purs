@@ -3,7 +3,6 @@ module TeamTavern.Server.Guide.Guides (Guide, guides) where
 import Prelude
 
 import Data.Array (sortBy)
-import Data.Ord (comparing)
 
 foreign import deadlockRankedWithFriendsText :: String
 

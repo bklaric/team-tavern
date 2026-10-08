@@ -5,7 +5,8 @@ import Prelude
 import Async (Async)
 import Data.Bifunctor (lmap)
 import Data.Newtype (unwrap)
-import Jarilo (noContent_)
+import Data.Variant (Variant)
+import Jarilo (InternalRow_, NoContentRow_, NotAuthorizedRow_, NotFoundRow_, noContent_)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query ((:), (:|))
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
@@ -14,8 +15,10 @@ import TeamTavern.Server.Infrastructure.Error (elaborate)
 import TeamTavern.Server.Infrastructure.Postgres (transaction)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Post.Infrastructure.Renew (renew)
+import Type.Row (type (+))
 
-renewPost :: ∀ left. Pool -> String -> Int -> Cookies -> Async left _
+renewPost :: ∀ left. Pool -> String -> Int -> Cookies
+    -> Async left (Variant (NoContentRow_ + NotAuthorizedRow_ + NotFoundRow_ + InternalRow_ + ()))
 renewPost pool handle postId cookies =
     sendResponse "Error renewing post" do
     { id } <- ensureSignedIn pool cookies

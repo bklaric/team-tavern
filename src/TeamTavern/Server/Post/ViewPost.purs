@@ -7,8 +7,9 @@ import Data.Bifunctor (lmap)
 import Data.Maybe (Maybe)
 import Data.Newtype (unwrap)
 import Data.Nullable (toNullable)
+import Data.Variant (Variant)
 import Foreign (Foreign)
-import Jarilo (internal__, ok_)
+import Jarilo (InternalRow_, NotFoundRow_, OkRow, internal__, ok_)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..), (:), (:|))
 import TeamTavern.Routes.Post.ViewPost as ViewPost
@@ -21,6 +22,7 @@ import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotFound, queryMany)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Post.Infrastructure.CardColumns (cardColumns)
 import TeamTavern.Server.Post.Infrastructure.OwnerColumns (ownerView)
+import Type.Row (type (+))
 import Yoga.JSON.Async (read)
 
 -- The page shows no marks: a description is the viewer's own, and what fits is
@@ -89,7 +91,8 @@ type Extras =
     , owner_view :: Maybe OwnerView
     }
 
-viewPost :: ∀ left. Pool -> String -> Int -> Cookies -> Async left _
+viewPost :: ∀ left. Pool -> String -> Int -> Cookies
+    -> Async left (Variant (OkRow ViewPost.OkContent + NotFoundRow_ + InternalRow_ + ()))
 viewPost pool handle id cookies =
     sendResponse "Error viewing post" do
     viewer <- checkSignedIn pool cookies <#> map (_.id >>> unwrap)

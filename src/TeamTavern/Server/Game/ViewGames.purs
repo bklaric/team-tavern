@@ -3,13 +3,15 @@ module TeamTavern.Server.Game.ViewGames (viewGames) where
 import Prelude
 
 import Async (Async)
-import Jarilo (ok_)
+import Data.Variant (Variant)
+import Jarilo (InternalRow_, OkRow, ok_)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..))
 import TeamTavern.Routes.Game.ViewGames as ViewGames
 import TeamTavern.Server.Infrastructure.Postgres (queryMany_)
 import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
+import Type.Row (type (+))
 
 -- The catalogue's order is the titles' order, wherever the site lists games.
 loadGamesQuery :: Query
@@ -28,7 +30,7 @@ loadGamesQuery = Query """
 loadGames :: ∀ errors. Pool -> Async (InternalTerror_ errors) ViewGames.OkContent
 loadGames pool = queryMany_ pool loadGamesQuery
 
-viewGames :: ∀ left. Pool -> Async left _
+viewGames :: ∀ left. Pool -> Async left (Variant (OkRow ViewGames.OkContent + InternalRow_ + ()))
 viewGames pool =
     sendResponse "Error viewing games" do
     ok_ <$> loadGames pool

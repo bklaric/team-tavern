@@ -3,7 +3,8 @@ module TeamTavern.Server.Feed.ViewOwnDescriptions (descriptionJson, ownDescripti
 import Prelude
 
 import Async (Async)
-import Jarilo (ok_)
+import Data.Variant (Variant)
+import Jarilo (InternalRow_, NotAuthorizedRow_, OkRow, ok_)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..), (:|))
 import TeamTavern.Routes.Feed.ViewOwnDescriptions as ViewOwnDescriptions
@@ -12,6 +13,7 @@ import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Postgres (queryMany)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Post.Infrastructure.Answers (flagsJson, optionsJson, rangesJson)
+import Type.Row (type (+))
 
 -- | A post as the description `Feed.sql` takes: its answers, and the account's
 -- | country, age and languages for a player post. The hours are in the owner's
@@ -55,7 +57,8 @@ ownDescriptionsQuery = Query $ """
     order by array_position(array['player', 'group', 'community'], post.ilk)
     """
 
-viewOwnDescriptions :: ∀ left. Pool -> String -> Cookies -> Async left _
+viewOwnDescriptions :: ∀ left. Pool -> String -> Cookies
+    -> Async left (Variant (OkRow ViewOwnDescriptions.OkContent + NotAuthorizedRow_ + InternalRow_ + ()))
 viewOwnDescriptions pool handle cookies =
     sendResponse "Error viewing own descriptions" do
     { id } <- ensureSignedIn pool cookies

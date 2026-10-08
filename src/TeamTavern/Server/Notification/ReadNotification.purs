@@ -5,7 +5,8 @@ import Prelude
 import Async (Async)
 import Data.Bifunctor (lmap)
 import Data.Newtype (unwrap)
-import Jarilo (noContent_)
+import Data.Variant (Variant)
+import Jarilo (InternalRow_, NoContentRow_, NotAuthorizedRow_, NotFoundRow_, noContent_)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..), (:|))
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
@@ -13,6 +14,7 @@ import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Error (elaborate)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotFound)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
+import Type.Row (type (+))
 
 readQuery :: Query
 readQuery = Query """
@@ -23,7 +25,8 @@ readQuery = Query """
     returning notification.id
     """
 
-readNotification :: ∀ left. Pool -> Int -> Cookies -> Async left _
+readNotification :: ∀ left. Pool -> Int -> Cookies
+    -> Async left (Variant (NoContentRow_ + NotAuthorizedRow_ + NotFoundRow_ + InternalRow_ + ()))
 readNotification pool notificationId cookies =
     sendResponse "Error reading notification" do
     { id } <- ensureSignedIn pool cookies

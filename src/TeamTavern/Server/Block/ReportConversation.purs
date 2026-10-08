@@ -5,7 +5,8 @@ import Prelude
 import Async (Async)
 import Data.Bifunctor (lmap)
 import Data.Newtype (unwrap)
-import Jarilo (noContent_)
+import Data.Variant (Variant)
+import Jarilo (BadRequestRow_, InternalRow_, NoContentRow_, NotAuthorizedRow_, NotFoundRow_, noContent_)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..), (:|))
 import TeamTavern.Routes.Shared.Report (Report)
@@ -18,6 +19,7 @@ import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Error (elaborate)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotFound, transaction)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
+import Type.Row (type (+))
 
 -- The report is against the other side, about the post the conversation is
 -- about, whichever side of it the post's owner is.
@@ -45,7 +47,8 @@ reportedQuery = Query $ """
         and not """ <> blockedBetween "post.player_id" "conversation.messager_id" <> """
     """
 
-reportConversation :: ∀ left. Mailer -> AdminEmail -> Pool -> Int -> Cookies -> Report -> Async left _
+reportConversation :: ∀ left. Mailer -> AdminEmail -> Pool -> Int -> Cookies -> Report
+    -> Async left (Variant (NoContentRow_ + BadRequestRow_ + NotAuthorizedRow_ + NotFoundRow_ + InternalRow_ + ()))
 reportConversation mailer adminEmail pool conversationId cookies body =
     sendResponse "Error reporting conversation" do
     { id } <- ensureSignedIn pool cookies

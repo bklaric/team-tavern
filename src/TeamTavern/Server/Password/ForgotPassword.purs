@@ -3,7 +3,8 @@ module TeamTavern.Server.Password.ForgotPassword (forgotPassword) where
 import Prelude
 
 import Async (Async)
-import Jarilo (noContent_)
+import Data.Variant (Variant)
+import Jarilo (InternalRow_, NoContentRow_, NotFoundRow_, noContent_)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..), (:|))
 import TeamTavern.Routes.Password.ForgotPassword as ForgotPassword
@@ -11,6 +12,7 @@ import TeamTavern.Server.Infrastructure.Email (Block(..), Email, Mailer, deliver
 import TeamTavern.Server.Infrastructure.GenerateNonce (Nonce, generateNonce, toString)
 import TeamTavern.Server.Infrastructure.Postgres (LoadSingleError, queryFirstNotFound)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
+import Type.Row (type (+))
 
 type Player = {email :: String, nickname :: String}
 
@@ -56,7 +58,7 @@ forgotPassword
     .  Mailer
     -> Pool
     -> ForgotPassword.RequestContent
-    -> Async left _
+    -> Async left (Variant (NoContentRow_ + NotFoundRow_ + InternalRow_ + ()))
 forgotPassword mailer pool {email} =
     sendResponse "Error sending password reset email" do
     -- Generate password reset nonce.

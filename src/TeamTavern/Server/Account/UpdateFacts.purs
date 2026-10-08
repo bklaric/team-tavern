@@ -9,10 +9,10 @@ import Data.Foldable (sequence_)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
 import Data.Nullable (toNullable)
-import Data.Variant (inj)
+import Data.Variant (Variant, inj)
 import Effect.Class (liftEffect)
 import Effect.Now (nowDate)
-import Jarilo (badRequest_, internal__, noContent_)
+import Jarilo (BadRequestRow, InternalRow_, NoContentRow_, NotAuthorizedRow_, badRequest_, internal__, noContent_)
 import JavaScript.Node.Errors.Class (code)
 import JavaScript.Npm.Pg.Async (query)
 import JavaScript.Npm.Pg.Error (constraint)
@@ -31,6 +31,7 @@ import TeamTavern.Server.Infrastructure.ResolveSteamId (SteamApi, resolveSteamCo
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Player.Domain.Nickname (validateNickname)
 import Type.Proxy (Proxy(..))
+import Type.Row (type (+))
 import Yoga.JSON (writeImpl)
 
 -- Every column is written as given, so a fact left empty is cleared, unlike
@@ -62,7 +63,8 @@ queryString = Query """
 allContactKinds :: Array String
 allContactKinds = [ "discord", "steam", "riot", "battle_tag", "ea", "epic", "embark", "ubisoft", "marvel_rivals", "psn", "gamer_tag", "friend_code" ]
 
-updateFacts :: ∀ left. SteamApi -> Pool -> Cookies -> UpdateFacts.RequestContent -> Async left _
+updateFacts :: ∀ left. SteamApi -> Pool -> Cookies -> UpdateFacts.RequestContent
+    -> Async left (Variant (NoContentRow_ + BadRequestRow UpdateFacts.BadContent + NotAuthorizedRow_ + InternalRow_ + ()))
 updateFacts steamApi pool cookies { nickname, account } =
     sendResponse "Error updating account facts" do
     { id } <- ensureSignedIn pool cookies

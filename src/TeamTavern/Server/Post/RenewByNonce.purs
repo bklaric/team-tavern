@@ -4,7 +4,8 @@ import Prelude
 
 import Async (Async)
 import Data.Bifunctor (lmap)
-import Jarilo (ok_)
+import Data.Variant (Variant)
+import Jarilo (InternalRow_, NotFoundRow_, OkRow, ok_)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..), (:))
 import TeamTavern.Routes.Post.RenewByNonce as RenewByNonce
@@ -13,6 +14,7 @@ import TeamTavern.Server.Infrastructure.Error (elaborate)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstInternal, transaction)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Post.Infrastructure.Renew (renew)
+import Type.Row (type (+))
 
 renewedQuery :: Query
 renewedQuery = Query $ """
@@ -29,7 +31,8 @@ renewedQuery = Query $ """
 
 -- | The nonce is the post's for as long as the post lives, so every email about
 -- | it carries the same link, and a link opened twice renews twice.
-renewByNonce :: ∀ left. Pool -> RenewByNonce.RequestContent -> Async left _
+renewByNonce :: ∀ left. Pool -> RenewByNonce.RequestContent
+    -> Async left (Variant (OkRow RenewByNonce.OkContent + NotFoundRow_ + InternalRow_ + ()))
 renewByNonce pool { nonce } =
     sendResponse "Error renewing post by nonce" do
     renewed :: RenewByNonce.OkContent <- pool # transaction \client -> do

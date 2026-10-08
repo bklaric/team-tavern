@@ -5,12 +5,13 @@ import Prelude
 import Async (Async)
 import Data.Newtype (unwrap)
 import Data.Nullable (toNullable)
+import Data.Variant (Variant)
 import Effect.Class (liftEffect)
 import Effect.Now (nowDate)
-import Jarilo (noContent_)
+import Jarilo (BadRequestRow, InternalRow_, NoContentRow_, NotAuthorizedRow_, NotFoundRow_, noContent_)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..), (:), (:|))
-import TeamTavern.Routes.Shared.Post (RequestContent)
+import TeamTavern.Routes.Shared.Post (BadContent, RequestContent)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotFound, transaction)
@@ -22,6 +23,7 @@ import TeamTavern.Server.Post.Infrastructure.NotifyFits (notifyFits)
 import TeamTavern.Server.Post.Infrastructure.ValidatePost (validatePost)
 import TeamTavern.Server.Post.Infrastructure.WriteAccount (writeAccount)
 import TeamTavern.Server.Post.Infrastructure.WriteAnswers (writeAnswers)
+import Type.Row (type (+))
 
 -- Saving renews the post (brief 9), so updated moves to now. Whether it had
 -- expired is read before the update, since returning sees only the new time.
@@ -55,7 +57,8 @@ updateQuery = Query """
     returning post.id, saved.expired
     """
 
-updatePost :: ∀ left. SteamApi -> Pool -> String -> String -> Cookies -> RequestContent -> Async left _
+updatePost :: ∀ left. SteamApi -> Pool -> String -> String -> Cookies -> RequestContent
+    -> Async left (Variant (NoContentRow_ + BadRequestRow BadContent + NotAuthorizedRow_ + NotFoundRow_ + InternalRow_ + ()))
 updatePost steamApi pool handle type_ cookies content =
     sendResponse "Error updating post" do
     { id } <- ensureSignedIn pool cookies

@@ -4,13 +4,15 @@ import Prelude
 
 import Async (Async)
 import Data.Bifunctor (lmap)
-import Jarilo (ok_)
+import Data.Variant (Variant)
+import Jarilo (InternalRow_, NotFoundRow_, OkRow, ok_)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..), (:))
 import TeamTavern.Routes.Game.ViewGame as ViewGame
 import TeamTavern.Server.Infrastructure.Error (elaborate)
 import TeamTavern.Server.Infrastructure.Postgres (LoadSingleError, queryFirstNotFound)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
+import Type.Row (type (+))
 
 loadGameQuery :: Query
 loadGameQuery = Query """
@@ -68,7 +70,8 @@ loadGame :: ∀ errors. Pool -> String -> Async (LoadSingleError errors) ViewGam
 loadGame pool handle = queryFirstNotFound pool loadGameQuery (handle : [])
     # lmap (elaborate ("Can't find game: " <> handle))
 
-viewGame :: ∀ left. Pool -> String -> Async left _
+viewGame :: ∀ left. Pool -> String
+    -> Async left (Variant (OkRow ViewGame.OkContent + NotFoundRow_ + InternalRow_ + ()))
 viewGame pool handle =
     sendResponse "Error viewing game" do
     ok_ <$> loadGame pool handle

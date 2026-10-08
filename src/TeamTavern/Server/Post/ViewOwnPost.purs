@@ -4,7 +4,8 @@ import Prelude
 
 import Async (Async)
 import Data.Maybe (Maybe)
-import Jarilo (ok_)
+import Data.Variant (Variant)
+import Jarilo (InternalRow_, NotAuthorizedRow_, OkRow, ok_)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..), (:), (:|))
 import TeamTavern.Routes.Post.ViewOwnPost as ViewOwnPost
@@ -14,6 +15,7 @@ import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstInternal, queryFirstMaybe)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Post.Infrastructure.Answers (flagsJson, optionsJson, rangesJson)
+import Type.Row (type (+))
 
 accountQuery :: Query
 accountQuery = Query """
@@ -74,7 +76,8 @@ postQuery = Query $ """
     where game.handle = $1 and post.player_id = $2 and post.ilk = $3
     """
 
-viewOwnPost :: ∀ left. Pool -> String -> String -> Cookies -> Async left _
+viewOwnPost :: ∀ left. Pool -> String -> String -> Cookies
+    -> Async left (Variant (OkRow ViewOwnPost.OkContent + NotAuthorizedRow_ + InternalRow_ + ()))
 viewOwnPost pool handle type_ cookies =
     sendResponse "Error viewing own post" do
     { id } <- ensureSignedIn pool cookies

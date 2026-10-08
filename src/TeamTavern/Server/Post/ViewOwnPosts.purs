@@ -8,8 +8,9 @@ import Data.Array.NonEmpty as NonEmptyArray
 import Data.Bifunctor (lmap)
 import Data.Newtype (unwrap)
 import Data.Traversable (traverse)
+import Data.Variant (Variant)
 import Foreign (Foreign)
-import Jarilo (internal__, ok_)
+import Jarilo (InternalRow_, NotAuthorizedRow_, OkRow, internal__, ok_)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..), (:))
 import TeamTavern.Routes.Post.ViewOwnPosts as ViewOwnPosts
@@ -24,6 +25,7 @@ import TeamTavern.Server.Infrastructure.Postgres (queryMany)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Post.Infrastructure.CardColumns (cardColumns)
 import TeamTavern.Server.Post.Infrastructure.OwnerColumns (ownerView)
+import Type.Row (type (+))
 import Yoga.JSON.Async (read)
 
 postsQuery :: Query
@@ -51,7 +53,8 @@ type Extras =
     , description :: Description
     }
 
-viewOwnPosts :: ∀ left. Pool -> Cookies -> Async left _
+viewOwnPosts :: ∀ left. Pool -> Cookies
+    -> Async left (Variant (OkRow ViewOwnPosts.OkContent + NotAuthorizedRow_ + InternalRow_ + ()))
 viewOwnPosts pool cookies =
     sendResponse "Error viewing own posts" do
     { id } <- ensureSignedIn pool cookies

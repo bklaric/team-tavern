@@ -11,9 +11,10 @@ import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Newtype (unwrap)
 import Data.Nullable (toNullable)
 import Data.Traversable (traverse)
+import Data.Variant (Variant)
 import Effect.Class (liftEffect)
 import Foreign (Foreign)
-import Jarilo (internal__, ok_)
+import Jarilo (InternalRow_, NotFoundRow_, OkRow, internal__, ok_)
 import JavaScript.Date as Date
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..), (:))
@@ -26,6 +27,7 @@ import TeamTavern.Server.Infrastructure.Error (Terror(..), elaborate)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotFound, queryMany)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Shared.Timezones (postgresTimezone)
+import Type.Row (type (+))
 import Yoga.JSON (writeImpl)
 import Yoga.JSON.Async (read)
 
@@ -59,7 +61,8 @@ shownTypes { description, showing }
 count :: String -> Int
 count = Int.fromString >>> fromMaybe 0
 
-viewFeed :: ∀ left. Pool -> String -> Cookies -> ViewFeed.RequestContent -> Async left _
+viewFeed :: ∀ left. Pool -> String -> Cookies -> ViewFeed.RequestContent
+    -> Async left (Variant (OkRow ViewFeed.OkContent + NotFoundRow_ + InternalRow_ + ()))
 viewFeed pool handle cookies request =
     sendResponse "Error viewing feed" do
     (_ :: { id :: Int }) <- queryFirstNotFound pool gameQuery (handle : [])

@@ -4,8 +4,8 @@ import Prelude
 
 import Async (Async)
 import Data.Newtype (unwrap)
-import Data.Variant (inj)
-import Jarilo (noContent_)
+import Data.Variant (Variant, inj)
+import Jarilo (BadRequestRow, InternalRow_, NoContentRow_, NotAuthorizedRow_, noContent_)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..), (:|))
 import TeamTavern.Routes.Account.SwitchToGoogle as SwitchToGoogle
@@ -15,6 +15,7 @@ import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.GoogleSignIn (GoogleClient, exchangeGoogleCode)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import Type.Proxy (Proxy(..))
+import Type.Row (type (+))
 
 -- Google takes the place of the password, Discord or Steam, and the email
 -- stays. Google is no contact, so the switch fills none.
@@ -27,7 +28,8 @@ queryString = Query """
     """
 
 switchToGoogle :: ∀ left.
-    GoogleClient -> Pool -> Cookies -> String -> SwitchToGoogle.RequestContent -> Async left _
+    GoogleClient -> Pool -> Cookies -> String -> SwitchToGoogle.RequestContent
+    -> Async left (Variant (NoContentRow_ + BadRequestRow SwitchToGoogle.BadContent + NotAuthorizedRow_ + InternalRow_ + ()))
 switchToGoogle googleClient pool cookies origin { code } =
     sendResponse "Error switching to Google" do
     { id, token } <- ensureSignedIn pool cookies

@@ -4,9 +4,10 @@ import Prelude
 
 import Async (Async, foreach)
 import Data.Newtype (unwrap)
-import Jarilo (ok_)
+import Data.Variant (Variant)
+import Jarilo (BadRequestRow_, InternalRow_, NotAuthorizedRow_, NotFoundRow_, OkRow, ok_)
 import JavaScript.Npm.Pg.Pool (Pool)
-import TeamTavern.Routes.Shared.Conversation (MessageContent)
+import TeamTavern.Routes.Shared.Conversation (Conversation, MessageContent)
 import TeamTavern.Server.Conversation.Infrastructure.PostMessage (postMessage, validateMessage)
 import TeamTavern.Server.Conversation.Infrastructure.SendMessageEmail (sendMessageEmail)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
@@ -14,8 +15,10 @@ import TeamTavern.Server.Infrastructure.Email (Mailer)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Postgres (transaction)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
+import Type.Row (type (+))
 
-sendReply :: ∀ left. Mailer -> Pool -> Int -> Cookies -> MessageContent -> Async left _
+sendReply :: ∀ left. Mailer -> Pool -> Int -> Cookies -> MessageContent
+    -> Async left (Variant (OkRow Conversation + BadRequestRow_ + NotAuthorizedRow_ + NotFoundRow_ + InternalRow_ + ()))
 sendReply mailer pool id cookies { content } =
     sendResponse "Error sending reply" do
     { id: viewer } <- ensureSignedIn pool cookies

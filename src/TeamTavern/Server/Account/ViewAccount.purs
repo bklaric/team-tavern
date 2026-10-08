@@ -4,7 +4,8 @@ import Prelude
 
 import Async (Async)
 import Data.Newtype (unwrap)
-import Jarilo (ok_)
+import Data.Variant (Variant)
+import Jarilo (InternalRow_, NotAuthorizedRow_, OkRow, ok_)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..), (:))
 import TeamTavern.Routes.Account.ViewAccount as ViewAccount
@@ -13,6 +14,7 @@ import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstInternal)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Post.Infrastructure.ContactAccount (contactAccount, contactOrder)
+import Type.Row (type (+))
 
 accountQuery :: Query
 accountQuery = Query $ """
@@ -63,7 +65,8 @@ accountQuery = Query $ """
     where player.id = $1
     """
 
-viewAccount :: ∀ left. Pool -> Cookies -> Async left _
+viewAccount :: ∀ left. Pool -> Cookies
+    -> Async left (Variant (OkRow ViewAccount.OkContent + NotAuthorizedRow_ + InternalRow_ + ()))
 viewAccount pool cookies =
     sendResponse "Error viewing account" do
     { id } <- ensureSignedIn pool cookies

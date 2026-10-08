@@ -4,8 +4,8 @@ import Prelude
 
 import Async (Async)
 import Data.Newtype (unwrap)
-import Data.Variant (inj)
-import Jarilo (ok_)
+import Data.Variant (Variant, inj)
+import Jarilo (BadRequestRow, InternalRow_, NotAuthorizedRow_, OkRow, ok_)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..), (:), (:|))
 import TeamTavern.Routes.Account.SwitchToDiscord as SwitchToDiscord
@@ -15,6 +15,7 @@ import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.FetchDiscordUser (DiscordApiUrl, discordTag, fetchDiscordUser)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import Type.Proxy (Proxy(..))
+import Type.Row (type (+))
 
 -- Discord takes the place of the password, Steam or Google, and the email
 -- stays. Its username becomes the Discord contact only where the account's
@@ -33,7 +34,8 @@ queryString = Query """
     """
 
 switchToDiscord :: ∀ left.
-    DiscordApiUrl -> Pool -> Cookies -> SwitchToDiscord.RequestContent -> Async left _
+    DiscordApiUrl -> Pool -> Cookies -> SwitchToDiscord.RequestContent
+    -> Async left (Variant (OkRow SwitchToDiscord.OkContent + BadRequestRow SwitchToDiscord.BadContent + NotAuthorizedRow_ + InternalRow_ + ()))
 switchToDiscord discordApiUrl pool cookies { accessToken } =
     sendResponse "Error switching to Discord" do
     { id, token } <- ensureSignedIn pool cookies

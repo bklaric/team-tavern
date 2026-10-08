@@ -3,15 +3,17 @@ module TeamTavern.Server.Player.ResendConfirmation (resendConfirmation) where
 import Prelude
 
 import Async (Async, foreach)
+import Data.Variant (Variant)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..), (:))
-import Jarilo (noContent_)
+import Jarilo (InternalRow_, NoContentRow_, NotAuthorizedRow_, noContent_)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.Email (Mailer)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstMaybe)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Player.Infrastructure.SendConfirmation (addConfirmation, sendConfirmation)
+import Type.Row (type (+))
 
 -- A confirmed or missing address has nothing to send.
 queryString :: Query
@@ -23,7 +25,8 @@ queryString = Query """
         and not player.email_confirmed
     """
 
-resendConfirmation :: ∀ left. Mailer -> Pool -> Cookies -> Async left _
+resendConfirmation :: ∀ left. Mailer -> Pool -> Cookies
+    -> Async left (Variant (NoContentRow_ + NotAuthorizedRow_ + InternalRow_ + ()))
 resendConfirmation mailer pool cookies =
     sendResponse "Error resending email confirmation" do
     {id} <- ensureSignedIn pool cookies

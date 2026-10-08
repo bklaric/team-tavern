@@ -10,9 +10,10 @@ import Data.Bifunctor (lmap)
 import Data.Newtype (class Newtype)
 import Data.Validated as Validated
 import Data.Variant (Variant, inj)
-import Jarilo (badRequest_)
-import TeamTavern.Server.Infrastructure.Error (Terror(..), ValidatedTerrorNeaVar)
+import Jarilo (BadRequestRow, badRequest_)
+import TeamTavern.Server.Infrastructure.Error (Terror(..), TerrorVar, ValidatedTerrorNeaVar)
 import Type.Proxy (Proxy(..))
+import Type.Row (type (+))
 import Wrapped.String (TooShort, tooShort)
 import Wrapped.Validated as Wrapped
 
@@ -35,7 +36,8 @@ validatePassword password =
         (Nea.singleton $ inj (Proxy :: _ "password") {})
         ["Password is invalid: " <> show errors]
 
-validatePassword' :: String -> Async _ Password
+validatePassword' :: ∀ other errors.
+    String -> Async (TerrorVar (BadRequestRow (Variant (password :: {} | other)) + errors)) Password
 validatePassword' password =
     Wrapped.create identity [tooShort minPasswordLength] Password password
     # AsyncVal.fromValidated

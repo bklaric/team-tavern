@@ -4,7 +4,8 @@ import Prelude
 
 import Async (Async)
 import Data.Newtype (unwrap)
-import Jarilo (ok_)
+import Data.Variant (Variant)
+import Jarilo (InternalRow_, NotAuthorizedRow_, OkRow, ok_)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..), (:))
 import TeamTavern.Routes.Block.ViewBlocked as ViewBlocked
@@ -12,6 +13,7 @@ import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Postgres (queryMany)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
+import Type.Row (type (+))
 
 blockedQuery :: Query
 blockedQuery = Query """
@@ -22,7 +24,8 @@ blockedQuery = Query """
     order by lower(player.nickname)
     """
 
-viewBlocked :: ∀ left. Pool -> Cookies -> Async left _
+viewBlocked :: ∀ left. Pool -> Cookies
+    -> Async left (Variant (OkRow ViewBlocked.OkContent + NotAuthorizedRow_ + InternalRow_ + ()))
 viewBlocked pool cookies =
     sendResponse "Error viewing blocked players" do
     { id } <- ensureSignedIn pool cookies

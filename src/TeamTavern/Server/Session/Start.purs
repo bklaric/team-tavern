@@ -5,8 +5,8 @@ import Prelude
 import Async (Async, foreach)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Traversable (traverse)
-import Data.Variant (match)
-import Jarilo (noContent)
+import Data.Variant (Variant, match)
+import Jarilo (BadRequestRow, InternalRow_, NoContentRow_, noContent)
 import JavaScript.Npm.Pg.Pool (Pool)
 import TeamTavern.Routes.Session.StartSession as StartSession
 import TeamTavern.Server.Infrastructure.Cookie (Cookies, setCookieHeader)
@@ -26,10 +26,12 @@ import TeamTavern.Server.Session.Start.CheckPassword (checkPassword)
 import TeamTavern.Server.Session.Start.CheckProvider (checkProvider)
 import TeamTavern.Server.Session.Start.CreateSession (createSession)
 import TeamTavern.Server.Session.Start.Unknown (unknownDiscord, unknownGoogle, unknownSteam)
+import Type.Row (type (+))
 
 start :: ∀ left.
     Environment -> Mailer -> DiscordApiUrl -> SteamOpenIdUrl -> SteamApi -> GoogleClient
-    -> Pool -> Cookies -> String -> StartSession.RequestContent -> Async left _
+    -> Pool -> Cookies -> String -> StartSession.RequestContent
+    -> Async left (Variant (NoContentRow_ + BadRequestRow StartSession.BadContent + InternalRow_ + ()))
 start environment mailer discordApiUrl steamOpenIdUrl steamApi googleClient pool cookies origin body =
     sendResponse "Error starting session" do
     -- Generate session token.

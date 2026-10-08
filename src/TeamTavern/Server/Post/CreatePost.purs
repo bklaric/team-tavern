@@ -11,7 +11,7 @@ import Data.Nullable (toNullable)
 import Data.Variant (Variant, inj)
 import Effect.Class (liftEffect)
 import Effect.Now (nowDate)
-import Jarilo (BadRequestRow, InternalRow_, badRequest_, internal__, noContent_)
+import Jarilo (BadRequestRow, InternalRow_, NoContentRow_, NotAuthorizedRow_, NotFoundRow_, badRequest_, internal__, noContent_)
 import JavaScript.Node.Errors.Class (code)
 import JavaScript.Npm.Pg.Async (query)
 import JavaScript.Npm.Pg.Client (Client)
@@ -20,7 +20,7 @@ import JavaScript.Npm.Pg.Error.Codes (unique_violation)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..), (:), (:|))
 import JavaScript.Npm.Pg.Result (rows)
-import TeamTavern.Routes.Shared.Post (RequestContent)
+import TeamTavern.Routes.Shared.Post (BadContent, RequestContent)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Error (Terror(..), TerrorVar)
@@ -85,7 +85,8 @@ insertPost client { playerId, gameId, type_, nonce } { post, summary } = do
 -- | Publishes a post, writing the account facts and contacts it gave to the
 -- | account in the same transaction (brief 6, step 3), and telling the owners
 -- | of the posts it fits (brief 8).
-createPost :: ∀ left. SteamApi -> Pool -> String -> String -> Cookies -> RequestContent -> Async left _
+createPost :: ∀ left. SteamApi -> Pool -> String -> String -> Cookies -> RequestContent
+    -> Async left (Variant (NoContentRow_ + BadRequestRow BadContent + NotAuthorizedRow_ + NotFoundRow_ + InternalRow_ + ()))
 createPost steamApi pool handle type_ cookies content =
     sendResponse "Error creating post" do
     { id } <- ensureSignedIn pool cookies

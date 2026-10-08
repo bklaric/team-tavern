@@ -5,7 +5,8 @@ import Prelude
 import Async (Async)
 import Data.Bifunctor (lmap)
 import Data.Newtype (unwrap)
-import Jarilo (ok_)
+import Data.Variant (Variant)
+import Jarilo (InternalRow_, NotAuthorizedRow_, NotFoundRow_, OkRow, ok_)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..), (:), (:|))
 import TeamTavern.Routes.Post.RevealContacts as RevealContacts
@@ -16,6 +17,7 @@ import TeamTavern.Server.Infrastructure.Error (elaborate)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotFound)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Post.Infrastructure.ContactAccount (contactAccount, contactOrder)
+import Type.Row (type (+))
 
 -- A reveal counts only where it shows something, and never the owner's own.
 revealQuery :: Query
@@ -54,7 +56,8 @@ revealQuery = Query $ """
     select contacts, discord_server, website from revealed
     """
 
-revealContacts :: ∀ left. Pool -> String -> Int -> Cookies -> Async left _
+revealContacts :: ∀ left. Pool -> String -> Int -> Cookies
+    -> Async left (Variant (OkRow RevealContacts.OkContent + NotAuthorizedRow_ + NotFoundRow_ + InternalRow_ + ()))
 revealContacts pool handle postId cookies =
     sendResponse "Error revealing contacts" do
     { id } <- ensureSignedIn pool cookies

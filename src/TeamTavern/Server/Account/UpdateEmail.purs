@@ -7,7 +7,8 @@ import Data.Array (head)
 import Data.Bifunctor (lmap)
 import Data.Newtype (unwrap)
 import Data.Traversable (for)
-import Jarilo (internal__, noContent_)
+import Data.Variant (Variant)
+import Jarilo (BadRequestRow, InternalRow_, NoContentRow_, NotAuthorizedRow_, internal__, noContent_)
 import JavaScript.Npm.Pg.Async (query)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..), (:|))
@@ -23,6 +24,7 @@ import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Infrastructure.ValidateEmail (validateEmail')
 import TeamTavern.Server.Infrastructure.ValidateEmail as Email
 import TeamTavern.Server.Player.Infrastructure.SendConfirmation (addConfirmation, sendConfirmation)
+import Type.Row (type (+))
 import Yoga.JSON.Async (read)
 
 -- An address that differs from the account's only in case is the same
@@ -35,7 +37,8 @@ queryString = Query """
     returning nickname
     """
 
-updateEmail :: ∀ left. Mailer -> Pool -> Cookies -> UpdateEmail.RequestContent -> Async left _
+updateEmail :: ∀ left. Mailer -> Pool -> Cookies -> UpdateEmail.RequestContent
+    -> Async left (Variant (NoContentRow_ + BadRequestRow UpdateEmail.BadContent + NotAuthorizedRow_ + InternalRow_ + ()))
 updateEmail mailer pool cookies { email } =
     sendResponse "Error updating email" do
     { id } <- ensureSignedIn pool cookies
