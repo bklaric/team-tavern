@@ -89,7 +89,7 @@ side by side:
 git clone https://github.com/bklaric/team-tavern
 git clone https://github.com/bklaric/purescript-bklaric
 git clone -b recursive-castable https://github.com/bklaric/purescript-untagged-union
-git clone -b fix-variant-decoding https://github.com/bklaric/purescript-yoga-json
+git clone -b write-undefined-variant-payload https://github.com/bklaric/purescript-yoga-json
 ```
 
 Then build and bring up the test stack, which seeds its own database:

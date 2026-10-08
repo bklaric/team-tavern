@@ -350,11 +350,11 @@ None of it is a bug to fix:
 `spago.yaml` pins the package set (`registry: 77.10.0`) and three extra
 packages, each resolved from a sibling checkout next to the repo:
 
-| Package          | Checkout                        | Branch                 |
-| ---------------- | ------------------------------- | ---------------------- |
-| `bklaric`        | `../purescript-bklaric`         | `main`                 |
-| `untagged-union` | `../purescript-untagged-union`  | `recursive-castable`   |
-| `yoga-json`      | `../purescript-yoga-json`       | `fix-variant-decoding` |
+| Package          | Checkout                        | Branch                            |
+| ---------------- | ------------------------------- | --------------------------------- |
+| `bklaric`        | `../purescript-bklaric`         | `main`                            |
+| `untagged-union` | `../purescript-untagged-union`  | `recursive-castable`              |
+| `yoga-json`      | `../purescript-yoga-json`       | `write-undefined-variant-payload` |
 
 The last two are forks that `bklaric` builds against. A path package's own
 workspace does not carry over, so team-tavern names them itself. The build
