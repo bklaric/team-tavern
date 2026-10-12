@@ -586,7 +586,9 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
                     HH.div [ HS.class_ "load-more" ]
                     [ button Outline Regular loadMore [ HH.text "Load more" ] ]
                 _ -> HH.text ""
-            , about game
+            -- Under the posts once they're in, so it doesn't sit in view
+            -- below an empty list and get pushed out when they arrive.
+            , if isJust state.feed || state.failed then about game else HH.text ""
             , if phone && state.sheetOpen
                 then sheet
                     { ref: sheetRef

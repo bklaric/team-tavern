@@ -74,7 +74,11 @@ a:hover {
     border-radius: 2px;
 }
 
-/* The page fills the window at least, so the footer sits at its bottom. */
+/* The page's content fills the window under the header at least, so the
+   footer starts below the fold. A page draws its content only once its fetch
+   answers, and a footer in view would be pushed out of it then, which counts
+   against the page's layout shift. A short page drawn whole at once fills
+   only the window, with the footer on its floor. */
 .site {
     display: flex;
     flex-direction: column;
@@ -83,6 +87,11 @@ a:hover {
 
 .site > main {
     flex: 1;
+    min-height: calc(100lvh - 57px);
+}
+
+.site > main.short-page {
+    min-height: 0;
 }
 
 /* The page's content takes the focus from the skip link and from a link to

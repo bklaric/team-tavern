@@ -216,17 +216,35 @@ type Visit =
     , previous :: Maybe String
     }
 
+-- A page shorter than the window that draws its content at once, so a footer
+-- on the window's floor stays where it is. The inbox fills the window exactly.
+short :: State -> Boolean
+short SignUp = true
+short SignIn = true
+short ForgotPassword = true
+short ResetPassword = true
+short ConfirmEmail = true
+short Renew = true
+short Messages = true
+short (Conversation _) = true
+short NotFound = true
+short _ = false
+
 -- The path marks the page drawn for it, in the same render as the page, so a
 -- test can tell when the location's page has arrived and not only the location.
 -- The page is the document's main content, which the header's skip link and a
 -- link to another page focus. The inbox fills the window, and has no footer
--- below it.
+-- below it. Nor has the empty page before the first route, so the footer comes
+-- in where the first page puts it rather than moving there.
 render :: ∀ left. Visit -> H.ComponentHTML (Action left) ChildSlots (Async left)
 render visit =
     HH.div [ HS.class_ "site", HP.attr (HH.AttrName "data-path") visit.path ]
     [ header { path: visit.path, visit: visit.visit }
-    , HH.main [ HP.id "content", HP.tabIndex (-1) ] [ renderPage visit ]
+    , HH.main
+        ([ HP.id "content", HP.tabIndex (-1) ] <> if short visit.page then [ HS.class_ "short-page" ] else [])
+        [ renderPage visit ]
     , case visit.page of
+        Empty -> HH.text ""
         Messages -> HH.text ""
         Conversation _ -> HH.text ""
         _ -> footer
