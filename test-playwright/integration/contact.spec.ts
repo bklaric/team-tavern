@@ -102,6 +102,16 @@ test.describe("the contact panel", () => {
             ["Discord", "Embark ID", "PSN ID", "Xbox gamertag"]);
     });
 
+    // PUBG offers the nickname its PC players add each other by.
+    test("lists the PUBG nickname before the platforms' accounts", async ({ page }) => {
+        await signIn(page, "new@example.com");
+        await openFeed(page, "pubg-battlegrounds");
+        const dialog = await openPanel(page, "PubgBattlegroundsTester");
+
+        await expect(dialog.locator(".contact-label")).toHaveText(
+            ["Discord", "PUBG nickname", "PSN ID", "Xbox gamertag"]);
+    });
+
     test("makes a community's invite or website the one filled button", async ({ page }) => {
         await signIn(page, "new@example.com");
         await openFeed(page, "valorant");

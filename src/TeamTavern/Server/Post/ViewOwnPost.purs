@@ -32,6 +32,7 @@ accountQuery = Query """
             'ea', player.ea_id,
             'epic', player.epic_id,
             'embark', player.embark_id,
+            'pubg', player.pubg_nickname,
             'ubisoft', player.ubisoft_username,
             'marvel_rivals', player.marvel_rivals_username,
             'psn', player.psn_id,
