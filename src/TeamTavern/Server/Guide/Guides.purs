@@ -72,11 +72,12 @@ guides = sortBy (flip $ comparing _.updated)
       }
     , { slug: "rocket-league-tournaments"
       , heading: "How Rocket League tournaments work, and how to find a teammate for them"
-      , title: "Rocket League tournaments: how they work and who to play them with"
-      , description: "Several brackets a day in every region, a party entered at its best player's rank, a duo in 3v3 "
-            <> "kept within three ranks: how Rocket League's tournaments work, and how to find a partner for them."
+      , title: "Rocket League tournament times, rules and finding a partner"
+      , description: "Every region's daily brackets in your own time, how long a run takes, what you need to "
+            <> "enter, and why a party plays at its best player's rank: Rocket League's tournaments, and how to "
+            <> "find a partner for them."
       , published: "2026-10-04"
-      , updated: "2026-10-04"
+      , updated: "2026-10-15"
       , games: [ { handle: "rocket-league", title: "Rocket League" } ]
       , html: markdownToHtml rocketLeagueTournamentsText
       }

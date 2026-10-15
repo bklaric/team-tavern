@@ -483,7 +483,12 @@ redirects the old site's feed paths to the new ones by `legacy.game_map`.
   and dates. The server turns each into HTML once as it starts, and
   `Client/Pages/Guide.purs` fetches that and sets it as the page's HTML, so
   the client bundle carries no guide text. That HTML is trusted because it is
-  the repo's own; nothing a player writes goes through it. The slug is the
+  the repo's own; nothing a player writes goes through it. A time of day in a
+  guide is written in UTC as `<time>22:00</time>`, and the page shows it in
+  the reader's zone; an element whose text names the zone carries the words
+  it becomes, as `<span data-local="your time">UTC</span>`, with `{zone}` for
+  the zone's name. Crawlers and a browser that
+  reports UTC get the UTC text. The slug is the
   guide's URL for good. `updated` orders the guides and dates them in the
   sitemap, so it changes when a fact in the guide does, not for a typo.
 - Configuration is environment variables read once in `Server/Main.purs`

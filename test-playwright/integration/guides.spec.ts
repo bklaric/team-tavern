@@ -104,6 +104,31 @@ test("the guide to joining a team leads to the Rocket League guide, and that to 
     await expect(page.getByRole("heading", { name: "Rocket League", level: 1 })).toBeVisible();
 });
 
+test.describe("in Tokyo, which keeps one time all year", () => {
+    test.use({ timezoneId: "Asia/Tokyo", locale: "en-US" });
+
+    test("the Rocket League guide gives its UTC times in the reader's time", async ({ page }) => {
+        await page.goto("/guides/rocket-league-tournaments");
+
+        const northAmerica = page.getByRole("row").filter({ hasText: "North America" });
+        await expect(northAmerica.getByRole("cell").nth(1)).toHaveText("7am, 11am");
+        await expect(page.getByText(
+            "Times on this page are converted from Epic's UTC to your time zone, Japan Standard Time.")).toBeVisible();
+    });
+});
+
+test.describe("in a browser that reports UTC", () => {
+    test.use({ timezoneId: "UTC", locale: "en-GB" });
+
+    test("the Rocket League guide keeps its UTC times", async ({ page }) => {
+        await page.goto("/guides/rocket-league-tournaments");
+
+        const northAmerica = page.getByRole("row").filter({ hasText: "North America" });
+        await expect(northAmerica.getByRole("cell").nth(1)).toHaveText("22:00, 02:00");
+        await expect(page.getByText("Times on this page are in UTC.")).toBeVisible();
+    });
+});
+
 test("the guide to joining a team leads to The Finals guide, and that to its game's feed", async ({ page }) => {
     const theFinalsHeading = "How to play ranked with friends in The Finals";
     await page.goto(guidePath);

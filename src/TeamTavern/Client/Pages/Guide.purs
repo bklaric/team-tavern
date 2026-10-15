@@ -19,6 +19,7 @@ import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.Ads as Ads
 import TeamTavern.Client.Pages.Document (document, longDate)
 import TeamTavern.Client.Pages.Placeholder (placeholder)
+import TeamTavern.Client.Script.LocalTimes (showLocalTimes)
 import TeamTavern.Client.Script.Meta (setCoverImage, setGuideData, setMeta)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
 import TeamTavern.Client.Script.RenderReady (appendRenderReadyNotFound, appendRenderReadyUnavailable)
@@ -77,6 +78,7 @@ component = Hooks.component \_ slug -> Hooks.do
                             , updated: guide'.updated
                             }
                         Hooks.put pageId $ Shown guide'
+                        showLocalTimes
                         scrollToFragment
                     , notFound: const do
                         appendRenderReadyNotFound

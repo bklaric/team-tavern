@@ -176,6 +176,17 @@ for (const [name, userAgent] of aiCrawlers)
             await expect(page.getByRole("link", { name: "Valorant players and groups on TeamTavern" }))
                 .toHaveAttribute("href", /\/games\/valorant$/);
         });
+
+        test("is served a guide's times as the guide gives them, in UTC", async ({ page }) => {
+            test.slow();
+
+            const response = await page.goto("/guides/rocket-league-tournaments", { timeout: 60_000 });
+
+            expect(response?.status()).toBe(200);
+            const html = await response!.text();
+            expect(html).toContain("<time>22:00</time>");
+            expect(html).toContain(">Times on this page are in UTC.</p>");
+        });
     });
 
 // Ahrefs audits the site as a search engine would read it, so its crawler and its site

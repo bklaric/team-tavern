@@ -82,6 +82,12 @@
     font-weight: 600;
 }
 
+/* A line under a table about how to read it. */
+.guide .guide-note {
+    font-size: var(--size-14);
+    color: var(--text-muted);
+}
+
 .document .guide ol {
     display: flex;
     flex-direction: column;
