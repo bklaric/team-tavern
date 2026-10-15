@@ -50,7 +50,7 @@ test.describe("the account page", () => {
         await expect(row(page, "Birthday")).toHaveText("Not given");
 
         await page.getByRole("button", { name: "Edit" }).click();
-        await expect(page.getByLabel("Nickname")).toBeFocused();
+        await expect(page.getByLabel("Nickname", { exact: true })).toBeFocused();
         await page.getByLabel("Location").selectOption("Germany");
         await page.getByLabel("Birthday").fill("2000-06-15");
         await page.getByRole("button", { name: "Save changes" }).click();
@@ -116,17 +116,17 @@ test.describe("the account page", () => {
 
         await openAccount(writer);
         await writer.getByRole("button", { name: "Edit" }).click();
-        await writer.getByLabel("Nickname").fill("");
+        await writer.getByLabel("Nickname", { exact: true }).fill("");
         await writer.getByRole("button", { name: "Save changes" }).click();
         await expect(writer.getByText("Choose a nickname.")).toBeVisible();
-        await expect(writer.getByLabel("Nickname")).toBeFocused();
+        await expect(writer.getByLabel("Nickname", { exact: true })).toBeFocused();
 
-        await writer.getByLabel("Nickname").fill("overwatchtester");
+        await writer.getByLabel("Nickname", { exact: true }).fill("overwatchtester");
         await writer.getByRole("button", { name: "Save changes" }).click();
         await expect(writer.getByText("This nickname is taken. Please pick another one.")).toBeVisible();
 
         const renamed = unique("Renamed");
-        await writer.getByLabel("Nickname").fill(renamed);
+        await writer.getByLabel("Nickname", { exact: true }).fill(renamed);
         await writer.getByRole("button", { name: "Save changes" }).click();
         await expect(row(writer, "Nickname")).toHaveText(renamed);
         await expectSignedInAs(writer, renamed);
