@@ -4,14 +4,11 @@ import path from "path";
 
 export const repositoryRoot = path.join(__dirname, "..");
 
-export const testStack = {
-    cwd: repositoryRoot,
-    config: "stacks/docker-compose.test.yml",
-    // The compose file declares the Caddy host port as a required variable, so compose
-    // refuses to start without the env file that sets it. The nested array keeps the
-    // flag and its value as separate argv entries, and a compose option has to precede
-    // the subcommand, which is where this library puts them.
-    composeOptions: [["--env-file", "stacks/test.env"]],
+// The local build, which .\bundle.ps1 -environment local writes, runs from its own directory,
+// where its compose file finds the .env beside it.
+export const localStack = {
+    cwd: path.join(repositoryRoot, "dist/local"),
+    config: "docker-compose.yml",
 };
 
 // docker-compose rejects with its own `{ exitCode, out, err }` result rather than an Error,

@@ -1,4 +1,4 @@
--- | Stands in for Discord's user endpoint in the test stack, so the suite can
+-- | Stands in for Discord's user endpoint in the local stack, so the suite can
 -- | sign up and sign in with Discord without a Discord account. The access token
 -- | is the user itself: the URI-encoded JSON of the record Discord would return.
 module TeamTavern.DiscordStub.Main (main) where

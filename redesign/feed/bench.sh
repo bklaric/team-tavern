@@ -15,7 +15,7 @@ set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 database="${1:-redesign_import}"
 runs="${2:-20}"
-user=$(grep '^POSTGRES_USER=' "$here/../../stacks/.env" | cut -d= -f2 | tr -d '\r')
+user=$(grep '^POSTGRES_USER=' "$here/../../stacks/local.env" | cut -d= -f2 | tr -d '\r')
 now="2026-09-12T08:23:58Z"
 
 # name|handle|viewer|description|types

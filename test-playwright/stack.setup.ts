@@ -2,24 +2,30 @@ import { test as setup } from "@playwright/test";
 import compose from "docker-compose";
 import fs from "fs";
 import path from "path";
-import { repositoryRoot, rethrowComposeError, testStack, waitForApi } from "./stack";
+import { localStack, rethrowComposeError, waitForApi } from "./stack";
 
-// The stack serves these out of the repository rather than out of an image, so without
-// them it answers nothing and the wait below is all that would notice, a minute later.
-const builtBundles = [
-    "release/client/index.html", "release/server/server.js", "release/caddy/base.Caddyfile",
-    "dist-test/discord-stub.js", "dist-test/mail-stub.js", "dist-test/steam-stub.js", "dist-test/google-stub.js"];
+// The stack runs the local build rather than images, so without it the stack answers
+// nothing and the wait below is all that would notice, a minute later. The stand-ins are
+// what tell a local build from a server's.
+const builtFiles = [
+    "docker-compose.yml", ".env", "Caddyfile", "base.Caddyfile",
+    "client/index.html", "server/server.js",
+    "discord-stub/main.js", "mail-stub/main.js", "steam-stub/main.js", "google-stub/main.js"];
 
-setup("boot the test stack", async ({ request }) => {
-    const missing = builtBundles.filter(bundle => !fs.existsSync(path.join(repositoryRoot, bundle)));
+setup("boot the local stack", async ({ request }) => {
+    const missing = builtFiles.filter(file => !fs.existsSync(path.join(localStack.cwd, file)));
     if (missing.length > 0)
-        throw new Error(`${missing.join(", ")} missing. Run ./build.sh before npm test.`);
+        throw new Error(`dist/local lacks ${missing.join(", ")}. Run .\\bundle.ps1 -environment local before npm test.`);
 
-    // -v takes the Postgres volume with it, so the stack below seeds a fresh database.
+    // Down and up again, so every container starts afresh, the mail stub with no mail.
     // --remove-orphans takes the containers of services the compose file no longer
-    // names, which would otherwise keep the host port.
-    await rethrowComposeError(() => compose.downAll({ ...testStack, commandOptions: ["-v", "--remove-orphans"] }));
-    await rethrowComposeError(() => compose.upAll(testStack));
+    // names, which would otherwise keep their names and the host port.
+    await rethrowComposeError(() => compose.downAll({ ...localStack, commandOptions: ["--remove-orphans"] }));
+    await rethrowComposeError(() => compose.upAll(localStack));
+
+    // Postgres keeps its cluster between runs, so the site's database is built anew from
+    // the seed rather than thrown away with a volume.
+    await rethrowComposeError(() => compose.exec("tt-postgres", ["bash", "/test-seed/seed.sh", "--fresh"], localStack));
 
     await waitForApi(request);
 });

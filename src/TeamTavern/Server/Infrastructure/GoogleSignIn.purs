@@ -33,7 +33,7 @@ import Yoga.JSON.Async (readJSON)
 -- | is for, and `secret` the OAuth client's, which the swap takes.
 newtype GoogleClient = GoogleClient { tokenUrl :: String, secret :: String }
 
--- | Google's token endpoint, which the site asks outside the test stack.
+-- | Google's token endpoint, which the site asks outside the local stack.
 googleEndpoint :: String
 googleEndpoint = "https://oauth2.googleapis.com/token"
 

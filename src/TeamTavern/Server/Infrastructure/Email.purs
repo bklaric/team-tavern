@@ -13,7 +13,7 @@ import TeamTavern.Server.Infrastructure.Ses (SendEmailParams, SesV2Client, sendA
 
 -- | Where the links in an email point, and the client that sends it, without
 -- | which it is only logged. The origin is empty where emails are only read on
--- | the site's own origin: logged, or captured by the test stack's mail stub.
+-- | the site's own origin: logged, or captured by the local stack's mail stub.
 newtype Mailer = Mailer { origin :: String, client :: Maybe SesV2Client }
 
 -- | An email is its blocks, which make both the HTML and the text body, so the

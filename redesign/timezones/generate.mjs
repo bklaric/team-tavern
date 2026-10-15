@@ -148,7 +148,7 @@ const listed = new Set(zones.map(({ name }) => name));
 const unplaced = zones.filter(({ name }) => !places.some(({ names }) => names.includes(name))).map(({ name }) => name);
 if (unplaced.length) fail(`CLDR ${cldrTag} has no place for ${unplaced.join(", ")}`);
 
-const image = readFileSync(join(root, "stacks/docker-compose.release.yml"), "utf8").match(/image: (postgres:\S+)/)[1];
+const image = readFileSync(join(root, "stacks/server.docker-compose.yml"), "utf8").match(/image: (postgres:\S+)/)[1];
 const postgresNames = new Set(execFileSync("docker", [
     "run", "--rm", "--user", "postgres", image, "sh", "-c",
     "initdb -D /tmp/data >/dev/null 2>&1"

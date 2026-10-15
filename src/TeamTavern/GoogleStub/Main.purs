@@ -1,4 +1,4 @@
--- | Stands in for Google's token endpoint in the test stack, so the suite can
+-- | Stands in for Google's token endpoint in the local stack, so the suite can
 -- | sign up and sign in with Google without a Google account. The code is the
 -- | account itself: the JSON of the claims the ID token would carry and the
 -- | redirect URI the code was given for, which the spec, playing Google's

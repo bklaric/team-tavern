@@ -16,7 +16,7 @@ export const steamNickname = (id: string) => `s${id.slice(9)}`;
 // named in `openid.return_to` with its answer in the query. This plays Steam's part: it
 // answers for whichever account is set at the time, or turns back as a player does who
 // cancels at Steam, and records each sign-in URL and each answer, so a test can check what
-// the page asked for and send an answer again. The steam service in the test stack checks
+// the page asked for and send an answer again. The steam service in the local stack checks
 // the answers, passing each once, as Steam does.
 export type FakeSteam = { steamId: string, cancel: boolean, loginRequests: URL[], answers: string[] };
 

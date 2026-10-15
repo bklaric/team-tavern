@@ -23,7 +23,7 @@ import Yoga.JSON (class ReadForeign)
 import Yoga.JSON.Async (readJSON)
 
 -- | Where the Steam Web API lives, `https://api.steampowered.com` outside the
--- | test stack, and the key it is called with.
+-- | local stack, and the key it is called with.
 newtype SteamApi = SteamApi { url :: String, key :: String }
 
 -- | What ResolveVanityURL answers: `success` is 1 with the ID, or 42 for a

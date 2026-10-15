@@ -1,4 +1,4 @@
--- | Stands in for SES in the test stack. It keeps every email the server
+-- | Stands in for SES in the local stack. It keeps every email the server
 -- | sends and shows those to an address at `/mail?to=<address>`, which Caddy
 -- | serves on the site's own origin, so a spec opens its player's mail in the
 -- | browser and follows the links in it as the player would.

@@ -1,1 +1,1 @@
-0 0 * * * export $(cat ~/team-tavern/.env | grep -v "^#" | grep -v "^$" | xargs) && bash ~/team-tavern/backup-database.sh
+0 0 * * * export $(cat ~/team-tavern/.env | grep -v "^#" | grep -v "^$" | xargs) && bash ~/team-tavern/releases/current/backup-database.sh

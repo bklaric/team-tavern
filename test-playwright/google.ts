@@ -15,7 +15,7 @@ export const googleNickname = (name: string) => name.replace(/[^A-Za-z0-9_.-]/g,
 // The pages send the browser to Google's authorize URL, and Google sends it back to the
 // page named in `redirect_uri` with a code and the page's `state` in the query. This plays
 // Google's part: it answers with a code for whichever user is set at the time and the
-// redirect URI the page named, which the google service in the test stack swaps for that
+// redirect URI the page named, which the google service in the local stack swaps for that
 // user's claims only with that same URI (see `GoogleStub/Main.purs`), or turns back as a
 // player does who cancels at Google, and records each authorize URL and each code, so a
 // test can check what the page asked for and send a code again. Each code is new, since

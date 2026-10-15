@@ -8,8 +8,7 @@
 /.purs*
 /.psa*
 /.sass-cache
-/dist*
-/release/
+/dist/
 /.spago
 /playwright-report/
 /test-results/

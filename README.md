@@ -65,11 +65,13 @@ src/TeamTavern/
   Client/         the Halogen app, its styles and static assets
   Shared/         static data both sides need
   Database/       SQL schema and seed data
-stacks/           docker compose files, Caddyfiles and env files
+stacks/           docker compose files, Caddyfiles, the local env file and the seed
 test-playwright/  the Playwright suite
 ```
 
-[CLAUDE.md](CLAUDE.md) describes the conventions in each of these in detail.
+`bundle.ps1` builds it, `up.ps1` and `down.ps1` run it locally, and
+`deploy.ps1` ships it to a server. [CLAUDE.md](CLAUDE.md) describes the
+conventions in each of these in detail.
 
 ## Running it locally
 
@@ -79,53 +81,56 @@ You need:
   `package.json`. The compiler, spago and the rest of the toolchain are
   `devDependencies`.
 - Docker.
-- bash. On Windows that is Git Bash; the scripts do not run under `cmd.exe` or
-  PowerShell.
+- Windows PowerShell, which runs the scripts.
 
 Three packages are resolved from checkouts next to this one, so clone all four
 side by side:
 
-```bash
+```powershell
 git clone https://github.com/bklaric/team-tavern
 git clone https://github.com/bklaric/purescript-bklaric
 git clone -b recursive-castable https://github.com/bklaric/purescript-untagged-union
 git clone -b write-undefined-variant-payload https://github.com/bklaric/purescript-yoga-json
 ```
 
-Then build and bring up the test stack, which seeds its own database:
+Then build and bring up the local stack, which seeds its own database:
 
-```bash
+```powershell
 cd team-tavern
 npm install
-./build.sh
-docker compose --env-file stacks/test.env -f stacks/docker-compose.test.yml up -d
+.\bundle.ps1 -environment local
+.\up.ps1
 ```
 
-The site is at <http://localhost:8080>. The first `up` builds the prerenderer
-image, which takes a while.
+The site is at <http://localhost:8020>. The first `up` builds the prerenderer
+image, which takes a while. Postgres keeps its data in `../postgres-docker`,
+beside the checkouts.
 
 Every seeded game has a player to sign in as, such as `valorant@example.com`
 with the password `tester-password`. The stack sends no real email: whatever
 the site sends to an address shows at
-`http://localhost:8080/mail?to=<address>`.
+`http://localhost:8020/mail?to=<address>`. Discord, Steam and Google are
+stand-ins too, which the tests drive.
 
-To throw the database away and start over:
+To build the database anew from the seed, or take the stack down:
 
-```bash
-docker compose --env-file stacks/test.env -f stacks/docker-compose.test.yml down -v
+```powershell
+.\up.ps1 -reseed
+.\down.ps1
 ```
 
 ## Tests
 
-```bash
+```powershell
 ./node_modules/.bin/playwright install chromium   # once
-npm test                                          # reseeds the test stack, then runs every spec
+npm test                                          # reseeds the local stack, then runs every spec
 npm test -- feed.spec.ts                          # only the specs you name
 npm run typecheck                                 # typechecks the suite
 ```
 
-`npm test` takes the test stack down and brings it back up itself, so it
-starts from a fresh database each time.
+The tests run on the same local stack, so build it first. `npm test` takes the
+stack down, brings it back up and builds the database anew itself, so it starts
+from the seed each time.
 
 ## Licence
 

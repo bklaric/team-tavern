@@ -28,7 +28,7 @@ import Type.Proxy (Proxy(..))
 import Type.Row (type (+))
 
 -- | Where Steam's OpenID provider is asked to check what it answered,
--- | `https://steamcommunity.com/openid/login` outside the test stack.
+-- | `https://steamcommunity.com/openid/login` outside the local stack.
 newtype SteamOpenIdUrl = SteamOpenIdUrl String
 
 -- | The provider every answer of Steam's names, wherever the check is sent.

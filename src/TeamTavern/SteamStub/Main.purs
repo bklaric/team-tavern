@@ -1,4 +1,4 @@
--- | Stands in for Steam in the test stack, so the suite can give a custom Steam
+-- | Stands in for Steam in the local stack, so the suite can give a custom Steam
 -- | profile address and sign in with Steam without reaching Steam.
 -- |
 -- | Of the Steam Web API it answers ResolveVanityURL and GetPlayerSummaries.

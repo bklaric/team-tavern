@@ -140,7 +140,7 @@ loadDiscordApiUrl =
     <#> DiscordApiUrl
 
 -- | Steam's Web API at `api.steampowered.com` unless STEAM_API_URL names
--- | another, as the test stack's does.
+-- | another, as the local stack's does.
 loadSteamApi :: ExceptT String Effect SteamApi
 loadSteamApi = do
     key <- lookupEnv "STEAM_API_KEY"
@@ -149,14 +149,14 @@ loadSteamApi = do
     pure $ SteamApi { url, key }
 
 -- | Steam's OpenID provider at `steamcommunity.com` unless STEAM_OPENID_URL
--- | names another, as the test stack's does.
+-- | names another, as the local stack's does.
 loadSteamOpenIdUrl :: Effect SteamOpenIdUrl
 loadSteamOpenIdUrl =
     lookupEnv "STEAM_OPENID_URL"
     <#> fromMaybe steamEndpoint
     <#> SteamOpenIdUrl
 
--- | Google's token endpoint unless GOOGLE_TOKEN_URL names another, as the test
+-- | Google's token endpoint unless GOOGLE_TOKEN_URL names another, as the local
 -- | stack's does.
 loadGoogleClient :: ExceptT String Effect GoogleClient
 loadGoogleClient = do
@@ -166,9 +166,9 @@ loadGoogleClient = do
     pure $ GoogleClient { tokenUrl, secret }
 
 -- | Staging and production send through SES and link to their own origin. The
--- | local stacks link relative to the site they serve, and only log, unless
--- | AWS_ENDPOINT_URL_SESV2 names something that takes SES's requests, as the
--- | test stack's mail stub does. The SDK reads that variable itself.
+-- | local stack links relative to the site it serves, and only logs, unless
+-- | AWS_ENDPOINT_URL_SESV2 names something that takes SES's requests, as its
+-- | mail stub does. The SDK reads that variable itself.
 loadMailer :: Environment -> ExceptT String Effect Mailer
 loadMailer environment = do
     accessKeyId <- lookupEnv "AWS_ACCESS_KEY_ID"
@@ -180,11 +180,10 @@ loadMailer environment = do
     pure $ Mailer case environment of
         Production -> { origin: "https://www.teamtavern.net", client: Just client }
         Staging -> { origin: "https://staging.teamtavern.net", client: Just client }
-        Development -> { origin: "", client: endpoint $> client }
-        Test -> { origin: "", client: endpoint $> client }
+        Local -> { origin: "", client: endpoint $> client }
 
 -- | The worker's period in seconds, an hour unless WORKER_PERIOD says otherwise,
--- | as the test stack's does.
+-- | as the local stack's does.
 loadWorkerPeriod :: ExceptT String Effect Int
 loadWorkerPeriod = do
     period <- lift $ lookupEnv "WORKER_PERIOD"

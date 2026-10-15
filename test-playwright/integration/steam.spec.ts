@@ -3,7 +3,7 @@ import { signIn, signUp } from "../accounts";
 import { expectPage } from "../pages";
 
 // Posts go into Deadlock, whose feed no other spec reads, and whose trackers all take the
-// SteamID64 the account keeps. The test stack's Steam (`SteamStub/Main.purs`) knows one
+// SteamID64 the account keeps. The local stack's Steam (`SteamStub/Main.purs`) knows one
 // custom profile address, Gabe Newell's `gabelogannewell`, whose profile is 76561197960287930.
 const steamId = "76561197960287930";
 

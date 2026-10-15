@@ -1,6 +1,6 @@
 import { expect, Locator, Page } from "@playwright/test";
 
-// The test stack's mail service keeps what the site sends, and shows an address's mail at
+// The local stack's mail service keeps what the site sends, and shows an address's mail at
 // /mail on the site's origin, newest first, each email in a frame whose links open in the
 // tab.
 

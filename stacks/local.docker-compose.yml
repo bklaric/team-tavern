@@ -1,0 +1,136 @@
+# The local stack, which the tests and local development share. bundle.ps1
+# copies this file into dist/local/ as docker-compose.yml, beside the client,
+# the server, the stand-ins and the Caddyfiles it mounts, so ./ below is
+# dist/local and ../../ is the repo.
+#
+# The stand-ins answer for Discord, SES, Steam and Google, where the .env beside
+# this file, stacks/local.env, points the server. Postgres keeps its cluster in
+# ../postgres-docker beside the repo, so databases other than the site's survive
+# a `down`; stacks/test-seed/seed.sh builds the site's.
+
+# The project is named here rather than after the directory compose runs from,
+# so the local and the server stacks are both `teamtavern` and their containers
+# have the same names.
+name: teamtavern
+
+# Every container is named as its service, so `docker` and `docker compose` take
+# the same name, and the tt- prefix sets them apart from other containers on the
+# machine.
+services:
+  tt-postgres:
+    image: postgres:18.6
+    container_name: tt-postgres
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      # The data lives in <major>/docker below this, so the next major version
+      # initializes beside it rather than over it.
+      - ../../../postgres-docker:/var/lib/postgresql
+      - ../../src/TeamTavern/Database:/database:ro
+      - ../../stacks/test-seed:/test-seed:ro
+
+  tt-node:
+    # Keep in step with the Volta pin in package.json.
+    image: node:24.21.0
+    container_name: tt-node
+    restart: unless-stopped
+    # Bash -c is necessary because of cd and &&, which are shell builtin commands.
+    # --omit=dev: server.js bundles everything except bcrypt, pg and
+    # @aws-sdk/client-sesv2, so the build toolchain has no place in this container.
+    command: >
+      bash -c "cd /root/team-tavern/server &&
+              npm ci --omit=dev &&
+              node server.js"
+    env_file: .env
+    volumes:
+      - ./server:/root/team-tavern/server
+      # Keeps the container's node_modules off the host.
+      - node_modules:/root/team-tavern/server/node_modules
+    depends_on:
+      - tt-postgres
+      - tt-discord
+      - tt-mail
+      - tt-steam
+      - tt-google
+
+  # Answers the Discord API the node container calls, at DISCORD_API_URL in .env.
+  tt-discord:
+    # Keep in step with the Volta pin in package.json.
+    image: node:24.21.0
+    container_name: tt-discord
+    restart: unless-stopped
+    command: node /root/discord-stub/main.js
+    volumes:
+      - ./discord-stub/main.js:/root/discord-stub/main.js:ro
+
+  # Takes the mail the node container sends to AWS_ENDPOINT_URL_SESV2 in .env, and
+  # shows it at /mail on Caddy's port.
+  tt-mail:
+    # Keep in step with the Volta pin in package.json.
+    image: node:24.21.0
+    container_name: tt-mail
+    restart: unless-stopped
+    command: node /root/mail-stub/main.js
+    volumes:
+      - ./mail-stub/main.js:/root/mail-stub/main.js:ro
+
+  # Answers the Steam Web API the node container calls, at STEAM_API_URL in .env.
+  tt-steam:
+    # Keep in step with the Volta pin in package.json.
+    image: node:24.21.0
+    container_name: tt-steam
+    restart: unless-stopped
+    command: node /root/steam-stub/main.js
+    volumes:
+      - ./steam-stub/main.js:/root/steam-stub/main.js:ro
+
+  # Swaps the codes the node container sends to GOOGLE_TOKEN_URL in .env, with
+  # the GOOGLE_CLIENT_SECRET there.
+  tt-google:
+    # Keep in step with the Volta pin in package.json.
+    image: node:24.21.0
+    container_name: tt-google
+    restart: unless-stopped
+    command: node /root/google-stub/main.js
+    env_file: .env
+    volumes:
+      - ./google-stub/main.js:/root/google-stub/main.js:ro
+
+  tt-renderready:
+    # No published image, so the first `up` builds it from the tag.
+    build: https://github.com/lukapozega/renderready.git#v1.0.0
+    container_name: tt-renderready
+    restart: unless-stopped
+    environment:
+      # Without it, renderready fetches the page itself and hands it to Chromium, which then
+      # treats the page as public and blocks its scripts from reaching the private `tt-caddy`
+      # address. No render needs a redirect followed: every page path answers 200.
+      FOLLOW_REDIRECTS: "true"
+      # A render that never settles is a page that failed to load, not one to index half-drawn.
+      TIMEOUT_STATUS_CODE: "503"
+      ALLOWED_DOMAINS: tt-caddy
+    depends_on:
+      - tt-node
+
+  tt-caddy:
+    image: caddy:2.11.4
+    container_name: tt-caddy
+    restart: unless-stopped
+    # 8020 rather than 80, so the stack runs beside other projects' local stacks.
+    # Caddy listens on 80 inside, where the prerenderer reaches it as http://tt-caddy.
+    ports:
+      - "8020:80"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./base.Caddyfile:/etc/caddy/base.Caddyfile:ro
+      - ./client:/srv:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - tt-node
+      - tt-renderready
+
+volumes:
+  node_modules:
+  caddy_data:
+  caddy_config:

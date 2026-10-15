@@ -7,7 +7,7 @@
 #
 # The regex is a Postgres one (\m and \M are word boundaries) matched against
 # the lower-cased text. The handle is the dump's, which may predate a rename
-# (csgo, not counter-strike-2). Run from the repo root with the development stack up.
+# (csgo, not counter-strike-2). Run from the repo root with the local stack up.
 
 set -euo pipefail
 
@@ -19,7 +19,7 @@ fi
 handle="$1"
 shift
 
-user=$(grep '^POSTGRES_USER=' stacks/.env | cut -d= -f2 | tr -d '\r')
+user=$(grep '^POSTGRES_USER=' stacks/local.env | cut -d= -f2 | tr -d '\r')
 
 terms=""
 for term in "$@"; do

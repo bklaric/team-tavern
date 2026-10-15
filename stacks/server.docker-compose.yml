@@ -1,12 +1,16 @@
-# The stack a release runs. build.sh copies this file into release/ as
-# compose.yml, beside the client, the server and the Caddyfiles it mounts, so
-# every relative path below is relative to release/ and the file does not run
-# from here.
+# The stack a staging or production server runs. bundle.ps1 copies this file
+# into dist/<environment>/ as docker-compose.yml, beside the client, the server
+# and the Caddyfiles it mounts, and deploy.ps1 unpacks that on the server as
+# ~/team-tavern/releases/<id>/. So ./ below is the release and ../../ is
+# ~/team-tavern, whose prod/ holds the data every release mounts.
 #
-# The rest comes from a .env beside it, which each machine keeps for itself and
-# a release never carries: on a server that is the .env in the release's
-# directory, and the development stack passes stacks/.env with --env-file.
+# The rest comes from the .env in the release, which deploy.ps1 links to the
+# server's own ~/team-tavern/.env. A build never carries one.
 
+# The project is named here rather than after the directory compose runs from:
+# every deploy runs from its own release directory, and they all have to be the
+# same `teamtavern` project for `--remove-orphans` and the fixed container names
+# to work.
 name: teamtavern
 
 # Every container is named as its service, so `docker` and `docker compose` take
@@ -24,8 +28,8 @@ services:
     volumes:
       # The data lives in <major>/docker below this, so the next major version
       # initializes beside it rather than over it.
-      - ${POSTGRES_DOCKER_PATH:?}:/var/lib/postgresql
-      - ${POSTGRES_BACKUP_PATH:?}:/backups
+      - ../../prod/docker-postgres/postgresql:/var/lib/postgresql
+      - ../../prod/docker-postgres/backups:/backups
 
   tt-node:
     # Keep in step with the Volta pin in package.json.
@@ -79,18 +83,15 @@ services:
     image: caddy:2.11.4
     container_name: tt-caddy
     restart: unless-stopped
-    # Each environment has its Caddyfile in caddy/, named after it.
-    command: caddy run --config /etc/caddy/${ENVIRONMENT:?}.Caddyfile --adapter caddyfile
-    # Production leaves both unset and takes 80 and 443. The development .env
-    # shifts the HTTP port, and its Caddyfile serves nothing on 443.
     ports:
-      - "${CADDY_HTTP_PORT:-80}:80"
-      - "${CADDY_HTTPS_PORT:-443}:443"
+      - "80:80"
+      - "443:443"
     volumes:
-      - ./caddy:/etc/caddy:ro
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./base.Caddyfile:/etc/caddy/base.Caddyfile:ro
       - ./client:/srv:ro
-      - ${CADDY_DOCKER_PATH:?}/data:/data
-      - ${CADDY_DOCKER_PATH:?}/config:/config
+      - ../../prod/docker-caddy/data:/data
+      - ../../prod/docker-caddy/config:/config
     depends_on:
       - tt-node
       - tt-renderready

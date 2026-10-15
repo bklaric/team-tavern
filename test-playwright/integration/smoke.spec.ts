@@ -1,7 +1,7 @@
 import { expect, Page, test } from "@playwright/test";
 import compose from "docker-compose";
 import { expectPage, postPath } from "../pages";
-import { rethrowComposeError, testStack, waitForApi } from "../stack";
+import { localStack, rethrowComposeError, waitForApi } from "../stack";
 
 const googlebot = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)";
 
@@ -265,13 +265,13 @@ test.describe("a bot, while the API is down", () => {
     test.use({ userAgent: googlebot, javaScriptEnabled: false });
 
     test.beforeAll(async () => {
-        await rethrowComposeError(() => compose.stopOne("tt-node", testStack));
+        await rethrowComposeError(() => compose.stopOne("tt-node", localStack));
     });
 
     test.afterAll(async ({ request }) => {
         // The node container reinstalls its dependencies on every start.
         test.setTimeout(120_000);
-        await rethrowComposeError(() => compose.upOne("tt-node", testStack));
+        await rethrowComposeError(() => compose.upOne("tt-node", localStack));
         await waitForApi(request);
     });
 

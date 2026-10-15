@@ -13,57 +13,66 @@ src/TeamTavern/
   Client/         Halogen SPA, its styles and static assets
   Shared/         static data both sides need (languages, timezones)
   Database/       SQL schema and seed data
-stacks/           docker compose, Caddyfiles, env files and the test seed
+stacks/           docker compose files, Caddyfiles, the local env file and the seed
 test-playwright/  the Playwright suite and the stack boot it runs first
 test/             a stub; nothing runs it
 ```
 
+`bundle.ps1`, `up.ps1`, `down.ps1` and `deploy.ps1` at the root build, run and
+ship it.
+
 Generated, never edited, all git-ignored: `output/` (compiled PureScript),
-`release/` (what a server runs), `dist-test/`, `.spago/`, Playwright's
-`playwright-report/` and `test-results/`, and `test-playwright/screenshots/`.
+`dist/` (one build per environment: `dist/local/` is what the local stack runs,
+`dist/production/` and `dist/staging/` what a deploy ships), `.spago/`,
+Playwright's `playwright-report/` and `test-results/`, and
+`test-playwright/screenshots/`.
 
 ## Environment
 
 - **Node and npm** are pinned by Volta in `package.json`; with Volta installed
   the right versions are picked up automatically. The `tt-node` service in
-  both compose files under `stacks/`, and the test stack's `tt-discord`,
+  both compose files under `stacks/`, and the local stack's `tt-discord`,
   `tt-mail`, `tt-steam` and `tt-google` services, pin the same Node version for
-  their containers, and nothing enforces agreement, so change all seven
+  their containers, and nothing enforces agreement, so change all six
   together.
 - **purs, spago, sass, esbuild, sharp and Playwright** come from `devDependencies`, so
   setup is `npm install` plus, for the browser Playwright drives,
   `./node_modules/.bin/playwright install chromium`, which downloads Chromium
   into a per-user cache outside the repo. No global installs.
-- **Git Bash** on Windows. The scripts are bash and do not run under
-  `cmd.exe` or PowerShell. **OpenSSL** must be on PATH for the cache-busting
-  asset hash in `build-client.sh`; Git Bash ships it.
+- **Windows PowerShell** runs the build, stack and deploy scripts, from the
+  repo root. It reads a `.ps1` without a byte order mark in the ANSI code page,
+  so they stay ASCII. Deploying takes `ssh`, `scp`, `tar` and `curl.exe`, which
+  Windows ships.
+- **Git Bash** runs the bash scripts that don't run in a container or on a
+  server, under `redesign/` and `.claude/skills/`.
 - **Docker Desktop** (WSL2 backend on Windows) for the local stack.
 
 ## Build and verify
 
-```bash
-npm install                 # once
-spago build                 # compile everything into output/
-./build.sh                  # spago build + build-client.sh + build-server.sh, into release/
-./run-development-stack.sh  # docker compose up: tt-postgres, tt-node, tt-renderready, tt-caddy
-npm test                    # boot the test stack and run the Playwright suite
-npm run typecheck           # tsc over test-playwright/ and playwright.config.ts
-./deploy-release.sh <host>  # upload release/ to a server and bring its stack up
+```powershell
+npm install                       # once
+spago build                       # compile everything into output/
+.\bundle.ps1 -environment local   # spago build, then the client and the server, into dist/local/
+.\up.ps1                          # bring the local stack up from dist/local/, at http://localhost:8020
+.\down.ps1                        # take it down
+npm test                          # boot the local stack afresh and run the Playwright suite
+npm run typecheck                 # tsc over test-playwright/ and playwright.config.ts
+.\deploy.ps1 -server user@host    # build production, ship it as a new release and check it answers
 ```
 
 Bare `spago` and `purs` work because Volta shims them and, since both are
 dependencies in `package.json`, runs the project-local copies. Without Volta,
-call `./node_modules/.bin/spago` as the scripts do. Never `npx spago`, and
+call `./node_modules/.bin/spago` as `bundle.ps1` does. Never `npx spago`, and
 never put `node_modules/.bin` on PATH before running spago: spago then finds
 the `purs.cmd` shim, which Node refuses to spawn, and the build dies with
 `spawn EINVAL`.
 
 `npm test` is Playwright, configured in `playwright.config.ts`.
-`test-playwright/stack.setup.ts` takes the test stack down with `-v`, brings it
-back up and waits for `/api/games` to answer, and the specs in
-`test-playwright/integration/` then run against it. The stack serves
-`release/` and `dist-test/` out of the repo, so `./build.sh` has to have run
-first; the setup says so rather than letting the wait time out.
+`test-playwright/stack.setup.ts` takes the local stack down, brings it back up,
+builds the site's database anew from the seed and waits for `/api/games` to
+answer, and the specs in `test-playwright/integration/` then run against it.
+The stack runs `dist/local/`, so `.\bundle.ps1 -environment local` has to have
+run first; the setup says so rather than letting the wait time out.
 
 A spec drives the site through the browser, as a player would: it sets up what it
 needs through the pages and asserts on what they show, never by calling the API
@@ -86,7 +95,7 @@ change reaches across the site, such as the router, the header or the shared
 styles, and no handful of specs covers it.
 
 `test-playwright/screenshots.mjs` shoots every screen of the site at 375 px and
-1280 px against the running test stack, into `test-playwright/screenshots/`, for
+1280 px against the running local stack, into `test-playwright/screenshots/`, for
 checking a change by eye; `--only=<text>` picks scenes by name. Run it as
 `"$(volta which node)" test-playwright/screenshots.mjs`, since the plain `node`
 shim goes through `cmd.exe`. It makes what the seed lacks, a conversation or a
@@ -94,195 +103,88 @@ block, through the pages, so run it on a stack the next `npm test` reseeds.
 `phone.spec.ts` holds every page and overlay to a 375 px window with the
 longest names a player can give.
 
-`build-client.sh` compiles Sass and bundles the client into `release/client/`
-under hashed file names. `build-server.sh` bundles the server into
-`release/server/server.js` with `bcrypt`, `pg` and `@aws-sdk/client-sesv2` left
-external, and copies the root `package.json` beside it; the container installs
-that with `--omit=dev`, so the build toolchain never enters the image. It also
-bundles `DiscordStub/Main.purs` into `dist-test/discord-stub.js`,
-`MailStub/Main.purs` into `dist-test/mail-stub.js`, `SteamStub/Main.purs`
-into `dist-test/steam-stub.js` and `GoogleStub/Main.purs` into
-`dist-test/google-stub.js`, which only the test stack runs. `build.sh` then copies in what runs them: `stacks/docker-compose.release.yml`
-as `release/compose.yml`, every Caddyfile but the test stack's into
-`release/caddy/`, and `backup-database.sh`.
+`.\bundle.ps1 -environment <local|staging|production> [-target client,server]`
+builds into `dist/<environment>/`, each environment into its own directory, so
+a production build leaves the local one alone. Both targets are built unless
+`-target` names one. It runs `spago build` first and stops at the first
+failure, checking the exit code of every native tool it runs. Each bundle's
+entry point is a stub on stdin that imports the module's `main` and calls it.
+
+- **`client`** compiles Sass and bundles the client into `client/`, under file
+  names hashed anew on every build, which it writes into both index files. It
+  empties the directory rather than removing it, since a running Caddy has it
+  mounted, so a rebuilt client shows on the next page load.
+- **`server`** is everything else. It bundles the server into
+  `server/server.js` with `bcrypt`, `pg` and `@aws-sdk/client-sesv2` left
+  external, beside the root `package.json` and lockfile, which the container
+  installs with `--omit=dev`, so the build toolchain never enters the image.
+  It puts `base.Caddyfile` and the environment's Caddyfile, as `Caddyfile`, at
+  the root with the stack's compose file. For `local` that is
+  `stacks/local.docker-compose.yml`, with `stacks/local.env` as `.env` and the
+  four stand-ins, each `<Name>Stub/Main.purs` bundled into
+  `<name>-stub/main.js`. For a server it is `stacks/server.docker-compose.yml`
+  and `backup-database.sh`, with no `.env`. Both compose files name their
+  project `teamtavern`, so the stack has the same name whichever directory it
+  runs from.
 
 ## Running the stack
 
-Two compose projects, and they can run at once. The development stack keeps its
-data in host directories next to the repo; the test stack keeps its in named
-volumes, so `down -v` throws the database away and the next boot seeds a fresh
-one. Both serve the same `release/` a server gets, so `./build.sh` has to have
-run either way.
+One local stack, which the tests and local development share:
+`dist/local/docker-compose.yml`, project `teamtavern`, at
+<http://localhost:8020>. 8020 rather than 80, so it runs beside other
+projects' local stacks.
 
-Both also answer to `http://tt-caddy` on their compose network, and that name is
-the render origin passed to `base.Caddyfile`. Renderready's browser has to fetch
-the site itself, and inside that container `localhost` is renderready. Neither
-compose file pulls a renderready image: the service is built from the upstream
-git tag, so the first `up` on a machine builds it, and that takes a while.
-
-|               | Development               | Test                             |
-| ------------- | ------------------------- | -------------------------------- |
-| Compose file  | `release/compose.yml`     | `stacks/docker-compose.test.yml` |
-| Env file      | `stacks/.env`             | `stacks/test.env`                |
-| Project name  | `teamtavern`              | `teamtavern-test`                |
-| Site          | <http://localhost:8000>   | <http://localhost:8080>          |
-| Database      | `team_tavern`             | `team_tavern_test`               |
-| Postgres data | host directory            | named volume, seeded on boot     |
-
-### The development stack
-
-`run-development-stack.sh` runs the release as a server does, from
-`release/compose.yml`, passing `stacks/.env` with `--env-file` where a server
-has its `.env` beside the compose file. That file configures docker compose, and compose hands each
-container what it needs of it. Besides the database and AWS credentials it
-names three host directories that are bind-mounted into the containers and live
-next to the repo, not in it:
-
-| Variable               | Contents                          |
-| ---------------------- | --------------------------------- |
-| `POSTGRES_DOCKER_PATH` | Postgres data, persists across restarts |
-| `POSTGRES_BACKUP_PATH` | database backups                  |
-| `CADDY_DOCKER_PATH`    | Caddy's `data` and `config` dirs  |
-
-On Windows these use the `/c/Users/...` form. `ENVIRONMENT` in the same file
-names the stack: `development`, `test`, `staging` or `production`. Caddy loads
-the Caddyfile of that name from `release/caddy/`, and the server reads it for
-what differs between stacks, in `Server/Infrastructure/Environment.purs`.
-
-Both local stacks serve plain HTTP, on the host port `CADDY_HTTP_PORT` names:
-8000 in `stacks/.env`, 8080 in `stacks/test.env`. Production runs the same
-`compose.yml`, leaves the variable unset and takes ports 80 and 443, where
-`production.Caddyfile` serves HTTPS. The session cookie drops `Secure` in the
-`development` and `test` environments, and browsers treat `http://localhost` as
-a secure context, so nothing on the site needs HTTPS locally.
-
-`stacks/.env` is committed. The Postgres credentials in it are real, but the
-database is reachable only from inside the compose network, so they are
-usable only by someone already on the server. The AWS key pair, the Steam
-Web API key and the Google OAuth client's secret are placeholders; the real
-ones live in the production `.env` on the server and are not in the repo.
-
-### The test stack
-
-`stacks/test.env` is self-contained: its own database name, its own throwaway
-credentials and the Caddy host port. It names no host directory, so the
-stack carries nothing between runs. Caddy loads `stacks/test.Caddyfile`, which
-the compose file mounts directly rather than selecting by `ENVIRONMENT`.
-
-```bash
-docker compose --env-file stacks/test.env -f stacks/docker-compose.test.yml up -d
-docker compose --env-file stacks/test.env -f stacks/docker-compose.test.yml down -v
+```powershell
+.\up.ps1           # recreate every container, so a new build is picked up
+.\up.ps1 -reseed   # and build the site's database anew from the seed
+.\down.ps1
 ```
 
-The compose file names the project itself, so `-p teamtavern-test` is already
-implied. `--env-file` is not: the port variable is declared required, so
-without it compose refuses to start rather than binding an arbitrary host port.
-`npm test` runs both commands itself, so a test run takes this stack down and
-reseeds it from whatever state it was in.
+A rebuilt client shows on the next page load; a rebuilt server takes `.\up.ps1`.
 
-The test stack has no Discord. Its `tt-discord` service runs
-`dist-test/discord-stub.js`, and `DISCORD_API_URL` in `test.env` points the
-server at it. The stub answers the user endpoint with whatever user the access
-token names, the URI-encoded JSON of that user, so a spec can sign up and sign in
-with Discord as anyone, verified email or not. The browser half of the flow never
-reaches Discord either: a spec answers the pages' redirect to Discord's
-authorize URL itself, sending the browser straight back with such a token and
-the `state` the page sent, and checks the scope and redirect URI the page asked
-for.
+Caddy listens on 80 inside the compose network, where the site also answers to
+`http://tt-caddy`, the render origin passed to `base.Caddyfile`. Renderready's
+browser has to fetch the site itself, and inside that container `localhost` is
+renderready. Neither compose file pulls a renderready image: the service is
+built from the upstream git tag, so the first `up` on a machine builds it, and
+that takes a while.
 
-The test stack has no SES either. Its `tt-mail` service runs
-`dist-test/mail-stub.js`, and `AWS_ENDPOINT_URL_SESV2` in `test.env` points the
-server's SES client at it, so the server sends as production does. The stub
-keeps every email and shows an address's mail at
-`http://localhost:8080/mail?to=<address>`, which `test.Caddyfile` routes on the
-site's origin, newest first, each email in a frame. A spec reads its player's
-email there and clicks the links in it, which are relative outside production
-and so open the test site. The development stack sets no `AWS_ENDPOINT_URL_SESV2`, and
-its node log shows each email's text instead.
+`ENVIRONMENT` names the stack: `local`, `staging` or `production`.
+`bundle.ps1` takes the same names and gives each build its Caddyfile, and the
+server reads it for what differs between stacks, in
+`Server/Infrastructure/Environment.purs`. The local stack serves plain HTTP.
+The session cookie drops `Secure` in `local`, and browsers treat
+`http://localhost` as a secure context, so nothing on the site needs HTTPS
+locally.
 
-The test stack has no Steam either. A Steam contact is kept as the SteamID64,
-which every Steam tracker takes and the profile's link is built from, so the
-server turns a profile's link into one and asks the Steam Web API's
-ResolveVanityURL for the ID behind a custom `/id/<name>` address. The test
-stack's `tt-steam` service runs `dist-test/steam-stub.js`, and `STEAM_API_URL`
-in `test.env` points the server at it. The stub knows one custom address,
-`gabelogannewell`, fails on `steam-is-down` as Steam does when it's down, and no profile
-has any other name. The development stack calls Steam with
-the placeholder key in `stacks/.env`, which Steam refuses, so a custom address
-fails there unless a real key is put in its place.
+`stacks/local.env` is committed. Every value in it is throwaway: Postgres is
+reachable only from inside the compose network, and everything else the server
+calls is a stand-in. The real keys live in each server's `.env` and are not in
+the repo.
 
-Signing in with Steam is OpenID 2.0: Steam sends the browser back to the
-sign-in page with a signed answer, and the server asks Steam's OpenID provider
-whether it signed it, which Steam answers once per sign-in. The server takes an
-answer only within five minutes of its nonce's time, and only once, by the
-nonces it keeps in `steam_nonce`. `STEAM_OPENID_URL`
-in `test.env` points that check at the same `tt-steam` stub, which passes any
-answer once, and its GetPlayerSummaries gives the profile name the nickname
-prompt offers. As with Discord, a spec plays Steam's sign-in page itself
-(`test-playwright/steam.ts`). Steam gives no address, so a player registering
-with it types one in, and the ticket it is registered with lives in
-`sign_in_ticket` for the hour between Steam's answer and the nickname.
+### The local database
 
-The test stack has no Google either. Signing in with Google is OAuth's
-authorization code flow: Google sends the browser back to the sign-in page with
-a code, and the server swaps it at Google's token endpoint, with the OAuth
-client's `GOOGLE_CLIENT_SECRET`, for an ID token that names the account, its
-address and its name. Google swaps a code once, so the ticket a player new to
-the site registers with lives in `sign_in_ticket`, as Steam's does, with the
-address Google gave. The test stack's `tt-google` service
-runs `dist-test/google-stub.js`, and `GOOGLE_TOKEN_URL` in `test.env` points
-the server at it. The stub takes the code for the account itself, the JSON of
-the claims its ID token carries and the redirect URI it was given for, and
-swaps each once, for that URI and the client and secret the server has, as
-Google does. As with Discord, a spec
-plays Google's sign-in page itself (`test-playwright/google.ts`). The client ID
-is public and lives in `Shared/Google.purs`, which the pages and the server
-both read.
+Postgres keeps its cluster in `../postgres-docker`, a host directory beside the
+repo, so it survives a `down`. The site's database is `team_tavern_local`,
+`PGDATABASE` in `stacks/local.env`. The cluster's other databases belong to the
+scripts that make and read them, and nothing in the stack touches them:
+`team_tavern` holds the production dump, which
+`.claude/skills/game-seed/scripts/count-terms.sh` reads, and `redesign_import`
+is what `redesign/import/import.sh` builds. `POSTGRES_USER` in the same file is
+the cluster's superuser, which the first boot of an empty directory creates.
 
-Every Discord button sends the browser back to `/signin`, the one redirect URI
-registered on the Discord app for each origin, and what the player was doing
-rides along in session storage. The sign-in page signs in a player Discord
-knows, and asks one it doesn't for a nickname, which finishes registering them.
-A trip from the account page's Continue with Discord signs nobody in: the
-sign-in page hands its token back to the account page, which moves the account
-from its password to that Discord. Steam's and Google's buttons go the same
-way, though Steam takes any return address, while Google, like Discord, takes
-only the `/signin` registered on its OAuth client for each origin. An account
-signs in with one of a password, a Discord account, a Steam account or a Google
-account, and the account page moves it between them.
+`stacks/test-seed/seed.sh`, run inside `tt-postgres`, builds the site's
+database. `.\up.ps1` runs it, and it leaves a database that is already there
+alone. `test-playwright/stack.setup.ts` runs it with `--fresh` on every test
+run, so `npm test` throws away whatever local development left there. It
+builds under another name and renames the result once complete, so a seed that
+fails leaves the database as it was. The compose file mounts
+`src/TeamTavern/Database/` and `stacks/test-seed/` from the repo, so a seed
+change needs no rebuild.
 
-What no test reaches is Discord itself: the redirect URIs registered on the
-Discord app and the real user endpoint. Before a deploy that touches sign-in,
-check them by hand against the development stack, whose
-`http://localhost:8000/signin` is a registered redirect URI, with a real Discord
-account:
-
-1. At <http://localhost:8000/signup>, Continue with Discord. The sign-in page
-   asks for a nickname, prefilled with the Discord username, and Continue lands
-   on the home page signed in.
-2. Sign out, Continue with Discord at <http://localhost:8000/signin>, and land
-   signed in without being asked for a nickname.
-3. `docker logs tt-node` shows no Discord errors for either.
-
-Steam's real OpenID provider is out of the tests' reach too. Check it the same
-way with a real Steam account: Continue with Steam at
-<http://localhost:8000/signup> asks for a nickname and an email and lands
-signed in, and Continue with Steam at <http://localhost:8000/signin> then
-signs straight in. The nickname comes up empty there, since the placeholder
-key gets no profile name, and `docker logs tt-node` says so.
-
-Google's real token endpoint and the redirect URIs registered on its OAuth
-client are out of reach too. Google refuses the placeholder secret in
-`stacks/.env`, so put the client's real one in its place locally, without
-committing it, and check the same way with a real Google account: Continue
-with Google at <http://localhost:8000/signup> asks for a nickname, prefilled
-from the Google name, and lands signed in, and Continue with Google at
-<http://localhost:8000/signin> then signs straight in.
-
-`stacks/test-seed/seed.sh` builds the database on the first boot of the Postgres
-volume, which is why `down -v` rather than `down` is what resets it. It applies
-`TablesCurrent.sql`, then `Seed/Regions.sql`, `Seed/Countries.sql` and
-`Seed/Games/`, then `stacks/test-seed/players.sql`. That last one gives every
+The seed applies `TablesCurrent.sql`, then `Seed/Regions.sql`,
+`Seed/Countries.sql` and `Seed/Games/`, then `stacks/test-seed/players.sql`.
+That last one gives every
 seeded game one account with a player post, so the feed has a row to assert
 on; the nickname is the handle title-cased with its hyphens dropped and
 `Tester` after it, so `apex-legends` gets `ApexLegendsTester`, the email is
@@ -310,21 +212,166 @@ all are confirmed. `Seed/Games/` carries every production game, so every
 game handle the site serves has a page with content. A cold boot answers on the
 API within a few seconds.
 
+### The stand-ins
+
+The local stack has no Discord. Its `tt-discord` service runs
+`dist/local/discord-stub/main.js`, and `DISCORD_API_URL` in `stacks/local.env`
+points the server at it. The stub answers the user endpoint with whatever user the access
+token names, the URI-encoded JSON of that user, so a spec can sign up and sign in
+with Discord as anyone, verified email or not. The browser half of the flow never
+reaches Discord either: a spec answers the pages' redirect to Discord's
+authorize URL itself, sending the browser straight back with such a token and
+the `state` the page sent, and checks the scope and redirect URI the page asked
+for.
+
+The local stack has no SES either. Its `tt-mail` service runs
+`dist/local/mail-stub/main.js`, and `AWS_ENDPOINT_URL_SESV2` in
+`stacks/local.env` points the server's SES client at it, so the server sends as
+production does. The stub keeps every email and shows an address's mail at
+`http://localhost:8020/mail?to=<address>`, which `local.Caddyfile` routes on
+the site's origin, newest first, each email in a frame. A spec reads its
+player's email there and clicks the links in it, which are relative outside
+staging and production and so open the local site.
+
+The local stack has no Steam either. A Steam contact is kept as the SteamID64,
+which every Steam tracker takes and the profile's link is built from, so the
+server turns a profile's link into one and asks the Steam Web API's
+ResolveVanityURL for the ID behind a custom `/id/<name>` address. The local
+stack's `tt-steam` service runs `dist/local/steam-stub/main.js`, and
+`STEAM_API_URL` in `stacks/local.env` points the server at it. The stub knows
+one custom address, `gabelogannewell`, fails on `steam-is-down` as Steam does
+when it's down, and no profile has any other name.
+
+Signing in with Steam is OpenID 2.0: Steam sends the browser back to the
+sign-in page with a signed answer, and the server asks Steam's OpenID provider
+whether it signed it, which Steam answers once per sign-in. The server takes an
+answer only within five minutes of its nonce's time, and only once, by the
+nonces it keeps in `steam_nonce`. `STEAM_OPENID_URL`
+in `stacks/local.env` points that check at the same `tt-steam` stub, which passes any
+answer once, and its GetPlayerSummaries gives the profile name the nickname
+prompt offers. As with Discord, a spec plays Steam's sign-in page itself
+(`test-playwright/steam.ts`). Steam gives no address, so a player registering
+with it types one in, and the ticket it is registered with lives in
+`sign_in_ticket` for the hour between Steam's answer and the nickname.
+
+The local stack has no Google either. Signing in with Google is OAuth's
+authorization code flow: Google sends the browser back to the sign-in page with
+a code, and the server swaps it at Google's token endpoint, with the OAuth
+client's `GOOGLE_CLIENT_SECRET`, for an ID token that names the account, its
+address and its name. Google swaps a code once, so the ticket a player new to
+the site registers with lives in `sign_in_ticket`, as Steam's does, with the
+address Google gave. The local stack's `tt-google` service
+runs `dist/local/google-stub/main.js`, and `GOOGLE_TOKEN_URL` in
+`stacks/local.env` points the server at it. The stub takes the code for the account itself, the JSON of
+the claims its ID token carries and the redirect URI it was given for, and
+swaps each once, for that URI and the client and secret the server has, as
+Google does. As with Discord, a spec
+plays Google's sign-in page itself (`test-playwright/google.ts`). The client ID
+is public and lives in `Shared/Google.purs`, which the pages and the server
+both read.
+
+Every Discord button sends the browser back to `/signin`, the one redirect URI
+registered on the Discord app for each origin, and what the player was doing
+rides along in session storage. The sign-in page signs in a player Discord
+knows, and asks one it doesn't for a nickname, which finishes registering them.
+A trip from the account page's Continue with Discord signs nobody in: the
+sign-in page hands its token back to the account page, which moves the account
+from its password to that Discord. Steam's and Google's buttons go the same
+way, though Steam takes any return address, while Google, like Discord, takes
+only the `/signin` registered on its OAuth client for each origin. An account
+signs in with one of a password, a Discord account, a Steam account or a Google
+account, and the account page moves it between them.
+
+What no test reaches is the real services: the redirect URIs registered on the
+Discord app and on the Google OAuth client, Discord's user endpoint, Steam's
+OpenID provider and Google's token endpoint. Before a deploy that touches
+sign-in, check them by hand against the local stack pointed at them. In
+`dist/local/.env`, delete `DISCORD_API_URL`, `STEAM_API_URL`,
+`STEAM_OPENID_URL` and `GOOGLE_TOKEN_URL`, put the Google client's real secret
+in place of the placeholder, and `.\up.ps1`. The next
+`.\bundle.ps1 -environment local` puts the stand-ins back, and the secret never
+reaches the repo. `http://localhost:8020/signin` has to be a registered
+redirect URI on both the Discord app and the Google client.
+
+1. With a real Discord account, at <http://localhost:8020/signup>, Continue
+   with Discord. The sign-in page asks for a nickname, prefilled with the
+   Discord username, and Continue lands on the home page signed in.
+2. Sign out, Continue with Discord at <http://localhost:8020/signin>, and land
+   signed in without being asked for a nickname.
+3. The same twice with a real Steam account: signing up asks for a nickname
+   and an email. The nickname comes up empty, since the placeholder Steam key
+   gets no profile name, and `docker logs tt-node` says so.
+4. The same twice with a real Google account: signing up asks for a nickname,
+   prefilled from the Google name.
+5. `docker logs tt-node` shows no other errors for any of them.
+
 ### A server
 
-A server holds no checkout, only a release: `~/team-tavern` is `release/` as
-uploaded, plus the server's own `.env` beside `compose.yml`, which compose reads
-from there. That `.env` sets what `stacks/.env` does, with the real AWS key pair, Steam Web API key and Google client secret,
-`ENVIRONMENT=production` (or `staging`) and no `CADDY_HTTP_PORT`. A release never
-carries one.
+A server holds no checkout. Everything lives under `~/team-tavern`:
 
-`./build.sh && ./deploy-release.sh user@host` uploads `release/` over SFTP,
-the index files last so no page names a script still on its way, and runs
-`docker compose up -d --force-recreate --remove-orphans` there. The files are
-bind-mounted, so recreating the containers is what picks them up. The nightly
-backup is `cron.txt`, run from the crontab of the user that owns the directory:
-`backup-database.sh` mails a gzipped dump through SES, signing the request with
-curl's `--aws-sigv4`.
+| Path                              | Contents |
+| --------------------------------- | -------- |
+| `.env`                            | the server's own configuration, which no build carries |
+| `prod/docker-postgres/postgresql` | Postgres data |
+| `prod/docker-postgres/backups`    | database backups |
+| `prod/docker-caddy/`              | Caddy's `data` and `config` dirs, its certificates among them |
+| `releases/<id>/`                  | one unpacked `dist/<environment>` per deploy, `<date>-<time>-<short sha>` |
+| `releases/current`                | a link to the release that is up |
+
+The `.env` sets every variable `stacks/server.docker-compose.yml` requires,
+`${NAME:?}`: the database's name and credentials, the real AWS key pair, Steam
+Web API key and Google client secret, `ADMIN_EMAIL`, and
+`ENVIRONMENT=production` or `staging`. Each release links its own `.env` to it,
+since compose reads the file from the release's directory. The first line of a
+release's `REVISION` names the commit it was built from, and the lines after it
+the commit of each sibling checkout `spago.yaml` builds in.
+
+`.\deploy.ps1 -server user@host [-environment staging] [-schemaApplied]`
+deploys from this machine, production unless it says staging. There is no CI.
+It runs these steps in order and stops at the first that fails:
+
+1. Refuses uncommitted changes in this repo or in any sibling checkout
+   `spago.yaml` builds in, because the release is stamped with their commits.
+2. Checks the server over ssh. `prod/docker-postgres/postgresql` has to exist,
+   because without it Postgres would start on an empty database. The `.env`
+   has to set every variable the compose file requires and name the
+   environment being deployed. No `tt-*` container may belong to a compose
+   project other than `teamtavern`, whose names and ports would block the new
+   stack. It also reads the revision that is up.
+3. Stops if `TablesCurrent.sql` changed since that revision, unless
+   `-schemaApplied` is passed: a migration is applied on the server by hand
+   before the deploy that needs it. `-schemaApplied` also goes ahead when the
+   revision that is up can't be compared, because it isn't in this checkout.
+4. Builds with `bundle.ps1 -environment <environment>` and checks that the
+   result holds exactly a server's files, `.env` not among them.
+5. Packs it with its `REVISION` into a tarball, uploads it with `scp` and
+   unpacks it into a fresh release directory, so files dropped from the build
+   are gone from the server too. It links the release's `.env` and copies in
+   the script and stylesheet the release that is up names, so a page that
+   loaded the old index just before the switch still gets them.
+6. Runs `docker compose -f <id>/docker-compose.yml up -d --remove-orphans --force-recreate`.
+   The files are bind-mounted, so the containers are recreated to pick them
+   up. Compose is given the release's real path rather than `current`, because
+   it resolves the `../../prod` mounts against that path.
+7. Points `current` at the new release.
+8. Waits up to two minutes, since the node container installs its packages on
+   every start, for `GET /` and `GET /api/games` to answer 200 through Caddy.
+   Then it lets the stack run for 15 seconds and requires every container to
+   be running with no restarts. From step 6 on, every failure prints the
+   command that brings back the release that was up.
+9. Prunes the old releases, keeping the newest five and the one that was up
+   before. This runs only after a healthy deploy, so a failed one never
+   deletes the release it says to roll back to.
+
+To roll back, bring up an earlier release:
+
+```bash
+ssh user@host "cd team-tavern/releases && docker compose -f <id>/docker-compose.yml up -d --remove-orphans --force-recreate && ln -sfn <id> current"
+```
+
+The nightly backup is `cron.txt`, run from the crontab of the user that owns
+`~/team-tavern`: the release's `backup-database.sh` mails a gzipped dump
+through SES, signing the request with curl's `--aws-sigv4`.
 
 Email goes out through SES in `eu-central-1`, where `teamtavern.net` is
 verified by the Easy DKIM records in its Namecheap DNS. The key pair is the IAM
@@ -344,6 +391,10 @@ None of it is a bug to fix:
 - **`$'\r': command not found`**, or a container that cannot reach
   `tt-postgres`: a file has CRLF endings. See the line-ending rule under Code
   style.
+- **`NativeCommandError`** around esbuild's or npm's progress lines when a
+  `.ps1` script's output is redirected with `2>&1`: Windows PowerShell wraps
+  each line a native tool writes to stderr in an error record. The scripts
+  check exit codes, not stderr.
 
 ## Dependencies
 
@@ -388,7 +439,7 @@ the server bundle leaves external, plus the build toolchain in devDependencies.
 
 In the running stack Caddy proxies `/api/*` to the node container, refusing a
 body past 64 KB with a 413 since the server reads a body whole, sends bot
-user agents to renderready, and serves everything else from `release/client/` with
+user agents to renderready, and serves everything else from the build's `client/` with
 an `index.html` fallback for SPA paths. `/sitemap.xml` goes to node as it is,
 outside `/api`: the one route that answers with something other than JSON, an
 `OkText` whose absolute addresses are built from the origin the request came
@@ -420,7 +471,7 @@ redirects the old site's feed paths to the new ones by `legacy.game_map`.
   feed query and the fit query that notifications come from are too big to
   inline: `Server/Feed/Feed.sql` and `Fits.sql` are files of their own, which
   `Feed.js` and `Fits.js` import as text from their place in `src/` and
-  `build-server.sh` bundles with esbuild's text loader. `Fits.sql` is `Feed.sql`
+  `bundle.ps1` bundles with esbuild's text loader. `Fits.sql` is `Feed.sql`
   turned round, so a change to how two posts compare is made in both, and
   `redesign/feed/check-fits.mjs` checks that they agree. node-pg sends parameters
   untyped, so a query Postgres can't type from their first use casts them there.
@@ -437,19 +488,21 @@ redirects the old site's feed paths to the new ones by `legacy.game_map`.
   sitemap, so it changes when a fact in the guide does, not for a typo.
 - Configuration is environment variables read once in `Server/Main.purs`
   (`PG*`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `ENVIRONMENT`, and
-  `ADMIN_EMAIL`, where reports of players are mailed), which the release's
-  `compose.yml` hands the node container from the stack's `.env`.
+  `ADMIN_EMAIL`, where reports of players are mailed), which the server's
+  compose file hands the node container from the server's `.env`, and the
+  local one from `stacks/local.env` whole.
   `ENVIRONMENT` decides the cookie's `Secure` and the origin of the links in an
   email. `DISCORD_API_URL` is optional and defaults to Discord's own API; only
-  `stacks/test.env` sets it. `STEAM_API_KEY` is required, and `STEAM_API_URL`
-  is optional and defaults to Steam's own Web API; only `stacks/test.env` sets
+  `stacks/local.env` sets it. `STEAM_API_KEY` is required, and `STEAM_API_URL`
+  is optional and defaults to Steam's own Web API; only `stacks/local.env` sets
   it, and `STEAM_OPENID_URL`, which defaults to Steam's OpenID provider.
   `GOOGLE_CLIENT_SECRET` is required, and `GOOGLE_TOKEN_URL` is optional and
-  defaults to Google's own token endpoint; only `stacks/test.env` sets it.
-  `AWS_ENDPOINT_URL_SESV2` is optional too, and the
-  SES client reads it itself: without it, the development stack only logs its
-  email; with it, the server sends there. Only `stacks/test.env` sets it. `WORKER_PERIOD` is optional as well:
-  the seconds between the worker's runs, an hour unless `stacks/test.env`'s 2.
+  defaults to Google's own token endpoint; only `stacks/local.env` sets it.
+  `AWS_ENDPOINT_URL_SESV2` is optional too, and the SES client reads it
+  itself: without it, the local stack only logs its email; with it, the server
+  sends there. Only `stacks/local.env` sets it. `WORKER_PERIOD` is optional as
+  well: the seconds between the worker's runs, an hour unless
+  `stacks/local.env`'s 2.
 - `Server/Worker.purs` runs in the node process on that period. Each run gives
   the posts that have entered their last week their expiry notification and
   sends every owner one email of the fits and expiries created since the run
@@ -534,22 +587,24 @@ redirects the old site's feed paths to the new ones by `legacy.game_map`.
   them, applied with `HS.class_`.
 - `Client/Static/` (the two index files, the favicon and `logo-512.png`, the
   Inter fonts with their `inter.css`, the game covers and ads.txt) is
-  copied verbatim by `build-client.sh`, the covers through `build-covers.mjs`;
-  adding a file or directory there means adding a `cp` line to that script.
+  copied as it is by `bundle.ps1`, the covers through `build-covers.mjs`;
+  adding a file or directory there means adding it to that script's list.
 
 ## Database
 
 `Database/` is plain SQL. `TablesCurrent.sql` is the schema, and it is what the
-test stack builds from. `TablesBase.sql` is the schema production and the
-development database had before the scripts in `Migrations/`, so
+local stack's seed builds from. `TablesBase.sql` is the schema production had
+before the scripts in `Migrations/`, so
 `TablesBase.sql` with those scripts applied in date order gives
 `TablesCurrent.sql`. `Seed/` holds the region and country rows and one file per
 game, each carrying that game's contacts, fields, field options and trackers.
-Only the test stack runs them, on every fresh boot.
+Only the local stack's seed runs them.
 
 A schema change is a dated script in `Migrations/`, one transaction, and the
-same edit to `TablesCurrent.sql`. The script is applied by hand to the
-`tt-postgres` container of the development stack and to production. Before it
+same edit to `TablesCurrent.sql`. The script is applied by hand to production,
+and to staging where it runs, before the deploy that needs it: `deploy.ps1`
+holds back a deploy whose `TablesCurrent.sql` changed until `-schemaApplied`
+says the script has run. Before it
 goes out, apply `TablesBase.sql` and the scripts to one scratch database and
 `TablesCurrent.sql` to another, and `pg_dump --schema-only` both: the dumps
 must not differ. A data fix SQL alone can't make, such as one that asks Steam,
@@ -560,12 +615,13 @@ point rots: it may address rows by ids only production has, so nothing can
 replay it and nothing catches it going stale.
 
 `Seed/Games/` is the production game catalogue, so it is checked against the
-development database rather than written freehand.
+production data in the local cluster's `team_tavern` rather than written
+freehand.
 
 A game is its seed file plus one cover, a 600x900 WebP at
 `Client/Static/Images/Games/<handle>.webp`, served as `/images/games/<handle>.webp`.
 The cover is the only per-game asset: every cover grid shows it, and nothing
-shows a game icon. `build-covers.mjs`, run by `build-client.sh`, fails the
+shows a game icon. `build-covers.mjs`, run by `bundle.ps1`, fails the
 build on a cover of another size and makes the 400x600 copy under
 `/images/games/400/` that the site's covers load; `Client/Snippets/Cover.purs`
 names both, and only shared links and wide phones take the original. Every

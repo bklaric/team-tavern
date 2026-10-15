@@ -7,7 +7,8 @@
 # Run from the repo root, or from wherever redesign/import/ and
 # src/TeamTavern/Database/ were unpacked beside each other on a server
 # (redesign/relaunch.md). POSTGRES_USER and POSTGRES_DB name the user and the
-# old site's database; where they are not set, they come from stacks/.env.
+# old site's database; where they are not set, the user is the local stack's,
+# from stacks/local.env, and the database team_tavern.
 #
 # The old database is only read: pg_dump copies it into the target, where it
 # becomes the legacy schema beside the new one. The target is dropped and
@@ -16,9 +17,8 @@
 set -euo pipefail
 
 target="${1:-redesign_import}"
-from_env() { grep "^$1=" stacks/.env | cut -d= -f2 | tr -d '\r'; }
-user="${POSTGRES_USER:-$(from_env POSTGRES_USER)}"
-source="${POSTGRES_DB:-$(from_env POSTGRES_DB)}"
+user="${POSTGRES_USER:-$(grep '^POSTGRES_USER=' stacks/local.env | cut -d= -f2 | tr -d '\r')}"
+source="${POSTGRES_DB:-team_tavern}"
 
 if [ "$target" = "$source" ]; then
     echo "The target, $target, is the database it imports from." >&2

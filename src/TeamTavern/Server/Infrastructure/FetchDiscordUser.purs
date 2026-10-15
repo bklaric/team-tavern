@@ -17,7 +17,7 @@ import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 import TeamTavern.Server.Infrastructure.ValidateEmail (VouchedEmail, vouchedEmail)
 import Yoga.JSON.Async (readJSON)
 
--- | Where Discord's API lives, `https://discord.com/api` outside the test stack.
+-- | Where Discord's API lives, `https://discord.com/api` outside the local stack.
 newtype DiscordApiUrl = DiscordApiUrl String
 
 -- | Discord leaves out `email` and `verified` without the `email` scope, and

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Applies the schema and game seeds to a throwaway database in the development
+# Applies the schema and game seeds to a throwaway database in the local
 # stack's postgres container, prints each game's fields, runs the catalogue
 # invariants, checks every game has its cover, and drops the database again.
 #
@@ -30,7 +30,7 @@ else
     seeds=("$@")
 fi
 
-user=$(grep '^POSTGRES_USER=' stacks/.env | cut -d= -f2 | tr -d '\r')
+user=$(grep '^POSTGRES_USER=' stacks/local.env | cut -d= -f2 | tr -d '\r')
 db="seed_check_$$_$RANDOM"
 
 psql_admin() { docker exec -i tt-postgres psql -U "$user" -d postgres -q "$@"; }

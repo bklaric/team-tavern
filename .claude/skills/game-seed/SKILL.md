@@ -108,8 +108,8 @@ use it, and labels follow the posts' words.
   their own boards, so for them the evidence is the recruitment boards
   (ETF2L's, CS2 LFT boards), team announcements and TeamTavern's own posts,
   and the report says the sample is thin.
-- **TeamTavern's own posts.** The development database holds the production
-  dump, whose about and ambitions texts are years of players describing
+- **TeamTavern's own posts.** The local stack's Postgres holds the production
+  dump, in `team_tavern`, whose about and ambitions texts are years of players describing
   themselves in their own words, not the old form's options.
   `scripts/count-terms.sh <old-handle> <label>=<regex>...` counts the profiles
   mentioning each term, overall and in the last two years.

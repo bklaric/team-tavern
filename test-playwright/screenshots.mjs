@@ -1,5 +1,5 @@
 // Screenshots every screen of the site at phone and desktop width, against the running
-// test stack, for comparing with the prototype's (redesign/prototype/screenshot.mjs):
+// local stack, for comparing with the prototype's (redesign/prototype/screenshot.mjs):
 //   "$(volta which node)" test-playwright/screenshots.mjs [--only=<text>] ...
 // With no --only it takes every scene; each --only keeps the scenes whose name holds its
 // text. The shots go to test-playwright/screenshots/. Scenes sign in as the seeded players
@@ -12,7 +12,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const origin = "http://localhost:8080";
+const origin = "http://localhost:8020";
 const password = "tester-password";
 const widths = { phone: 375, desktop: 1280 };
 const only = process.argv.slice(2)
@@ -25,9 +25,8 @@ try {
         throw new Error(`/api/games answered ${response.status}`);
     }
 } catch (error) {
-    console.error(`The test stack doesn't answer at ${origin} (${error.message}).`);
-    console.error("Build with ./build.sh and run npm test, or bring the stack up with");
-    console.error("docker compose --env-file stacks/test.env -f stacks/docker-compose.test.yml up -d");
+    console.error(`The local stack doesn't answer at ${origin} (${error.message}).`);
+    console.error("Build it with .\\bundle.ps1 -environment local and bring it up with .\\up.ps1.");
     process.exit(1);
 }
 
@@ -88,7 +87,7 @@ async function openPost(page, handle, name) {
 }
 
 // Discord's part in signing up, as test-playwright/discord.ts plays it: straight back to
-// the page with a token the test stack's stub reads as a new user.
+// the page with a token the local stack's stub reads as a new user.
 async function fakeDiscord(page) {
     const id = unique("");
     await page.route(url => url.hostname === "discord.com" && url.pathname === "/api/oauth2/authorize", route => {

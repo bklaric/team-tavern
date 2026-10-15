@@ -12,7 +12,7 @@ export function discordUser(email: string | null, verified: boolean): DiscordUse
 // The pages send the browser to Discord's authorize URL, and Discord sends it back to the
 // page named in `redirect_uri` with an access token and the page's `state` in the fragment.
 // This plays Discord's part: it answers with a token for whichever user is set at the time,
-// which the discord service in the test stack reads back as that user (see
+// which the discord service in the local stack reads back as that user (see
 // `DiscordStub/Main.purs`), or turns back as a player does who cancels at Discord, and
 // records each authorize URL so a test can check what the page asked for.
 export type FakeDiscord = { user: DiscordUser, cancel: boolean, authorizeRequests: URL[] };

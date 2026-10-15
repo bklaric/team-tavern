@@ -6,7 +6,7 @@ import { fakeSteam } from "../steam";
 
 // MailTester and QuietTester (`stacks/test-seed/players.sql`) are written to only
 // here; the players writing to them are new to each test. FitsTester and ExpiringTester
-// are here for the worker's period email, which the test stack sends every two seconds.
+// are here for the worker's period email, which the local stack sends every two seconds.
 
 const card = (page: Page, name: string) =>
     page.locator(".card").filter({ has: page.getByRole("link", { name, exact: true }) });

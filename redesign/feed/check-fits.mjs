@@ -1,7 +1,7 @@
 // Checks the fit query against the feed query from every owner's seat:
 //   "$(volta which node)" redesign/feed/check-fits.mjs [game ...]
 //   "$(volta which node)" redesign/feed/check-fits.mjs --at 2024-09-01
-//   "$(volta which node)" redesign/feed/check-fits.mjs --container teamtavern-test-postgres-1 --user tester --database team_tavern_test
+//   "$(volta which node)" redesign/feed/check-fits.mjs --container tt-postgres --database team_tavern_local
 // A notification says a post fits another (brief 8), and fitting is what the
 // feed's Fits you counts, which check.mjs proves against the prototype. So for
 // every post in the games given (all of them by default) the posts Fits.sql
