@@ -111,6 +111,33 @@ test("the guide to joining a team leads to the Deadlock guide, and that to its g
     await expect(page.getByRole("heading", { name: "Deadlock", level: 1 })).toBeVisible();
 });
 
+test("the guide to joining a team leads to the Rainbow Six Siege guide, and that to its game's feed", async ({ page }) => {
+    const siegeHeading = "How to play ranked with friends in Rainbow Six Siege";
+    await page.goto(guidePath);
+    await expect(page.getByRole("heading", { name: guideHeading, level: 1 })).toBeVisible();
+
+    await page.getByRole("link", { name: siegeHeading }).click();
+
+    await expectPage(page, "/guides/rainbow-six-siege-ranked-with-friends");
+    await expect(page.getByRole("heading", { name: siegeHeading, level: 1 })).toBeVisible();
+    await expect(page.getByRole("table")).toContainText("Gold to Diamond");
+
+    await page.getByRole("link", { name: "Rainbow Six Siege players and groups on TeamTavern" }).last().click();
+
+    await expectPage(page, "/games/rainbow-six-siege");
+    await expect(page.getByRole("heading", { name: "Rainbow Six Siege", level: 1 })).toBeVisible();
+});
+
+test("the Rainbow Six Siege guide leads to the role chart in the guide to joining a team", async ({ page }) => {
+    await page.goto("/guides/rainbow-six-siege-ranked-with-friends");
+    await expect(page.getByRole("heading", { name: "How to play ranked with friends in Rainbow Six Siege", level: 1 })).toBeVisible();
+
+    await page.getByRole("link", { name: "the role chart in the guide to joining a team" }).click();
+
+    await expectPage(page, guidePath);
+    await expect(page.getByRole("heading", { name: "Pick one game and one role, ideally one teams are short of", level: 2 })).toBeInViewport();
+});
+
 // The guide's text comes after the page loads, so the page, not the browser,
 // finds the part of it the address names.
 test("an address naming a part of a guide opens the guide at it", async ({ page }) => {

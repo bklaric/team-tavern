@@ -22,6 +22,7 @@ const guidePaths = [
     "/guides/rocket-league-tournaments",
     "/guides/the-finals-ranked-with-friends",
     "/guides/deadlock-ranked-with-friends",
+    "/guides/rainbow-six-siege-ranked-with-friends",
 ];
 
 // Neither robots nor the sitemap is a page, so Caddy answers a bot with the file itself

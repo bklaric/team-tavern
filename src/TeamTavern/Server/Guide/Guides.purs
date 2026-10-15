@@ -12,6 +12,8 @@ foreign import makeAnEsportsTeamText :: String
 
 foreign import marvelRivalsChampionshipTeamText :: String
 
+foreign import rainbowSixSiegeRankedWithFriendsText :: String
+
 foreign import rocketLeagueTournamentsText :: String
 
 foreign import theFinalsRankedWithFriendsText :: String
@@ -40,7 +42,7 @@ guides = sortBy (flip $ comparing _.updated)
       , description: "Most esports teams are amateur five-stacks playing Premier, Clash, ESEA or Siege Cup. "
             <> "Here's what each game asks of your account, what teams look for, and where to find one."
       , published: "2026-09-29"
-      , updated: "2026-10-07"
+      , updated: "2026-10-15"
       , html: markdownToHtml joinAnEsportsTeamText
       }
     , { slug: "make-an-esports-team"
@@ -49,7 +51,7 @@ guides = sortBy (flip $ comparing _.updated)
       , description: "Starting an amateur team? How to pick your format, recruit for the roles you're missing, "
             <> "run tryouts, find scrims, and the roster rules each game's tournament enforces."
       , published: "2026-09-29"
-      , updated: "2026-10-07"
+      , updated: "2026-10-15"
       , html: markdownToHtml makeAnEsportsTeamText
       }
     , { slug: "marvel-rivals-championship-team"
@@ -87,5 +89,14 @@ guides = sortBy (flip $ comparing _.updated)
       , published: "2026-10-07"
       , updated: "2026-10-07"
       , html: markdownToHtml deadlockRankedWithFriendsText
+      }
+    , { slug: "rainbow-six-siege-ranked-with-friends"
+      , heading: "How to play ranked with friends in Rainbow Six Siege"
+      , title: "R6 ranked with friends: what ranks can play together in Siege, and how to find a stack"
+      , description: "Since Ranked 3.0, a squad must be within three full ranks, two with a Diamond or Champion: "
+            <> "who can queue together in Rainbow Six Siege, and how to find a stack in range."
+      , published: "2026-10-15"
+      , updated: "2026-10-15"
+      , html: markdownToHtml rainbowSixSiegeRankedWithFriendsText
       }
     ]

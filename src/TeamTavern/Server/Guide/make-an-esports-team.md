@@ -86,6 +86,7 @@ Every format has its own way to create a team and its own roster rules, and some
 | **The Finals: Ranked Cashout** | Nobody: a party of 2 or 3 queues together, and the game fills empty places | A duo must be within 10,000 RS, and a party is matched by its highest-ranked player |
 | **Rocket League: in-game tournaments** | Nobody: each player registers alone or in a party of 2 or 3, and the game fills empty places | A party enters at its highest player's tournament rank, and a duo in 3v3 must be within three ranks |
 | **Deadlock: Ranked** | Nobody: a duo queues together, and the game fills the rest | Duos only, at most one rank apart, after each has played their calibration games alone |
+| **Rainbow Six Siege: Ranked** | Nobody: a squad of up to 5 queues together, and the game fills empty places | Squadmates must be within three full ranks, or two with a Diamond or Champion, except in placements |
 | **Rainbow Six Siege: Siege Cup** | The squad leader registers a squad of five | The team can't be edited once registered |
 | **Rainbow Six Siege: Challenger Series** | The team's creator invites players on Challengermode | A player who wasn't in the lineup needs an admin's approval to join mid-tournament |
 | **Overwatch: OWCS** | Up to 8 players, aged 17 or over | The 2026 open qualifier requires Masters 1 |
