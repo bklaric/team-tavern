@@ -142,7 +142,7 @@ component = Hooks.component \_ { conversation: openId, visit } -> Hooks.do
         -- Opening a conversation marks it read, which its row and the header
         -- then show.
         loadConversation visit' id = do
-            result <- H.lift $ Async.attempt $ fetchPath (Proxy :: _ ViewConversation) { id }
+            result <- H.lift $ Async.attempt $ fetchPath (expecting [ "notAuthorized" ] (Proxy :: _ ViewConversation)) { id }
             case hush result >>= onMatch { ok: Just } (const Nothing) of
                 Nothing -> do
                     whileCurrent visit' _ { open = Gone }
