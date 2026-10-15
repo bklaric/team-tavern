@@ -10,5 +10,5 @@ import TeamTavern.Server.Guide.Guides (guides)
 import Type.Row (type (+))
 
 viewGuides :: ∀ left. Async left (Variant (OkRow ViewGuides.OkContent + ()))
-viewGuides = pure $ ok_ $ guides <#> \{ slug, heading, description, updated } ->
-    { slug, heading, description, updated }
+viewGuides = pure $ ok_ $ guides <#> \{ slug, heading, description, updated, games } ->
+    { slug, heading, description, updated, games }

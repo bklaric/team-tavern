@@ -10,13 +10,18 @@ import Data.Tuple.Nested ((/\))
 import Data.Variant (onMatch)
 import Halogen as H
 import Halogen.HTML as HH
+import Halogen.HTML.Events as HE
+import Halogen.HTML.Properties as HP
+import Halogen.HTML.Properties.ARIA as HPA
 import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.Ads as Ads
 import TeamTavern.Client.Pages.Document (document, link, longDate)
+import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
 import TeamTavern.Client.Script.RenderReady (appendRenderReadyUnavailable)
 import TeamTavern.Client.Shared.Fetch (fetchSimple)
 import TeamTavern.Client.Shared.Slot (Slot__I)
 import TeamTavern.Client.Snippets.Class as HS
+import TeamTavern.Client.Snippets.Cover (smallCoverPath)
 import TeamTavern.Routes.Guide.ViewGuides (ViewGuides)
 import TeamTavern.Routes.Guide.ViewGuides as ViewGuides
 import Type.Proxy (Proxy(..))
@@ -43,9 +48,23 @@ component = Hooks.component \_ _ -> Hooks.do
             Loading -> []
             Failed -> [ HH.p_ [ HH.text "There has been an error loading the guides." ] ]
             Shown guides' ->
-                [ HH.ul [ HS.class_ "guide-list" ] $ guides' <#> \{ slug, heading, description, updated } ->
+                [ HH.ul [ HS.class_ "guide-list" ] $ guides' <#> \{ slug, heading, description, updated, games } ->
+                    let path = "/guides/" <> slug in
                     HH.li_
-                    [ HH.h2_ [ link ("/guides/" <> slug) heading ]
+                    -- The cover leads to the guide too, for a pointer. The
+                    -- title is the guide's one link to a keyboard or a screen
+                    -- reader.
+                    [ HH.a
+                        [ HS.class_ "guide-list-cover", HP.href path, HP.tabIndex (-1), HPA.hidden "true"
+                        , HE.onClick $ navigateWithEvent_ path
+                        ]
+                        [ case games of
+                            [ { handle } ] -> HH.img
+                                [ HP.src $ smallCoverPath handle, HP.alt "", HP.width 400, HP.height 600 ]
+                            _ -> HH.span [ HS.class_ "guide-list-logo" ]
+                                [ HH.img [ HP.src "/logo-mark.svg", HP.alt "" ] ]
+                        ]
+                    , HH.h2_ [ link path heading ]
                     , HH.p [ HS.class_ "guide-updated" ] [ HH.text $ "Updated " <> longDate updated ]
                     , HH.p_ [ HH.text description ]
                     ]

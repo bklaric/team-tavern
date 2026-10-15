@@ -151,11 +151,12 @@ setBreadcrumbs crumbs = liftEffect do
         }
 
 -- | A guide is an article by TeamTavern itself, which names no one person, on
--- | the trail from the home page through the guides. The dates are ISO.
+-- | the trail from the home page through the guides. The dates are ISO, and
+-- | the image is a path on the site's origin.
 setGuideData :: ∀ monad. MonadEffect monad =>
-    { path :: String, heading :: String, description :: String, published :: String, updated :: String }
+    { path :: String, heading :: String, description :: String, image :: String, published :: String, updated :: String }
     -> monad Unit
-setGuideData { path, heading, description, published, updated } = liftEffect do
+setGuideData { path, heading, description, image, published, updated } = liftEffect do
     origin' <- window >>= location >>= origin
     setStructuredData
         { "@context": "https://schema.org"
@@ -166,7 +167,7 @@ setGuideData { path, heading, description, published, updated } = liftEffect do
                 , "@id": origin' <> path <> "#article"
                 , headline: heading
                 , description
-                , image: origin' <> "/logo-512.png"
+                , image: origin' <> image
                 , datePublished: published
                 , dateModified: updated
                 , mainEntityOfPage: origin' <> path

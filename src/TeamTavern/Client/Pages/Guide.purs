@@ -19,13 +19,14 @@ import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.Ads as Ads
 import TeamTavern.Client.Pages.Document (document, longDate)
 import TeamTavern.Client.Pages.Placeholder (placeholder)
-import TeamTavern.Client.Script.Meta (setGuideData, setMeta)
+import TeamTavern.Client.Script.Meta (setCoverImage, setGuideData, setMeta)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
 import TeamTavern.Client.Script.RenderReady (appendRenderReadyNotFound, appendRenderReadyUnavailable)
 import TeamTavern.Client.Script.Scroll (scrollToFragment)
 import TeamTavern.Client.Shared.Fetch (expecting, fetchPath)
 import TeamTavern.Client.Shared.Slot (Slot__I)
 import TeamTavern.Client.Snippets.Class as HS
+import TeamTavern.Client.Snippets.Cover (coverPath)
 import TeamTavern.Routes.Guide.ViewGuide (ViewGuide)
 import TeamTavern.Routes.Guide.ViewGuide as ViewGuide
 import Type.Proxy (Proxy(..))
@@ -60,10 +61,18 @@ component = Hooks.component \_ slug -> Hooks.do
                 Right response -> response # onMatch
                     { ok: \guide' -> do
                         setMeta guide'.title guide'.description
+                        -- A guide to one game shares that game's cover, and
+                        -- the rest keep the logo the router has set.
+                        image <- case guide'.games of
+                            [ game ] -> do
+                                setCoverImage game
+                                pure $ coverPath game.handle
+                            _ -> pure "/logo-512.png"
                         setGuideData
                             { path: "/guides/" <> slug
                             , heading: guide'.heading
                             , description: guide'.description
+                            , image
                             , published: guide'.published
                             , updated: guide'.updated
                             }

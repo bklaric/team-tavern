@@ -391,6 +391,16 @@ test.describe("a page's structured data", () => {
         ]);
     });
 
+    test("pictures a guide to one game with its cover", async ({ page }) => {
+        test.slow();
+
+        await page.goto("/guides/deadlock-ranked-with-friends", { timeout: 60_000 });
+
+        const { "@graph": graph } = await structuredData(page);
+        const article = graph.find((node: any) => node["@type"] === "Article");
+        expect(new URL(article.image).pathname).toBe("/images/games/deadlock.webp");
+    });
+
     test("is left out of a page with nothing to say", async ({ page }) => {
         test.slow();
 
@@ -412,7 +422,8 @@ test("a page drops the structured data of the page before it", async ({ page }) 
     await expect(page.locator('script[type="application/ld+json"]')).toHaveCount(0);
 });
 
-// A shared link shows the game's cover for a feed or a post, and the logo for the rest.
+// A shared link shows the game's cover for a feed, a post or a guide to one game, and the
+// logo for the rest.
 test.describe("a page's share image", () => {
     test.use({ userAgent: googlebot, javaScriptEnabled: false });
 
@@ -442,6 +453,18 @@ test.describe("a page's share image", () => {
 
         await page.goto(nightOwls, { timeout: 60_000 });
         await expectImage(page, cover);
+    });
+
+    test("is the game's cover on a guide to one game, and the logo on a guide to several", async ({ page }) => {
+        test.slow();
+
+        await page.goto("/guides/deadlock-ranked-with-friends", { timeout: 60_000 });
+        await expectImage(page,
+            { path: "/images/games/deadlock.webp", alt: "Deadlock cover", width: "600", height: "900", type: "image/webp" });
+
+        await page.goto(guidePath, { timeout: 60_000 });
+        await expectImage(page,
+            { path: "/logo-512.png", alt: "TeamTavern logo", width: "512", height: "512", type: "image/png" });
     });
 
     test("is the logo on a page of the site's own", async ({ page }) => {

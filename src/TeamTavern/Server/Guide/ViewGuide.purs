@@ -13,6 +13,6 @@ import Type.Row (type (+))
 
 viewGuide :: ∀ left. String -> Async left (Variant (OkRow ViewGuide.OkContent + NotFoundRow_ + ()))
 viewGuide slug = pure case guides # find (_.slug >>> eq slug) of
-    Just { heading, title, description, published, updated, html } ->
-        ok_ { heading, title, description, published, updated, html }
+    Just { heading, title, description, published, updated, games, html } ->
+        ok_ { heading, title, description, published, updated, games, html }
     Nothing -> notFound__

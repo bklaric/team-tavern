@@ -3,6 +3,7 @@ module TeamTavern.Server.Guide.Guides (Guide, guides) where
 import Prelude
 
 import Data.Array (sortBy)
+import TeamTavern.Routes.Guide.ViewGuide (GuideGame)
 
 foreign import deadlockRankedWithFriendsText :: String
 
@@ -21,7 +22,9 @@ foreign import theFinalsRankedWithFriendsText :: String
 foreign import markdownToHtml :: String -> String
 
 -- | The slug is the guide's URL, so it never changes. `updated` is the date a
--- | fact in the guide last changed. The dates are ISO.
+-- | fact in the guide last changed. The dates are ISO. A guide that names one
+-- | game in `games` shows its cover in the guides list and on a shared link;
+-- | any other guide shows the logo.
 type Guide =
     { slug :: String
     , heading :: String
@@ -29,6 +32,7 @@ type Guide =
     , description :: String
     , published :: String
     , updated :: String
+    , games :: Array GuideGame
     , html :: String
     }
 
@@ -43,6 +47,7 @@ guides = sortBy (flip $ comparing _.updated)
             <> "Here's what each game asks of your account, what teams look for, and where to find one."
       , published: "2026-09-29"
       , updated: "2026-10-15"
+      , games: []
       , html: markdownToHtml joinAnEsportsTeamText
       }
     , { slug: "make-an-esports-team"
@@ -52,6 +57,7 @@ guides = sortBy (flip $ comparing _.updated)
             <> "run tryouts, find scrims, and the roster rules each game's tournament enforces."
       , published: "2026-09-29"
       , updated: "2026-10-15"
+      , games: []
       , html: markdownToHtml makeAnEsportsTeamText
       }
     , { slug: "marvel-rivals-championship-team"
@@ -61,6 +67,7 @@ guides = sortBy (flip $ comparing _.updated)
             <> "for the Marvel Rivals Championship and the way to Ignite."
       , published: "2026-09-30"
       , updated: "2026-09-30"
+      , games: [ { handle: "marvel-rivals", title: "Marvel Rivals" } ]
       , html: markdownToHtml marvelRivalsChampionshipTeamText
       }
     , { slug: "rocket-league-tournaments"
@@ -70,6 +77,7 @@ guides = sortBy (flip $ comparing _.updated)
             <> "kept within three ranks: how Rocket League's tournaments work, and how to find a partner for them."
       , published: "2026-10-04"
       , updated: "2026-10-04"
+      , games: [ { handle: "rocket-league", title: "Rocket League" } ]
       , html: markdownToHtml rocketLeagueTournamentsText
       }
     , { slug: "the-finals-ranked-with-friends"
@@ -79,6 +87,7 @@ guides = sortBy (flip $ comparing _.updated)
             <> "how ranked in The Finals treats friends, and how to find a steady third."
       , published: "2026-10-06"
       , updated: "2026-10-06"
+      , games: [ { handle: "the-finals", title: "The Finals" } ]
       , html: markdownToHtml theFinalsRankedWithFriendsText
       }
     , { slug: "deadlock-ranked-with-friends"
@@ -88,6 +97,7 @@ guides = sortBy (flip $ comparing _.updated)
             <> "Who can queue together, where a stack plays, and how to find a duo."
       , published: "2026-10-07"
       , updated: "2026-10-07"
+      , games: [ { handle: "deadlock", title: "Deadlock" } ]
       , html: markdownToHtml deadlockRankedWithFriendsText
       }
     , { slug: "rainbow-six-siege-ranked-with-friends"
@@ -97,6 +107,7 @@ guides = sortBy (flip $ comparing _.updated)
             <> "who can queue together in Rainbow Six Siege, and how to find a stack in range."
       , published: "2026-10-15"
       , updated: "2026-10-15"
+      , games: [ { handle: "rainbow-six-siege", title: "Rainbow Six Siege" } ]
       , html: markdownToHtml rainbowSixSiegeRankedWithFriendsText
       }
     ]

@@ -18,6 +18,32 @@ test("the guides list each guide with its last update and lead to it", async ({ 
     await expect(page).toHaveTitle(/^How to join an esports team/);
 });
 
+test("the guides show the cover of the game each is about, and the logo for the rest", async ({ page }) => {
+    await page.goto("/guides");
+    await expectPage(page, "/guides");
+    const image = (heading: string) =>
+        page.getByRole("listitem").filter({ has: page.getByRole("link", { name: heading }) }).locator("img");
+
+    await expect(image("How to play ranked with friends in Deadlock"))
+        .toHaveAttribute("src", "/images/games/400/deadlock.webp");
+    await expect(image(guideHeading)).toHaveAttribute("src", "/logo-mark.svg");
+    for (const cover of await page.locator(".guide-list img").all())
+        await expect.poll(() => cover.evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0))
+            .toBe(true);
+});
+
+test("a guide's cover leads to the guide", async ({ page }) => {
+    const deadlockHeading = "How to play ranked with friends in Deadlock";
+    await page.goto("/guides");
+    await expectPage(page, "/guides");
+
+    await page.getByRole("listitem").filter({ has: page.getByRole("link", { name: deadlockHeading }) })
+        .locator("img").click();
+
+    await expectPage(page, "/guides/deadlock-ranked-with-friends");
+    await expect(page.getByRole("heading", { name: deadlockHeading, level: 1 })).toBeVisible();
+});
+
 // The guide's text is HTML from the server, and its links to the site's pages move
 // within the site as any other in-app link does, without loading it again.
 test("a guide's link to a feed opens the feed without a reload", async ({ page }) => {
