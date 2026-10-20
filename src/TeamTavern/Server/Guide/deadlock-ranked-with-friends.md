@@ -1,9 +1,10 @@
-You can play Deadlock ranked with one friend, as long as the two of you are at most one rank apart and have both unlocked ranked and played your calibration games. A group of three or more can't queue for ranked at all, and plays Standard instead. Some answers still say ranked is solo only, which was true of Deadlock's first ranked mode in 2024 and isn't now.
+A Deadlock match is two teams of six, and up to six friends can party together, but only in Standard. Ranked takes you alone or with one friend, as long as the two of you are at most one rank apart and have both unlocked ranked and played your calibration games. A group of three to six can't queue for ranked at all. Some answers still say ranked is solo only, which was true of Deadlock's first ranked mode in 2024 and isn't now.
 
 This guide is for a player who wants to play ranked with a friend, or has a group that ranked turns away. It covers who can queue together, what a friend needs before they can join you, where a group of three to six plays, how a duo shares a lane, how to find a duo partner, and where a full team goes. For other games, see [every game's team format](/guides/join-an-esports-team#your-games-team-format).
 
 > **In short**
 >
+> - A team is six players. In Standard, a party can be any size from two to six, and a full party of six is a whole team.
 > - Ranked takes solo players and duos only. A group of three to six plays Standard, which has no limits on party size or rank.
 > - A duo must be at most one rank apart, so a Mystic can duo with a Sentinel or a Ritualist. Eternus players duo only with another Eternus within three subranks.
 > - Before a friend can join you in ranked, they need 60 wins in Standard, three heroes with 15 wins each, and eight calibration games played alone.
@@ -72,7 +73,7 @@ Set the lane preference before you queue, agree on voice, and play every game ou
 
 **Voice.** By [Valve's update of June 2024](https://forums.playdeadlock.com/threads/06-13-2024-update.5773/), team voice and text chat are opt-in, with a prompt before each match. A party can set its chat to Party-only, All Team or Disabled, which suits a duo that talks on Discord.
 
-**Leaving.** A ranked game a player leaves counts as a loss for their party too, by [Valve's matchmaking update](https://store.steampowered.com/news/app/1422450/view/680756685198854910). After the first five minutes the leaver gets penalties as well, which "start with queue timeouts and escalate to increasing amounts of low priority games". A partner who leaves costs you the game.
+**Leaving.** A ranked game a player leaves counts as a loss for them and their party, whenever they leave, by [Valve's matchmaking update](https://store.steampowered.com/news/app/1422450/view/680756685198854910). The leaver gets penalties too, which "start with queue timeouts and escalate to increasing amounts of low priority games". The rest of their team can leave without a loss. So a partner who leaves costs you the game, while a stranger who leaves doesn't.
 
 ## Finding a duo partner
 
@@ -127,13 +128,21 @@ The guide to joining a team covers [Deadlock among every game's team formats](/g
 
 ## Frequently asked questions
 
+### How many players are on a Deadlock team?
+
+Six. A match, Standard or ranked, is six against six. In Standard, up to six friends can queue together, and a party of six is a whole team; a smaller party is filled up with players from the queue. In ranked, a party is at most two players.
+
+### How do you unlock ranked in Deadlock?
+
+Win 60 games in Standard, with 15 of those wins on each of at least three heroes. Then play eight calibration games alone, after which you get your rank and can queue with a friend.
+
 ### Can you play Deadlock ranked with friends?
 
 With one friend, at most one rank away, once both of you have unlocked ranked and played your eight calibration games. Three or more friends play Standard.
 
 ### Why can't I play ranked with my friend?
 
-One of you hasn't unlocked ranked (60 Standard wins, and three heroes with 15 wins each) or finished calibration, you're more than one rank apart, one of you is Eternus and the other isn't an Eternus within three subranks, or one of you has a sanction such as low priority. A party of three or more can't queue for ranked at all.
+One of you hasn't unlocked ranked (60 Standard wins, and three heroes with 15 wins each) or hasn't finished the eight calibration games, which are played alone, you're more than one rank apart, one of you is Eternus and the other isn't an Eternus within three subranks, or one of you has a sanction such as low priority. A party of three or more can't queue for ranked at all.
 
 ### Can three friends play Deadlock ranked?
 

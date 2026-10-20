@@ -24,7 +24,7 @@ test("the guides show the cover of the game each is about, and the logo for the 
     const image = (heading: string) =>
         page.getByRole("listitem").filter({ has: page.getByRole("link", { name: heading }) }).locator("img");
 
-    await expect(image("How to play ranked with friends in Deadlock"))
+    await expect(image("Deadlock team size, party size and playing ranked with friends"))
         .toHaveAttribute("src", "/images/games/400/deadlock.webp");
     await expect(image(guideHeading)).toHaveAttribute("src", "/logo-mark.svg");
     for (const cover of await page.locator(".guide-list img").all())
@@ -33,7 +33,7 @@ test("the guides show the cover of the game each is about, and the logo for the 
 });
 
 test("a guide's cover leads to the guide", async ({ page }) => {
-    const deadlockHeading = "How to play ranked with friends in Deadlock";
+    const deadlockHeading = "Deadlock team size, party size and playing ranked with friends";
     await page.goto("/guides");
     await expectPage(page, "/guides");
 
@@ -89,7 +89,7 @@ test("the guide to joining a team leads to the Marvel Rivals guide, and that to 
 });
 
 test("the guide to joining a team leads to the Rocket League guide, and that to its game's feed", async ({ page }) => {
-    const rocketLeagueHeading = "How Rocket League tournaments work, and how to find a teammate for them";
+    const rocketLeagueHeading = "Rocket League tournament times, rules and finding a partner";
     await page.goto(guidePath);
     await expect(page.getByRole("heading", { name: guideHeading, level: 1 })).toBeVisible();
 
@@ -146,7 +146,7 @@ test("the guide to joining a team leads to The Finals guide, and that to its gam
 });
 
 test("the guide to joining a team leads to the Deadlock guide, and that to its game's feed", async ({ page }) => {
-    const deadlockHeading = "How to play ranked with friends in Deadlock";
+    const deadlockHeading = "Deadlock team size, party size and playing ranked with friends";
     await page.goto(guidePath);
     await expect(page.getByRole("heading", { name: guideHeading, level: 1 })).toBeVisible();
 

@@ -71,7 +71,7 @@ guides = sortBy (flip $ comparing _.updated)
       , html: markdownToHtml marvelRivalsChampionshipTeamText
       }
     , { slug: "rocket-league-tournaments"
-      , heading: "How Rocket League tournaments work, and how to find a teammate for them"
+      , heading: "Rocket League tournament times, rules and finding a partner"
       , title: "Rocket League tournament times, rules and finding a partner"
       , description: "Every region's daily brackets in your own time, how long a run takes, what you need to "
             <> "enter, and why a party plays at its best player's rank: Rocket League's tournaments, and how to "
@@ -92,12 +92,12 @@ guides = sortBy (flip $ comparing _.updated)
       , html: markdownToHtml theFinalsRankedWithFriendsText
       }
     , { slug: "deadlock-ranked-with-friends"
-      , heading: "How to play ranked with friends in Deadlock"
-      , title: "Deadlock ranked with friends: who can duo, and where a stack plays"
-      , description: "Deadlock ranked takes solos and duos one rank apart, after eight solo calibration games. "
-            <> "Who can queue together, where a stack plays, and how to find a duo."
+      , heading: "Deadlock team size, party size and playing ranked with friends"
+      , title: "Deadlock team size, party size and who can duo in ranked"
+      , description: "A Deadlock team is six players, and a party of up to six plays Standard, but ranked takes "
+            <> "only solos and duos one rank apart. Who can queue together, and how to find a duo."
       , published: "2026-10-07"
-      , updated: "2026-10-07"
+      , updated: "2026-10-20"
       , games: [ { handle: "deadlock", title: "Deadlock" } ]
       , html: markdownToHtml deadlockRankedWithFriendsText
       }
