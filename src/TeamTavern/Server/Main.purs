@@ -11,11 +11,10 @@ import Data.Int (fromString)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.String as String
 import Effect (Effect)
-import Effect.Console (log)
 import Jarilo.Serve (ServeOptions, serve)
 import JavaScript.Node.Events.EventEmitter (on)
 import JavaScript.Node.Events.EventListener (toEventListener)
-import JavaScript.Node.Process (lookupEnv)
+import JavaScript.Node.Process (exit, lookupEnv)
 import JavaScript.Npm.Pg.Client.Events as ClientEvents
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Pool as Pool
@@ -329,7 +328,7 @@ runServer environment mailer discordClient steamApi steamOpenIdUrl googleClient 
     }
 
 main :: Effect Unit
-main = either log pure =<< runExceptT do
+main = either (\error -> logStamped error *> exit 1) pure =<< runExceptT do
     environment <- loadEnvironment
     discordClient <- loadDiscordClient
     steamApi <- loadSteamApi
