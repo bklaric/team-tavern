@@ -20,6 +20,7 @@ import JavaScript.Npm.Pg.Client.Events as ClientEvents
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Pool as Pool
 import JavaScript.Npm.Pg.Pool.Events as PoolEvents
+import Record as Record
 import TeamTavern.Routes.All (AllRoutes)
 import TeamTavern.Server.Account.DeleteAccount (deleteAccount)
 import TeamTavern.Server.Account.SwitchToDiscord (switchToDiscord)
@@ -122,10 +123,26 @@ loadPostgresVariables = do
 -- out for a transaction, and the pool's error needs one that does nothing.
 -- A client that lost its connection fails every query after, and the pool
 -- drops it when it is handed back.
+--
+-- The slowest queries, a feed batch that reaches the expired posts of the
+-- biggest game and the fits of a new post there, take about a second at most
+-- on production's data. So Postgres cancels a statement still running, or
+-- waiting on a lock, after ten seconds, and the request fails and hands its
+-- connection back. Postgres enforces it itself, so the connection stays usable
+-- and a transaction around the statement rolls back. Nothing awaits anything
+-- but Postgres inside a transaction, so one left idle for ten seconds is stuck,
+-- and Postgres ends its connection and so its locks. A request that waits five
+-- seconds for one of the pool's ten connections fails rather than queue with
+-- no end.
 createPostgresPool :: ExceptT String Effect Pool
 createPostgresPool = do
     postgresVariables <- loadPostgresVariables
-    pool <- lift $ Pool.create postgresVariables
+    pool <- lift $ Pool.create $ Record.union postgresVariables
+        { max: 10
+        , connectionTimeoutMillis: 5000
+        , statement_timeout: 10000
+        , idle_in_transaction_session_timeout: 10000
+        }
     lift $ pool # on PoolEvents.connect (toEventListener \client ->
         client # on ClientEvents.error (toEventListener \error ->
             logStamped $ String.joinWith " | " $ Array.cons "Postgres connection lost" $ databaseErrorLines error)
