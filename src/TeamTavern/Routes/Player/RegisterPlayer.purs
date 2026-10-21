@@ -8,8 +8,9 @@ type RegisterPlayer =
     PostJson_ (Literal "players") RequestContent
     ==> (NoContent ! BadRequestJson BadContent ! Internal_)
 
--- | `ticket` is the one signing in with Steam or Google gave. Steam gives no
--- | address, so the player types one in; Google's rides on its ticket.
+-- | `ticket` is the one signing in with Discord, Steam or Google gave. Steam
+-- | gives no address, so the player types one in; Discord's and Google's ride
+-- | on their ticket.
 type RequestContent = Variant
     ( password ::
         { email :: String
@@ -18,7 +19,7 @@ type RequestContent = Variant
         }
     , discord ::
         { nickname :: String
-        , accessToken :: String
+        , ticket :: String
         }
     , steam ::
         { nickname :: String
@@ -37,13 +38,14 @@ type RegistrationError = Variant
     , password :: {}
     )
 
--- | `steamTicket` and `googleTicket` are a ticket past its hour or already
--- | spent.
+-- | `discordTicket`, `steamTicket` and `googleTicket` are a ticket past its
+-- | hour or already spent.
 type BadContent = Variant
     ( registration :: NonEmptyArray RegistrationError
     , emailTaken :: {}
     , nicknameTaken :: {}
     , discordTaken :: {}
+    , discordTicket :: {}
     , steamTaken :: {}
     , steamTicket :: {}
     , googleTaken :: {}

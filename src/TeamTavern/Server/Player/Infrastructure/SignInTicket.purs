@@ -22,26 +22,26 @@ addQuery = Query """
     with stale as (
         delete from sign_in_ticket where created < now() - interval '1 hour'
     )
-    insert into sign_in_ticket (token_hash, provider, provider_id, email, email_confirmed)
-    values ($1, $2, $3, $4, $5)
+    insert into sign_in_ticket (token_hash, provider, provider_id, email, email_confirmed, discord_tag)
+    values ($1, $2, $3, $4, $5, $6)
     """
 
 takeQuery :: Query
 takeQuery = Query """
     delete from sign_in_ticket
     where token_hash = $1 and provider = $2 and created > now() - interval '1 hour'
-    returning provider_id as "providerId", email, email_confirmed as "emailConfirmed"
+    returning provider_id as "providerId", email, email_confirmed as "emailConfirmed", discord_tag as "discordTag"
     """
 
--- | The account a ticket is for, by the id the provider knows it by, and the
--- | address the provider gave for it.
-type Ticketed = { providerId :: String, email :: Maybe VouchedEmail }
+-- | The account a ticket is for, by the id the provider knows it by, the
+-- | address the provider gave for it, and, for Discord, its tag.
+type Ticketed = { providerId :: String, email :: Maybe VouchedEmail, discordTag :: Maybe String }
 
 -- | A ticket for registering the account the provider has vouched for, which
 -- | the player shows once they have picked a nickname.
 addSignInTicket :: ∀ querier errors. Querier querier =>
     querier -> Provider -> Ticketed -> Async (InternalTerror_ errors) String
-addSignInTicket querier provider { providerId, email } = do
+addSignInTicket querier provider { providerId, email, discordTag } = do
     token <- Token.generate
     tokenHash <- Token.hash token
     queryNone querier addQuery
@@ -49,7 +49,8 @@ addSignInTicket querier provider { providerId, email } = do
         : ticketName provider
         : providerId
         : toNullable (email <#> _.email)
-        :| maybe false _.confirmed email
+        : maybe false _.confirmed email
+        :| toNullable discordTag
         )
     pure $ unwrap token
 
@@ -60,8 +61,8 @@ takeSignInTicket :: ∀ querier body errors. Querier querier =>
     -> Async (TerrorVar (InternalRow_ + BadRequestRow body + errors)) Ticketed
 takeSignInTicket querier provider spent ticket = do
     tokenHash <- Token.hash (Token.Token ticket)
-    row :: Maybe { providerId :: String, email :: Maybe String, emailConfirmed :: Boolean } <-
+    row :: Maybe { providerId :: String, email :: Maybe String, emailConfirmed :: Boolean, discordTag :: Maybe String } <-
         queryFirstMaybe querier takeQuery (tokenHash :| ticketName provider)
-    { providerId, email, emailConfirmed } <- row # note (Terror (badRequest_ spent)
+    { providerId, email, emailConfirmed, discordTag } <- row # note (Terror (badRequest_ spent)
         [ "The " <> ticketName provider <> " ticket is spent or past its hour." ])
-    pure { providerId, email: email <#> { email: _, confirmed: emailConfirmed } }
+    pure { providerId, email: email <#> { email: _, confirmed: emailConfirmed }, discordTag }

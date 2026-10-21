@@ -160,6 +160,8 @@ test("signing up with Discord asks Discord for the email and comes back through 
     await expectPage(page, "/games/valorant");
     await expectSignedInAs(page, nickname);
     const [authorize] = discord.authorizeRequests;
+    expect(authorize.searchParams.get("client_id")).toBe("1068667687661740052");
+    expect(authorize.searchParams.get("response_type")).toBe("code");
     expect(authorize.searchParams.get("scope")).toBe("identify email");
     expect(authorize.searchParams.get("redirect_uri")).toBe(`${baseURL}/signin`);
     expect(authorize.searchParams.get("state")).toMatch(/^[0-9a-f]{32}$/);
@@ -228,16 +230,65 @@ test("turning back at Discord leaves the player on the sign-up page they started
     await expectPage(page, "/games/valorant");
 });
 
-// Discord hands back a token for the tab that asked; one arriving without the state the
+// Discord hands back a code for the tab that asked; one arriving without the state the
 // page sent is refused, so a link can't sign someone in as another player.
-test("a Discord token without the page's state signs nobody in", async ({ page }) => {
+test("a Discord code without the page's state signs nobody in", async ({ page, baseURL }) => {
     const user = discordUser(null, false);
-    const token = encodeURIComponent(JSON.stringify({ ...user, discriminator: "0" }));
+    const code = encodeURIComponent(JSON.stringify(
+        { ...user, discriminator: "0", client_id: "1068667687661740052", redirect_uri: `${baseURL}/signin` }));
 
-    await page.goto(`/signin#token_type=Bearer&access_token=${token}&state=forged`);
+    await page.goto(`/signin?code=${code}&state=forged`);
 
     await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
     await expect(page.getByLabel("Email or nickname")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Sign in" })).toBeVisible();
+    await expect(page).toHaveURL(/\/signin$/);
+});
+
+// Discord swaps each code once, so one kept from the address bar or a log signs nobody in
+// again. The sign-in page it lands on offers Discord again, which signs in.
+test("a Discord code signs in once", async ({ page }) => {
+    const discord = await fakeDiscord(page, discordUser(`${unique("once")}@example.com`, true));
+    const nickname = await signUpWithDiscord(page, discord);
+    await signOut(page);
+
+    discord.replay = true;
+    await page.goto("/signin");
+    await page.getByRole("button", { name: "Continue with Discord" }).click();
+
+    await expect(page.getByText("Discord couldn't sign you in. Continue with Discord again.")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Sign in" })).toBeVisible();
+    discord.replay = false;
+    await page.getByRole("button", { name: "Continue with Discord" }).click();
+    await expectPage(page, "/");
+    await expectSignedInAs(page, nickname);
+});
+
+// Discord and Google both come back with a code and the state in the query, so the trip
+// that came back is the one whose state it is, not whichever is read first.
+test("Discord's code returns to Discord's trip while a Google trip is kept", async ({ page }) => {
+    const discord = await fakeDiscord(page, discordUser(null, false));
+    await page.goto("/signin");
+    await page.evaluate(() => sessionStorage.setItem("tt-google", JSON.stringify(
+        { state: "0123456789abcdef0123456789abcdef", back: "/", from: "/signup", switching: false })));
+    await page.getByRole("button", { name: "Continue with Discord" }).click();
+
+    await expect(page.getByRole("heading", { name: "Pick a nickname" })).toBeVisible();
+    await expect(page.getByLabel("Nickname")).toHaveValue(discord.user.username);
+});
+
+// Any site with a Discord sign-in gets what Discord gives a player signing in there. The
+// server takes only what Discord gave for TeamTavern's own app.
+test("what Discord gave another app signs nobody in", async ({ page }) => {
+    const discord = await fakeDiscord(page, discordUser(`${unique("elsewhere")}@example.com`, true));
+    await signUpWithDiscord(page, discord);
+    await signOut(page);
+    discord.application = "1111111111111111111";
+
+    await page.goto("/signin");
+    await page.getByRole("button", { name: "Continue with Discord" }).click();
+
+    await expect(page.getByText("Discord couldn't sign you in. Continue with Discord again.")).toBeVisible();
     await expect(page.getByRole("link", { name: "Sign in" })).toBeVisible();
 });
 
@@ -551,6 +602,7 @@ test("a Google code without the page's state signs nobody in", async ({ page }) 
     await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
     await expect(page.getByLabel("Email or nickname")).toBeVisible();
     await expect(page.getByRole("link", { name: "Sign in" })).toBeVisible();
+    await expect(page).toHaveURL(/\/signin$/);
 });
 
 // Google swaps each code once, so one kept from the address bar or a log signs nobody in

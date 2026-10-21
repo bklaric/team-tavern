@@ -1,20 +1,20 @@
 module TeamTavern.Client.Script.Discord
     ( authorizeSwitchToDiscord
     , authorizeWithDiscord
-    , keepSwitchToken
+    , keepSwitchCode
     , takeDiscordReturn
-    , takeSwitchToken
+    , takeSwitchCode
     ) where
 
 import Prelude
 
-import Control.Alt ((<|>))
-import Data.Maybe (Maybe(..), fromMaybe, isJust)
+import Data.Maybe (Maybe(..), fromMaybe)
 import Effect.Class (class MonadEffect, liftEffect)
 import JSURI (decodeURIComponent, encodeURIComponent)
 import TeamTavern.Client.Script.Navigate (hardNavigate)
-import TeamTavern.Client.Script.QueryParams (getFragmentParam, getQueryParam)
+import TeamTavern.Client.Script.QueryParams (getQueryParam)
 import TeamTavern.Client.Script.Trip (Trip, keepSwitch, setOut, takeReturn, takeSwitch)
+import TeamTavern.Shared.Discord (discordClientId)
 import Web.HTML (window)
 import Web.HTML.Location (origin)
 import Web.HTML.Window (location)
@@ -27,8 +27,8 @@ storageKey = "tt-discord"
 switchKey :: String
 switchKey = "tt-discord-switch"
 
--- | Sends the browser to Discord, which sends it to the sign-in page with an
--- | access token in the fragment; the sign-in page then goes on to `back`.
+-- | Sends the browser to Discord, which sends it to the sign-in page with a
+-- | code in the query; the sign-in page then goes on to `back`.
 authorizeWithDiscord :: ∀ effect. MonadEffect effect => String -> effect Unit
 authorizeWithDiscord back = authorize { back, switching: false }
 
@@ -42,37 +42,33 @@ authorize trip = liftEffect do
     state <- setOut storageKey trip
     origin' <- window >>= location >>= origin
     hardNavigate $ "https://discord.com/api/oauth2/authorize"
-        <> "?client_id=1068667687661740052"
+        <> "?client_id=" <> discordClientId
         <> "&redirect_uri=" <> (encodeURIComponent (origin' <> "/signin") # fromMaybe "")
-        <> "&response_type=token"
+        <> "&response_type=code"
         <> "&scope=identify%20email"
         <> "&state=" <> state
         <> "&prompt=none"
 
--- | What Discord came back with and the trip it came back from. `accessToken`
--- | is nothing when the player turned back at Discord, which sends `error`
--- | with the state instead. OAuth puts those in the fragment for a token, but
--- | Discord doesn't document where it puts them, so the query is read too.
--- | Any provider sends an error, so one is Discord's only with the state of
--- | the trip to Discord this tab kept.
-takeDiscordReturn :: ∀ effect. MonadEffect effect => effect (Maybe { accessToken :: Maybe String, trip :: Trip })
+-- | What Discord came back with and the trip it came back from. `code` is for
+-- | the server to swap, or nothing when the player turned back at Discord,
+-- | which sends `error` with the state instead. Google sends a code and an
+-- | error alike, so either is Discord's only with the state of the trip to
+-- | Discord this tab kept.
+takeDiscordReturn :: ∀ effect. MonadEffect effect => effect (Maybe { code :: Maybe String, trip :: Trip })
 takeDiscordReturn = do
-    let param name = do
-            fragment <- getFragmentParam name
-            query <- getQueryParam name
-            pure $ (fragment <|> query) >>= decodeURIComponent
-    accessToken <- getFragmentParam "access_token" <#> (_ >>= decodeURIComponent)
+    let param name = getQueryParam name <#> (_ >>= decodeURIComponent)
+    code <- param "code"
     error <- param "error"
     returnedState <- param "state"
-    liftEffect case accessToken, error of
+    liftEffect case code, error of
         Nothing, Nothing -> pure Nothing
-        _, _ -> takeReturn storageKey { ownMark: isJust accessToken, returnedState } <#> map { accessToken, trip: _ }
+        _, _ -> takeReturn storageKey { ownMark: false, returnedState } <#> map { code, trip: _ }
 
--- | Keeps the token of a trip that switches the account to Discord for the
+-- | Keeps the code of a trip that switches the account to Discord for the
 -- | account page.
-keepSwitchToken :: ∀ effect. MonadEffect effect => String -> effect Unit
-keepSwitchToken = liftEffect <<< keepSwitch switchKey
+keepSwitchCode :: ∀ effect. MonadEffect effect => String -> effect Unit
+keepSwitchCode = liftEffect <<< keepSwitch switchKey
 
--- | The token a switch to Discord came back with, taken once.
-takeSwitchToken :: ∀ effect. MonadEffect effect => effect (Maybe String)
-takeSwitchToken = liftEffect $ takeSwitch switchKey
+-- | The code a switch to Discord came back with, taken once.
+takeSwitchCode :: ∀ effect. MonadEffect effect => effect (Maybe String)
+takeSwitchCode = liftEffect $ takeSwitch switchKey

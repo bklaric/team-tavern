@@ -128,17 +128,20 @@ create table email_confirmation
 
 create index email_confirmation_player_id_idx on email_confirmation (player_id);
 
--- A Steam or Google account new to the site, between the provider vouching for
--- it and the player picking a nickname, with the address the provider gave for
--- it, which Steam never does. Each answers for a sign-in only once, so the
--- registration that follows shows this instead. It lasts an hour.
+-- A Discord, Steam or Google account new to the site, between the provider
+-- vouching for it and the player picking a nickname, with the address the
+-- provider gave for it, which Steam never does. Each answers for a sign-in
+-- only once, so the registration that follows shows this instead. It lasts an
+-- hour.
 create table sign_in_ticket
     ( token_hash character(64) not null primary key
-    , provider text not null check (provider in ('steam', 'google'))
+    , provider text not null check (provider in ('discord', 'steam', 'google'))
     , provider_id text not null
     , email varchar(254)
     , email_confirmed boolean not null
     , created timestamptz not null default current_timestamp
+    -- A Discord account's tag, which becomes the player's Discord contact.
+    , discord_tag varchar(37)
     );
 
 -- The nonce of every answer of Steam's the site accepted lately, so none is

@@ -11,8 +11,8 @@ import JavaScript.Npm.Pg.Query (Query(..), (:), (:|))
 import TeamTavern.Routes.Account.SwitchToDiscord as SwitchToDiscord
 import TeamTavern.Server.Account.Infrastructure.SwitchSignIn (switchSignIn)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
+import TeamTavern.Server.Infrastructure.DiscordSignIn (DiscordClient, exchangeDiscordCode)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
-import TeamTavern.Server.Infrastructure.FetchDiscordUser (DiscordApiUrl, discordTag, fetchDiscordUser)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import Type.Proxy (Proxy(..))
 import Type.Row (type (+))
@@ -34,13 +34,13 @@ queryString = Query """
     """
 
 switchToDiscord :: ∀ left.
-    DiscordApiUrl -> Pool -> Cookies -> SwitchToDiscord.RequestContent
+    DiscordClient -> Pool -> Cookies -> String -> SwitchToDiscord.RequestContent
     -> Async left (Variant (OkRow SwitchToDiscord.OkContent + BadRequestRow SwitchToDiscord.BadContent + NotAuthorizedRow_ + InternalRow_ + ()))
-switchToDiscord discordApiUrl pool cookies { accessToken } =
+switchToDiscord discordClient pool cookies origin { code } =
     sendResponse "Error switching to Discord" do
     { id, token } <- ensureSignedIn pool cookies
-    discordUser <- fetchDiscordUser discordApiUrl accessToken
+    { discordId, tag } <- exchangeDiscordCode discordClient origin code
     content :: SwitchToDiscord.OkContent <-
-        switchSignIn pool (unwrap id) token queryString (unwrap id : discordUser.id :| discordTag discordUser)
+        switchSignIn pool (unwrap id) token queryString (unwrap id : discordId :| tag)
             { constraint: "player_discord_id_key", taken: inj (Proxy :: _ "discordTaken") {} }
     pure $ ok_ content

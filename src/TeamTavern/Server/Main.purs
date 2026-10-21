@@ -48,10 +48,10 @@ import TeamTavern.Server.Game.ViewGame (viewGame)
 import TeamTavern.Server.Game.ViewGames (viewGames)
 import TeamTavern.Server.Guide.ViewGuide (viewGuide)
 import TeamTavern.Server.Guide.ViewGuides (viewGuides)
+import TeamTavern.Server.Infrastructure.DiscordSignIn (DiscordClient(..), discordEndpoint)
 import TeamTavern.Server.Infrastructure.Email (Mailer(..))
 import TeamTavern.Server.Infrastructure.Environment (Environment(..))
 import TeamTavern.Server.Infrastructure.Environment as Environment
-import TeamTavern.Server.Infrastructure.FetchDiscordUser (DiscordApiUrl(..))
 import TeamTavern.Server.Infrastructure.GoogleSignIn (GoogleClient(..), googleEndpoint)
 import TeamTavern.Server.Infrastructure.Log (logStamped, print)
 import TeamTavern.Server.Infrastructure.Postgres (databaseErrorLines)
@@ -133,11 +133,14 @@ loadEnvironment =
     <#> note "Couldn't read variable ENVIRONMENT."
     # ExceptT
 
-loadDiscordApiUrl :: Effect DiscordApiUrl
-loadDiscordApiUrl =
-    lookupEnv "DISCORD_API_URL"
-    <#> fromMaybe "https://discord.com/api"
-    <#> DiscordApiUrl
+-- | Discord's API unless DISCORD_API_URL names another, as the local stack's
+-- | does.
+loadDiscordClient :: ExceptT String Effect DiscordClient
+loadDiscordClient = do
+    secret <- lookupEnv "DISCORD_CLIENT_SECRET"
+        <#> note "Couldn't read variable DISCORD_CLIENT_SECRET." # ExceptT
+    apiUrl <- lift $ lookupEnv "DISCORD_API_URL" <#> fromMaybe discordEndpoint
+    pure $ DiscordClient { apiUrl, secret }
 
 -- | Steam's Web API at `api.steampowered.com` unless STEAM_API_URL names
 -- | another, as the local stack's does.
@@ -198,10 +201,10 @@ loadAdminEmail =
     <#> note "Couldn't read variable ADMIN_EMAIL."
     # ExceptT
 
-runServer :: Environment -> Mailer -> DiscordApiUrl -> SteamApi -> SteamOpenIdUrl -> GoogleClient -> AdminEmail -> ClientErrorLimit -> Pool -> Effect Unit
-runServer environment mailer discordApiUrl steamApi steamOpenIdUrl googleClient adminEmail clientErrorLimit pool = serve (Proxy :: _ AllRoutes) serveOptions
+runServer :: Environment -> Mailer -> DiscordClient -> SteamApi -> SteamOpenIdUrl -> GoogleClient -> AdminEmail -> ClientErrorLimit -> Pool -> Effect Unit
+runServer environment mailer discordClient steamApi steamOpenIdUrl googleClient adminEmail clientErrorLimit pool = serve (Proxy :: _ AllRoutes) serveOptions
     { startSession: \{ cookies, headers, body } ->
-        Session.start environment mailer discordApiUrl steamOpenIdUrl steamApi googleClient pool cookies (requestOrigin headers) body
+        Session.start environment mailer discordClient steamOpenIdUrl steamApi googleClient pool cookies (requestOrigin headers) body
     , endSession: \{ cookies } ->
         Session.end pool cookies
     , forgotPassword: \{ body } ->
@@ -209,7 +212,7 @@ runServer environment mailer discordApiUrl steamApi steamOpenIdUrl googleClient 
     , resetPassword: \{ body } ->
         resetPassword pool body
     , registerPlayer: \{ cookies, body } ->
-        register environment mailer discordApiUrl pool cookies body
+        register environment mailer pool cookies body
     , viewMe: \{ cookies } ->
         viewMe environment pool cookies
     , confirmEmail: \{ body } ->
@@ -224,8 +227,8 @@ runServer environment mailer discordApiUrl steamApi steamOpenIdUrl googleClient 
         updateSwitches pool cookies body
     , updateEmail: \{ cookies, body } ->
         updateEmail mailer pool cookies body
-    , switchToDiscord: \{ cookies, body } ->
-        switchToDiscord discordApiUrl pool cookies body
+    , switchToDiscord: \{ cookies, headers, body } ->
+        switchToDiscord discordClient pool cookies (requestOrigin headers) body
     , switchToSteam: \{ cookies, headers, body } ->
         switchToSteam steamOpenIdUrl pool cookies (requestOrigin headers) body
     , switchToGoogle: \{ cookies, headers, body } ->
@@ -303,7 +306,7 @@ runServer environment mailer discordApiUrl steamApi steamOpenIdUrl googleClient 
 main :: Effect Unit
 main = either log pure =<< runExceptT do
     environment <- loadEnvironment
-    discordApiUrl <- lift loadDiscordApiUrl
+    discordClient <- loadDiscordClient
     steamApi <- loadSteamApi
     steamOpenIdUrl <- lift loadSteamOpenIdUrl
     googleClient <- loadGoogleClient
@@ -313,4 +316,4 @@ main = either log pure =<< runExceptT do
     mailer <- loadMailer environment
     clientErrorLimit <- lift createClientErrorLimit
     lift $ startWorker workerPeriod mailer pool
-    lift $ runServer environment mailer discordApiUrl steamApi steamOpenIdUrl googleClient adminEmail clientErrorLimit pool
+    lift $ runServer environment mailer discordClient steamApi steamOpenIdUrl googleClient adminEmail clientErrorLimit pool

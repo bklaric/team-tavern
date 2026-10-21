@@ -10,27 +10,42 @@ export function discordUser(email: string | null, verified: boolean): DiscordUse
 }
 
 // The pages send the browser to Discord's authorize URL, and Discord sends it back to the
-// page named in `redirect_uri` with an access token and the page's `state` in the fragment.
-// This plays Discord's part: it answers with a token for whichever user is set at the time,
-// which the discord service in the local stack reads back as that user (see
-// `DiscordStub/Main.purs`), or turns back as a player does who cancels at Discord, and
-// records each authorize URL so a test can check what the page asked for.
-export type FakeDiscord = { user: DiscordUser, cancel: boolean, authorizeRequests: URL[] };
+// page named in `redirect_uri` with a code and the page's `state` in the query. This plays
+// Discord's part: it answers with a code for whichever user is set at the time, the app the
+// page named, unless `application` names another, and the redirect URI the page named,
+// which the discord service in the local stack swaps for that user only for that same app
+// and URI (see `DiscordStub/Main.purs`), or turns back as a player does who cancels at
+// Discord, and records each authorize URL and each code, so a test can check what the page
+// asked for and send a code again. Each code is new, since the discord service swaps each
+// once, as Discord does, unless `replay` sends the last one again.
+export type FakeDiscord = {
+    user: DiscordUser,
+    cancel: boolean,
+    replay: boolean,
+    application: string | null,
+    authorizeRequests: URL[],
+    codes: string[],
+};
 
 export async function fakeDiscord(page: Page, user: DiscordUser): Promise<FakeDiscord> {
-    const discord: FakeDiscord = { user, cancel: false, authorizeRequests: [] };
+    const discord: FakeDiscord = { user, cancel: false, replay: false, application: null, authorizeRequests: [], codes: [] };
     await page.route(url => url.hostname === "discord.com" && url.pathname === "/api/oauth2/authorize", route => {
         const authorize = new URL(route.request().url());
         discord.authorizeRequests.push(authorize);
         const { id, username, email, verified } = discord.user;
-        const token = encodeURIComponent(JSON.stringify({ id, username, discriminator: "0", email, verified }));
+        const client_id = discord.application ?? authorize.searchParams.get("client_id");
+        const redirect_uri = authorize.searchParams.get("redirect_uri");
+        const code = discord.replay && discord.codes.length > 0
+            ? discord.codes[discord.codes.length - 1]
+            : JSON.stringify({ id, username, discriminator: "0", email, verified, client_id, redirect_uri, code: unique("") });
+        if (!discord.cancel) discord.codes.push(code);
         const state = encodeURIComponent(authorize.searchParams.get("state") ?? "");
         const answer = discord.cancel
             ? `error=access_denied&error_description=The+resource+owner+or+authorization+server+denied+the+request&state=${state}`
-            : `token_type=Bearer&access_token=${token}&state=${state}`;
+            : `code=${encodeURIComponent(code)}&state=${state}`;
         return route.fulfill({
             status: 302,
-            headers: { location: `${authorize.searchParams.get("redirect_uri")}#${answer}` },
+            headers: { location: `${redirect_uri}?${answer}` },
         });
     });
     return discord;

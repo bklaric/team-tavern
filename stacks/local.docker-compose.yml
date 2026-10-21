@@ -53,13 +53,15 @@ services:
       - tt-steam
       - tt-google
 
-  # Answers the Discord API the node container calls, at DISCORD_API_URL in .env.
+  # Answers the Discord API the node container calls, at DISCORD_API_URL in .env,
+  # swapping codes with the DISCORD_CLIENT_SECRET there.
   tt-discord:
     # Keep in step with the Volta pin in package.json.
     image: node:24.21.0
     container_name: tt-discord
     restart: unless-stopped
     command: node /root/discord-stub/main.js
+    env_file: .env
     volumes:
       - ./discord-stub/main.js:/root/discord-stub/main.js:ro
 

@@ -12,7 +12,6 @@ import TeamTavern.Routes.Player.RegisterPlayer as RegisterPlayer
 import TeamTavern.Server.Infrastructure.Cookie (Cookies, setCookieHeader)
 import TeamTavern.Server.Infrastructure.Email (Mailer)
 import TeamTavern.Server.Infrastructure.Environment (Environment)
-import TeamTavern.Server.Infrastructure.FetchDiscordUser (DiscordApiUrl, discordEmail, fetchDiscordUser)
 import TeamTavern.Server.Infrastructure.Postgres (transaction)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Infrastructure.ValidateEmail as Email
@@ -32,9 +31,9 @@ import Type.Proxy (Proxy(..))
 import Type.Row (type (+))
 
 register :: ∀ left.
-    Environment -> Mailer -> DiscordApiUrl -> Pool -> Cookies -> RegisterPlayer.RequestContent
+    Environment -> Mailer -> Pool -> Cookies -> RegisterPlayer.RequestContent
     -> Async left (Variant (NoContentRow_ + BadRequestRow RegisterPlayer.BadContent + InternalRow_ + ()))
-register environment mailer discordApiUrl pool cookies content =
+register environment mailer pool cookies content =
     sendResponse "Error registering player" do
     -- Validate register model.
     registration <- validateRegistration content
@@ -61,21 +60,21 @@ register environment mailer discordApiUrl pool cookies content =
                 pure {confirmation: Just
                     {email: Email.toString email, nickname: unwrap nickname, nonce}}
 
-        , discord: \{nickname, accessToken} -> do
-            discordUser <- fetchDiscordUser discordApiUrl accessToken
-            pool # transaction \client -> do
-                id <- addPlayerDiscord client nickname discordUser
-                revokeSession client cookies
-                createSession id token client
+        , discord: \{nickname, ticket} -> pool # transaction \client -> do
+            -- A failed registration takes back the spent ticket with the rest.
+            ticketed <- takeSignInTicket client Discord (inj (Proxy :: _ "discordTicket") {}) ticket
+            id <- addPlayerDiscord client nickname ticketed
+            revokeSession client cookies
+            createSession id token client
 
-                -- Discord confirms an address it verified; any other gets the link.
-                confirmation <- case discordEmail discordUser of
-                    Just {email, confirmed: false} -> do
-                        nonce <- addConfirmation client id email
-                        pure $ Just {email, nickname: unwrap nickname, nonce}
-                    _ -> pure Nothing
+            -- Discord confirms an address it verified; any other gets the link.
+            confirmation <- case ticketed.email of
+                Just {email, confirmed: false} -> do
+                    nonce <- addConfirmation client id email
+                    pure $ Just {email, nickname: unwrap nickname, nonce}
+                _ -> pure Nothing
 
-                pure {confirmation}
+            pure {confirmation}
 
         , steam: \{nickname, email, ticket} -> pool # transaction \client -> do
             -- A failed registration takes back the spent ticket with the rest.

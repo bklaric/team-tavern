@@ -87,19 +87,20 @@ async function openPost(page, handle, name) {
 }
 
 // Discord's part in signing up, as test-playwright/discord.ts plays it: straight back to
-// the page with a token the local stack's stub reads as a new user.
+// the page with a code the local stack's stub swaps for a new user.
 async function fakeDiscord(page) {
     const id = unique("");
     await page.route(url => url.hostname === "discord.com" && url.pathname === "/api/oauth2/authorize", route => {
         const authorize = new URL(route.request().url());
-        const user = { id, username: `d${id}`, discriminator: "0", email: null, verified: false };
-        const token = encodeURIComponent(JSON.stringify(user));
+        const redirect_uri = authorize.searchParams.get("redirect_uri");
+        const code = JSON.stringify({
+            id, username: `d${id}`, discriminator: "0", email: null, verified: false,
+            client_id: authorize.searchParams.get("client_id"), redirect_uri, code: unique(""),
+        });
         const state = encodeURIComponent(authorize.searchParams.get("state") ?? "");
         return route.fulfill({
             status: 302,
-            headers: {
-                location: `${authorize.searchParams.get("redirect_uri")}#token_type=Bearer&access_token=${token}&state=${state}`,
-            },
+            headers: { location: `${redirect_uri}?code=${encodeURIComponent(code)}&state=${state}` },
         });
     });
 }

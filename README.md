@@ -24,7 +24,7 @@ type StartSession =
 type BadContent = Variant
     ( unknownPlayer :: {}
     , wrongPassword :: {}
-    , unknownDiscord :: { nickname :: String }
+    , unknownDiscord :: { nickname :: String, ticket :: String }
     )
 ```
 

@@ -13,7 +13,8 @@ type RequestContentEmail =
     , password :: String
     }
 
-type RequestContentDiscord = {accessToken :: String}
+-- | `code` is the one Discord sent the browser back to the sign-in page with.
+type RequestContentDiscord = {code :: String}
 
 -- | `assertion` is the `openid.` parameters Steam sent the browser back with.
 type RequestContentSteam = {assertion :: Object String}
@@ -29,16 +30,18 @@ type RequestContent = Variant
     )
 
 -- | `unknownDiscord` carries the Discord username, which the nickname prompt
--- | offers to a player registering with Discord. `unknownSteam` carries the
--- | Steam profile name as a nickname, empty if Steam didn't give it, and the
--- | ticket the player registers that Steam account with. `steamRefused` is an
--- | answer Steam didn't give, gave for another site, or gave once already.
--- | `unknownGoogle` and `googleRefused` are the same for Google, whose code
--- | is refused once spent or when it was given for another site.
+-- | offers to a player registering with Discord, and the ticket the player
+-- | registers that Discord account with. `discordRefused` is a code Discord
+-- | won't swap: spent, or given for another app or site. `unknownSteam`
+-- | carries the Steam profile name as a nickname, empty if Steam didn't give
+-- | it, and a ticket. `steamRefused` is an answer Steam didn't give, gave for
+-- | another site, or gave once already. `unknownGoogle` and `googleRefused`
+-- | are the same for Google, whose code is refused as Discord's is.
 type BadContent = Variant
     ( unknownPlayer :: {}
     , wrongPassword :: {}
-    , unknownDiscord :: { nickname :: String }
+    , unknownDiscord :: { nickname :: String, ticket :: String }
+    , discordRefused :: {}
     , unknownSteam :: { nickname :: String, ticket :: String }
     , steamRefused :: {}
     , unknownGoogle :: { nickname :: String, ticket :: String }

@@ -23,9 +23,12 @@ import TeamTavern.Client.Components.Flow (flow, flowError, flowLead, flowLink, f
 import TeamTavern.Client.Icons as Icons
 import TeamTavern.Client.Pages.Post.Register (Publishing, publishing, publishingPost)
 import TeamTavern.Client.Script.Back (authPath, readBack)
-import TeamTavern.Client.Script.Discord (authorizeWithDiscord, keepSwitchToken, takeDiscordReturn)
-import TeamTavern.Client.Script.Google (authorizeWithGoogle, keepSwitchCode, takeGoogleReturn)
+import TeamTavern.Client.Script.Discord (authorizeWithDiscord, takeDiscordReturn)
+import TeamTavern.Client.Script.Discord as Discord
+import TeamTavern.Client.Script.Google (authorizeWithGoogle, takeGoogleReturn)
+import TeamTavern.Client.Script.Google as Google
 import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_, replaceState)
+import TeamTavern.Client.Script.QueryParams (getQueryParam, removeQueryParam)
 import TeamTavern.Client.Script.Steam (authorizeWithSteam, keepSwitchAssertion, takeSteamReturn)
 import TeamTavern.Client.Shared.AccountErrors (emailError, emailInvalid, nicknameInvalid, nicknameTaken, somethingWrong)
 import TeamTavern.Client.Shared.Fetch (expecting, fetchBody)
@@ -48,7 +51,7 @@ data Screen
 
 -- `offered` is whether Steam or Google gave a name to offer as the nickname.
 data Registering
-    = WithDiscord { accessToken :: String }
+    = WithDiscord { ticket :: String }
     | WithSteam { ticket :: String, offered :: Boolean }
     | WithGoogle { ticket :: String, offered :: Boolean }
 
@@ -98,6 +101,9 @@ initialState =
     , errors: noErrors
     , sending: false
     }
+
+discordRefused :: String
+discordRefused = "Discord couldn't sign you in. Continue with Discord again."
 
 steamRefused :: String
 steamRefused = "Steam couldn't sign you in. Continue with Steam again."
@@ -157,10 +163,11 @@ component = Hooks.component \_ _ -> Hooks.do
                     (const failed)
                 Left _ -> failed
 
-        startDiscordSession accessToken back =
-            startSession "Discord" back (inj (Proxy :: _ "discord") { accessToken }) \failed -> onMatch
-                { unknownDiscord: \{ nickname } ->
-                    set _ { screen = Nickname $ WithDiscord { accessToken }, nickname = nickname }
+        startDiscordSession code back =
+            startSession "Discord" back (inj (Proxy :: _ "discord") { code }) \failed -> onMatch
+                { unknownDiscord: \{ nickname, ticket } ->
+                    set _ { screen = Nickname $ WithDiscord { ticket }, nickname = nickname }
+                , discordRefused: const $ returnFailed back discordRefused
                 }
                 (const failed)
 
@@ -217,8 +224,8 @@ component = Hooks.component \_ _ -> Hooks.do
                 set _ { sending = true, errors = noErrors }
                 result <- H.lift $ Async.attempt $ fetchBody (expecting [ "badRequest" ] (Proxy :: _ RegisterPlayer))
                     case registering of
-                        WithDiscord { accessToken } ->
-                            inj (Proxy :: _ "discord") { nickname: trim state.nickname, accessToken }
+                        WithDiscord { ticket } ->
+                            inj (Proxy :: _ "discord") { nickname: trim state.nickname, ticket }
                         WithSteam { ticket } ->
                             inj (Proxy :: _ "steam") { nickname: trim state.nickname, email: trim state.email, ticket }
                         WithGoogle { ticket } ->
@@ -238,6 +245,8 @@ component = Hooks.component \_ _ -> Hooks.do
                             , nicknameTaken: const $ failWith noErrors { nickname = Just nicknameTaken }
                             , discordTaken: const $ failWith noErrors
                                 { form = Just "This Discord account already has a TeamTavern account. Sign in with Discord instead." }
+                            , discordTicket: const $ failWith noErrors
+                                { form = Just "Discord's sign-in has run out. Go back and continue with Discord again." }
                             , steamTaken: const $ failWith noErrors
                                 { form = Just "This Steam account already has a TeamTavern account. Sign in with Steam instead." }
                             , steamTicket: const $ failWith noErrors
@@ -266,22 +275,26 @@ component = Hooks.component \_ _ -> Hooks.do
         steamReturn <- takeSteamReturn
         case googleReturn, discordReturn, steamReturn of
             Just { code: Just code, trip: { back, switching: true } }, _, _ -> do
-                keepSwitchCode code
+                Google.keepSwitchCode code
                 navigateReplace_ back
             Just { code: Just code, trip: { back } }, _, _ -> void $ Hooks.fork $ startGoogleSession code back
             Just { trip }, _, _ -> turnedBack trip
-            _, Just { accessToken: Just accessToken, trip: { back, switching: true } }, _ -> do
-                keepSwitchToken accessToken
+            _, Just { code: Just code, trip: { back, switching: true } }, _ -> do
+                Discord.keepSwitchCode code
                 navigateReplace_ back
-            _, Just { accessToken: Just accessToken, trip: { back } }, _ ->
-                void $ Hooks.fork $ startDiscordSession accessToken back
+            _, Just { code: Just code, trip: { back } }, _ -> void $ Hooks.fork $ startDiscordSession code back
             _, Just { trip }, _ -> turnedBack trip
             _, _, Just { assertion: Just assertion, trip: { back, switching: true } } -> do
                 keepSwitchAssertion assertion
                 navigateReplace_ back
             _, _, Just { assertion: Just assertion, trip: { back } } -> void $ Hooks.fork $ startSteamSession assertion back
             _, _, Just { trip } -> turnedBack trip
-            Nothing, Nothing, Nothing -> readBack >>= showPassword
+            Nothing, Nothing, Nothing -> do
+                -- What came back from a trip this tab didn't start leaves the
+                -- address, so a code nothing swapped doesn't linger in it.
+                returned <- (||) <$> (getQueryParam "code" <#> isJust) <*> (getQueryParam "error" <#> isJust)
+                when returned $ for_ [ "code", "state", "error", "error_description" ] removeQueryParam
+                readBack >>= showPassword
         pure Nothing
 
     let formError = case state.errors.form of

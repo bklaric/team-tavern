@@ -340,6 +340,21 @@ test.describe("the account page", () => {
         await expect(row(page, "Sign-in")).toHaveText("Email and password");
     });
 
+    test("refuses what Discord gave another app", async ({ page }) => {
+        await signUp(page, "A");
+        const discord = await fakeDiscord(page, discordUser(null, false));
+        discord.application = "1111111111111111111";
+        const signInRow = page.locator("#sign-in");
+
+        await openAccount(page);
+        await signInRow.getByRole("button", { name: "Change" }).click();
+        await signInRow.getByRole("button", { name: "Continue with Discord" }).click();
+
+        await expectPage(page, "/account");
+        await expect(page.locator(".toast-text")).toHaveText("Discord couldn't confirm it's your account. Try again.");
+        await expect(row(page, "Sign-in")).toHaveText("Email and password");
+    });
+
     test("asks a Discord account without an address for one to sign in with a password", async ({ page }) => {
         const nickname = await signUpWithDiscord(page, await fakeDiscord(page, discordUser(null, false)));
         const address = `${nickname.toLowerCase()}@example.com`;

@@ -102,6 +102,7 @@ component = Hooks.component \_ _ -> Hooks.do
                                 { email = Just "An account already uses this email. Sign in instead." }
                             , nicknameTaken: const $ failWith noErrors { nickname = Just nicknameTaken }
                             , discordTaken: const $ failWith noErrors { form = Just somethingWrong }
+                            , discordTicket: const $ failWith noErrors { form = Just somethingWrong }
                             , steamTaken: const $ failWith noErrors { form = Just somethingWrong }
                             , steamTicket: const $ failWith noErrors { form = Just somethingWrong }
                             , googleTaken: const $ failWith noErrors { form = Just somethingWrong }

@@ -39,8 +39,10 @@ import TeamTavern.Client.Components.Toast (toasts, useToast)
 import TeamTavern.Client.Components.Tokens as Tokens
 import TeamTavern.Client.Icons as Icons
 import TeamTavern.Client.Script.Back (authPath)
-import TeamTavern.Client.Script.Discord (authorizeSwitchToDiscord, takeSwitchToken)
-import TeamTavern.Client.Script.Google (authorizeSwitchToGoogle, takeSwitchCode)
+import TeamTavern.Client.Script.Discord (authorizeSwitchToDiscord)
+import TeamTavern.Client.Script.Discord as Discord
+import TeamTavern.Client.Script.Google (authorizeSwitchToGoogle)
+import TeamTavern.Client.Script.Google as Google
 import TeamTavern.Client.Script.Focus (focusSoon)
 import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_)
 import TeamTavern.Client.Script.Scroll (focusCentered, focusFirstInvalid)
@@ -293,17 +295,21 @@ component = Hooks.component \_ _ -> Hooks.do
         switchFailed provider =
             showToast { text: provider <> " couldn't take over your sign-in. Try again.", action: Nothing }
 
-        -- Back from Discord with the token of a switch to it.
+        -- Back from Discord with the code of a switch to it.
         switchToDiscord :: String -> HookM (Async left) Unit
-        switchToDiscord accessToken = do
-            result <- H.lift $ Async.attempt $ fetchBody (expecting [ "badRequest" ] (Proxy :: _ SwitchToDiscord)) { accessToken }
+        switchToDiscord code = do
+            result <- H.lift $ Async.attempt $ fetchBody (expecting [ "badRequest" ] (Proxy :: _ SwitchToDiscord)) { code }
             case hush result of
                 Nothing -> switchFailed "Discord"
                 Just response -> response # onMatch
                     { ok: \{ contact } -> switched $ "You sign in with Discord now"
                         <> maybe "" (\contact' -> ", and your posts offer Discord " <> contact' <> " as a contact") contact
                         <> "."
-                    , badRequest: \_ -> refuseSwitch "Discord" "Discord"
+                    , badRequest: match
+                        { discordTaken: \_ -> refuseSwitch "Discord" "Discord"
+                        , discordRefused: \_ -> showToast
+                            { text: "Discord couldn't confirm it's your account. Try again.", action: Nothing }
+                        }
                     }
                     (const $ switchFailed "Discord")
 
@@ -353,9 +359,9 @@ component = Hooks.component \_ _ -> Hooks.do
                     Hooks.modify_ stateId _ { page = page }
                     let landing = CodeUnits.drop 1 hash
                     when (elem landing landings) $ focusCentered landing
-                    takeSwitchToken >>= traverse_ switchToDiscord
+                    Discord.takeSwitchCode >>= traverse_ switchToDiscord
                     takeSwitchAssertion >>= traverse_ switchToSteam
-                    takeSwitchCode >>= traverse_ switchToGoogle
+                    Google.takeSwitchCode >>= traverse_ switchToGoogle
         pure Nothing
 
     let focusEdit = liftEffect $ focusSoon "#facts-title ~ .account-actions .button"

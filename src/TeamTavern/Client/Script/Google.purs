@@ -8,7 +8,7 @@ module TeamTavern.Client.Script.Google
 
 import Prelude
 
-import Data.Maybe (Maybe(..), fromMaybe, isJust)
+import Data.Maybe (Maybe(..), fromMaybe)
 import Effect.Class (class MonadEffect, liftEffect)
 import JSURI (decodeURIComponent, encodeURIComponent)
 import TeamTavern.Client.Script.Navigate (hardNavigate)
@@ -54,9 +54,9 @@ authorize trip = liftEffect do
 
 -- | What Google came back with and the trip it came back from. `code` is for
 -- | the server to swap, or nothing when the player turned back at Google,
--- | which sends `error` with the state instead. Any provider sends an error,
--- | so one is Google's only with the state of the trip to Google this tab
--- | kept.
+-- | which sends `error` with the state instead. Discord sends a code and an
+-- | error alike, so either is Google's only with the state of the trip to
+-- | Google this tab kept.
 takeGoogleReturn :: ∀ effect. MonadEffect effect => effect (Maybe { code :: Maybe String, trip :: Trip })
 takeGoogleReturn = do
     let param name = getQueryParam name <#> (_ >>= decodeURIComponent)
@@ -65,7 +65,7 @@ takeGoogleReturn = do
     returnedState <- param "state"
     liftEffect case code, error of
         Nothing, Nothing -> pure Nothing
-        _, _ -> takeReturn storageKey { ownMark: isJust code, returnedState } <#> map { code, trip: _ }
+        _, _ -> takeReturn storageKey { ownMark: false, returnedState } <#> map { code, trip: _ }
 
 -- | Keeps the code of a trip that switches the account to Google for the
 -- | account page.

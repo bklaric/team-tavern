@@ -10,9 +10,9 @@ import Jarilo (BadRequestRow, InternalRow_, NoContentRow_, noContent)
 import JavaScript.Npm.Pg.Pool (Pool)
 import TeamTavern.Routes.Session.StartSession as StartSession
 import TeamTavern.Server.Infrastructure.Cookie (Cookies, setCookieHeader)
+import TeamTavern.Server.Infrastructure.DiscordSignIn (DiscordClient, exchangeDiscordCode)
 import TeamTavern.Server.Infrastructure.Email (Mailer)
 import TeamTavern.Server.Infrastructure.Environment (Environment)
-import TeamTavern.Server.Infrastructure.FetchDiscordUser (DiscordApiUrl, discordEmail, fetchDiscordUser)
 import TeamTavern.Server.Infrastructure.GoogleSignIn (GoogleClient, exchangeGoogleCode)
 import TeamTavern.Server.Infrastructure.Postgres (transaction)
 import TeamTavern.Server.Infrastructure.ResolveSteamId (SteamApi)
@@ -29,10 +29,10 @@ import TeamTavern.Server.Session.Start.Unknown (unknownDiscord, unknownGoogle, u
 import Type.Row (type (+))
 
 start :: ∀ left.
-    Environment -> Mailer -> DiscordApiUrl -> SteamOpenIdUrl -> SteamApi -> GoogleClient
+    Environment -> Mailer -> DiscordClient -> SteamOpenIdUrl -> SteamApi -> GoogleClient
     -> Pool -> Cookies -> String -> StartSession.RequestContent
     -> Async left (Variant (NoContentRow_ + BadRequestRow StartSession.BadContent + InternalRow_ + ()))
-start environment mailer discordApiUrl steamOpenIdUrl steamApi googleClient pool cookies origin body =
+start environment mailer discordClient steamOpenIdUrl steamApi googleClient pool cookies origin body =
     sendResponse "Error starting session" do
     -- Generate session token.
     token <- Token.generate
@@ -56,9 +56,9 @@ start environment mailer discordApiUrl steamOpenIdUrl steamApi googleClient pool
         { password: \bodyEmail -> pool # transaction \client -> do
             {id} <- checkPassword bodyEmail client
             startFor client { id, confirmation: Nothing }
-        , discord: \{accessToken} -> do
-            discordUser <- fetchDiscordUser discordApiUrl accessToken
-            startWith Discord discordUser.id (discordEmail discordUser) $ unknownDiscord discordUser
+        , discord: \{code} -> do
+            discordUser <- exchangeDiscordCode discordClient origin code
+            startWith Discord discordUser.discordId discordUser.email $ unknownDiscord pool discordUser
         , steam: \{assertion} -> do
             steamId <- verifySteamReturn steamOpenIdUrl origin pool assertion
             startWith Steam steamId Nothing $ unknownSteam steamApi pool steamId

@@ -214,15 +214,25 @@ API within a few seconds.
 
 ### The stand-ins
 
-The local stack has no Discord. Its `tt-discord` service runs
-`dist/local/discord-stub/main.js`, and `DISCORD_API_URL` in `stacks/local.env`
-points the server at it. The stub answers the user endpoint with whatever user the access
-token names, the URI-encoded JSON of that user, so a spec can sign up and sign in
-with Discord as anyone, verified email or not. The browser half of the flow never
-reaches Discord either: a spec answers the pages' redirect to Discord's
-authorize URL itself, sending the browser straight back with such a token and
-the `state` the page sent, and checks the scope and redirect URI the page asked
-for.
+The local stack has no Discord. Signing in with Discord is OAuth's
+authorization code flow: Discord sends the browser back to the sign-in page
+with a code, and the server swaps it at Discord's token endpoint, with the
+app's `DISCORD_CLIENT_SECRET`, for a token it asks Discord's user endpoint
+about. Discord swaps a code only for the app it gave it to, so what another
+site with a Discord sign-in got signs nobody in here, and only once, so the
+ticket a player new to the site registers with lives in `sign_in_ticket`, with
+the address Discord gave and the account's tag. The local stack's `tt-discord`
+service runs `dist/local/discord-stub/main.js`, and `DISCORD_API_URL` in
+`stacks/local.env` points the server at it. The stub takes the code for the
+user itself, the JSON of that user with the app and redirect URI it was given
+for, and swaps each once, for that app and URI and the secret the server has,
+as Discord does, so a spec can sign up and sign in with Discord as anyone,
+verified email or not. The browser half of the flow never reaches Discord
+either: a spec answers the pages' redirect to Discord's authorize URL itself,
+sending the browser straight back with such a code and the `state` the page
+sent, and checks the scope and redirect URI the page asked for
+(`test-playwright/discord.ts`). The client ID is public and lives in
+`Shared/Discord.purs`, which the pages and the server both read.
 
 The local stack has no SES either. Its `tt-mail` service runs
 `dist/local/mail-stub/main.js`, and `AWS_ENDPOINT_URL_SESV2` in
@@ -259,8 +269,8 @@ authorization code flow: Google sends the browser back to the sign-in page with
 a code, and the server swaps it at Google's token endpoint, with the OAuth
 client's `GOOGLE_CLIENT_SECRET`, for an ID token that names the account, its
 address and its name. Google swaps a code once, so the ticket a player new to
-the site registers with lives in `sign_in_ticket`, as Steam's does, with the
-address Google gave. The local stack's `tt-google` service
+the site registers with lives in `sign_in_ticket`, as Discord's and Steam's
+do, with the address Google gave. The local stack's `tt-google` service
 runs `dist/local/google-stub/main.js`, and `GOOGLE_TOKEN_URL` in
 `stacks/local.env` points the server at it. The stub takes the code for the account itself, the JSON of
 the claims its ID token carries and the redirect URI it was given for, and
@@ -275,22 +285,24 @@ registered on the Discord app for each origin, and what the player was doing
 rides along in session storage. The sign-in page signs in a player Discord
 knows, and asks one it doesn't for a nickname, which finishes registering them.
 A trip from the account page's Continue with Discord signs nobody in: the
-sign-in page hands its token back to the account page, which moves the account
+sign-in page hands its code back to the account page, which moves the account
 from its password to that Discord. Steam's and Google's buttons go the same
 way, though Steam takes any return address, while Google, like Discord, takes
-only the `/signin` registered on its OAuth client for each origin. An account
-signs in with one of a password, a Discord account, a Steam account or a Google
-account, and the account page moves it between them.
+only the `/signin` registered on its OAuth client for each origin. Discord and
+Google both come back with a `code` and the `state`, so the trip that came back
+is the one whose state it is. An account signs in with one of a password, a
+Discord account, a Steam account or a Google account, and the account page
+moves it between them.
 
 What no test reaches is the real services: the redirect URIs registered on the
-Discord app and on the Google OAuth client, Discord's user endpoint, Steam's
-OpenID provider and Google's token endpoint. Before a deploy that touches
-sign-in, check them by hand against the local stack pointed at them. In
+Discord app and on the Google OAuth client, Discord's token and user endpoints,
+Steam's OpenID provider and Google's token endpoint. Before a deploy that
+touches sign-in, check them by hand against the local stack pointed at them. In
 `dist/local/.env`, delete `DISCORD_API_URL`, `STEAM_API_URL`,
-`STEAM_OPENID_URL` and `GOOGLE_TOKEN_URL`, put the Google client's real secret
-in place of the placeholder, and `.\up.ps1`. The next
-`.\bundle.ps1 -environment local` puts the stand-ins back, and the secret never
-reaches the repo. `http://localhost:8020/signin` has to be a registered
+`STEAM_OPENID_URL` and `GOOGLE_TOKEN_URL`, put the Discord app's and the Google
+client's real secrets in place of the placeholders, and `.\up.ps1`. The next
+`.\bundle.ps1 -environment local` puts the stand-ins back, and the secrets
+never reach the repo. `http://localhost:8020/signin` has to be a registered
 redirect URI on both the Discord app and the Google client.
 
 1. With a real Discord account, at <http://localhost:8020/signup>, Continue
@@ -320,7 +332,7 @@ A server holds no checkout. Everything lives under `~/team-tavern`:
 
 The `.env` sets every variable `stacks/server.docker-compose.yml` requires,
 `${NAME:?}`: the database's name and credentials, the real AWS key pair, Steam
-Web API key and Google client secret, `ADMIN_EMAIL`, and
+Web API key, Discord client secret and Google client secret, `ADMIN_EMAIL`, and
 `ENVIRONMENT=production` or `staging`. Each release links its own `.env` to it,
 since compose reads the file from the release's directory. The first line of a
 release's `REVISION` names the commit it was built from, and the lines after it
@@ -497,8 +509,9 @@ redirects the old site's feed paths to the new ones by `legacy.game_map`.
   compose file hands the node container from the server's `.env`, and the
   local one from `stacks/local.env` whole.
   `ENVIRONMENT` decides the cookie's `Secure` and the origin of the links in an
-  email. `DISCORD_API_URL` is optional and defaults to Discord's own API; only
-  `stacks/local.env` sets it. `STEAM_API_KEY` is required, and `STEAM_API_URL`
+  email. `DISCORD_CLIENT_SECRET` is required, and `DISCORD_API_URL` is optional
+  and defaults to Discord's own API; only `stacks/local.env` sets it.
+  `STEAM_API_KEY` is required, and `STEAM_API_URL`
   is optional and defaults to Steam's own Web API; only `stacks/local.env` sets
   it, and `STEAM_OPENID_URL`, which defaults to Steam's OpenID provider.
   `GOOGLE_CLIENT_SECRET` is required, and `GOOGLE_TOKEN_URL` is optional and

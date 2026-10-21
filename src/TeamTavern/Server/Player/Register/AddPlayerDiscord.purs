@@ -8,9 +8,9 @@ import Data.Nullable (toNullable)
 import Data.Tuple (Tuple(..))
 import Data.Variant (inj)
 import JavaScript.Npm.Pg.Query (class Querier, Query(..), (:), (:|))
-import TeamTavern.Server.Infrastructure.FetchDiscordUser (DiscordUserContent, discordEmail, discordTag)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
 import TeamTavern.Server.Player.Infrastructure.InsertPlayer (InsertPlayerError, insertPlayer)
+import TeamTavern.Server.Player.Infrastructure.SignInTicket (Ticketed)
 import Type.Proxy (Proxy(..))
 
 -- Email uniqueness holds among password players only, so a Discord player's
@@ -23,15 +23,14 @@ queryString = Query """
     """
 
 addPlayerDiscord :: ∀ querier other errors. Querier querier =>
-    querier -> Nickname -> DiscordUserContent
+    querier -> Nickname -> Ticketed
     -> Async (InsertPlayerError (discordTaken :: {} | other) errors) Int
-addPlayerDiscord querier nickname discordUser = do
-    let email = discordEmail discordUser
+addPlayerDiscord querier nickname { providerId: discordId, email, discordTag } =
     insertPlayer [ Tuple "player_discord_id_key" $ inj (Proxy :: _ "discordTaken") {} ]
         querier queryString
         ( nickname
-        : discordUser.id
+        : discordId
         : toNullable (email <#> _.email)
         : maybe false _.confirmed email
-        :| discordTag discordUser
+        :| toNullable discordTag
         )

@@ -24,7 +24,7 @@ type Registration = Variant
         }
     , discord ::
         { nickname :: Nickname
-        , accessToken :: String
+        , ticket :: String
         }
     , steam ::
         { nickname :: Nickname
@@ -47,8 +47,8 @@ validateRegistration' = match
         <*> validateNickname nickname
         <*> validatePassword password
         <#> inj (Proxy :: _ "password")
-    , discord: \{nickname, accessToken} ->
-        {nickname: _, accessToken}
+    , discord: \{nickname, ticket} ->
+        {nickname: _, ticket}
         <$> validateNickname nickname
         <#> inj (Proxy :: _ "discord")
     , steam: \{nickname, email, ticket} ->
