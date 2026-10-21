@@ -16,6 +16,7 @@ import Jarilo.Serve (ServeOptions, serve)
 import JavaScript.Node.Events.EventEmitter (on)
 import JavaScript.Node.Events.EventListener (toEventListener)
 import JavaScript.Node.Process (lookupEnv)
+import JavaScript.Npm.Pg.Client.Events as ClientEvents
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Pool as Pool
 import JavaScript.Npm.Pg.Pool.Events as PoolEvents
@@ -114,16 +115,23 @@ loadPostgresVariables = do
         <#> note ("Couldn't read variable PGDATABASE.") # ExceptT
     pure { user, password, host, port, database }
 
--- Postgres ending a connection the pool holds idle, as a restart does, makes
--- the pool emit an error, and an error nobody listens for ends the process.
--- The pool drops that client and connects afresh for the next query.
+-- Postgres ending a connection, as a restart does, makes its client emit an
+-- error, and an error nobody listens for ends the process. The pool listens
+-- only to a client it holds idle, and emits the error again on itself, so
+-- each client gets a listener of its own, which also covers a client checked
+-- out for a transaction, and the pool's error needs one that does nothing.
+-- A client that lost its connection fails every query after, and the pool
+-- drops it when it is handed back.
 createPostgresPool :: ExceptT String Effect Pool
 createPostgresPool = do
     postgresVariables <- loadPostgresVariables
     pool <- lift $ Pool.create postgresVariables
-    lift $ pool # on PoolEvents.error (toEventListener \error _ ->
-        logStamped $ String.joinWith " | " $ Array.cons "Idle Postgres connection lost" $ databaseErrorLines error)
+    lift $ pool # on PoolEvents.connect (toEventListener \client ->
+        client # on ClientEvents.error (toEventListener \error ->
+            logStamped $ String.joinWith " | " $ Array.cons "Postgres connection lost" $ databaseErrorLines error)
+        # void)
         # void
+    lift $ pool # on PoolEvents.error (toEventListener \_ _ -> pure unit) # void
     pure pool
 
 loadEnvironment :: ExceptT String Effect Environment
