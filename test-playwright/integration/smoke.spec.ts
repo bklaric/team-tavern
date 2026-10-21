@@ -120,14 +120,42 @@ test.describe("a browser", () => {
             expect(cacheControl.get("/fonts/inter.css")).toBe("public, max-age=604800");
         });
 
-    test("is told to keep to HTTPS, to trust the content types and to send only the origin away", async ({ page }) => {
+    test("is told to keep to HTTPS, to trust the content types, to send only the origin away and to let only the site frame it", async ({ page }) => {
         const response = await page.goto(feedPath);
 
         expect(response?.headers()).toMatchObject({
             "strict-transport-security": "max-age=31536000",
             "x-content-type-options": "nosniff",
             "referrer-policy": "strict-origin-when-cross-origin",
+            "content-security-policy": "frame-ancestors 'self'",
         });
+    });
+
+    // A page that frames the site could steer a signed-in player's clicks into it. The
+    // framing page is this suite's own, at the site's origin and at 127.0.0.1, which is
+    // another origin. Chrome takes a page the suite answers for a public one, and keeps it
+    // from framing localhost unless allowed to, so it is allowed, and only the site's own
+    // answer decides whether the frame shows it. `goto` waits for the frame to load, and
+    // the shell carries `#spa-teamtavern` before any script runs. Chrome says in the
+    // console which directive refused the frame.
+    test("is shown the site in a frame on the site, and not on another site", async ({ context, page, baseURL }) => {
+        await context.grantPermissions(["local-network-access"]);
+        const framing = `<iframe title="TeamTavern" src="${baseURL}${feedPath}"></iframe>`;
+        const otherSite = baseURL!.replace("localhost", "127.0.0.1");
+        for (const origin of [baseURL!, otherSite])
+            await page.route(`${origin}/framing`, route =>
+                route.fulfill({ contentType: "text/html", body: framing }));
+        const frame = page.frameLocator('iframe[title="TeamTavern"]');
+
+        await page.goto(`${baseURL}/framing`);
+        await expect(frame.getByRole("heading", { name: "Valorant LFG", level: 1 })).toBeVisible();
+
+        const refused = page.waitForEvent("console", message =>
+            message.text().includes(`violates the following Content Security Policy directive: "frame-ancestors 'self'"`));
+        await page.goto(`${otherSite}/framing`);
+        await refused;
+        await expect(page.locator('iframe[title="TeamTavern"]')).toHaveCount(1);
+        await expect(frame.locator("#spa-teamtavern")).toHaveCount(0);
     });
 
     test("stays on a path the site does not have and says so", async ({ page }) => {

@@ -8,11 +8,16 @@ root * /srv
 
 # A browser ignores Strict-Transport-Security over plain HTTP, so the local
 # stacks can send it too.
+#
+# Only the site may frame its pages, or another site could frame them out of
+# sight and steer a signed-in player's clicks into them. The ads frame their
+# creatives, never the page.
 
 header {
     Strict-Transport-Security "max-age=31536000"
     X-Content-Type-Options nosniff
     Referrer-Policy strict-origin-when-cross-origin
+    Content-Security-Policy "frame-ancestors 'self'"
 }
 
 # Serve index.prerender.html to the prerenderer.
