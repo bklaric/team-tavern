@@ -179,6 +179,38 @@ test("the guide to joining a team leads to the Rainbow Six Siege guide, and that
     await expect(page.getByRole("heading", { name: "Rainbow Six Siege", level: 1 })).toBeVisible();
 });
 
+test("the guide to joining a team leads to the Marvel Rivals ranked guide, and that to its game's feed", async ({ page }) => {
+    const rivalsHeading = "Marvel Rivals team size, party size and playing ranked with friends";
+    await page.goto(guidePath);
+    await expect(page.getByRole("heading", { name: guideHeading, level: 1 })).toBeVisible();
+
+    await page.getByRole("link", { name: rivalsHeading }).click();
+
+    await expectPage(page, "/guides/marvel-rivals-ranked-with-friends");
+    await expect(page.getByRole("heading", { name: rivalsHeading, level: 1 })).toBeVisible();
+    await expect(page.getByRole("table")).toContainText("Gold II reaches Bronze II or Silver II up to Platinum II");
+
+    await page.getByRole("link", { name: "Marvel Rivals players and groups on TeamTavern" }).last().click();
+
+    await expectPage(page, "/games/marvel-rivals");
+    await expect(page.getByRole("heading", { name: "Marvel Rivals", level: 1 })).toBeVisible();
+});
+
+test("the Marvel Rivals guides lead to each other", async ({ page }) => {
+    await page.goto("/guides/marvel-rivals-championship-team");
+    await expect(page.getByRole("heading", { name: "How to build a Marvel Rivals Championship team", level: 1 })).toBeVisible();
+
+    await page.getByRole("link", { name: "PC, PlayStation and Xbox" }).click();
+
+    await expectPage(page, "/guides/marvel-rivals-ranked-with-friends");
+    await expect(page.getByRole("heading", { name: "PC, PlayStation and Xbox", level: 2 })).toBeInViewport();
+
+    await page.getByRole("link", { name: "recruiting a Faction" }).click();
+
+    await expectPage(page, "/guides/marvel-rivals-championship-team");
+    await expect(page.getByRole("heading", { name: "Recruiting your Faction", level: 2 })).toBeInViewport();
+});
+
 test("the Rainbow Six Siege guide leads to the role chart in the guide to joining a team", async ({ page }) => {
     await page.goto("/guides/rainbow-six-siege-ranked-with-friends");
     await expect(page.getByRole("heading", { name: "How to play ranked with friends in Rainbow Six Siege", level: 1 })).toBeVisible();

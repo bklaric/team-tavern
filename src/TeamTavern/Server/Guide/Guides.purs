@@ -13,6 +13,8 @@ foreign import makeAnEsportsTeamText :: String
 
 foreign import marvelRivalsChampionshipTeamText :: String
 
+foreign import marvelRivalsRankedWithFriendsText :: String
+
 foreign import rainbowSixSiegeRankedWithFriendsText :: String
 
 foreign import rocketLeagueTournamentsText :: String
@@ -46,7 +48,7 @@ guides = sortBy (flip $ comparing _.updated)
       , description: "Most esports teams are amateur five-stacks playing Premier, Clash, ESEA or Siege Cup. "
             <> "Here's what each game asks of your account, what teams look for, and where to find one."
       , published: "2026-09-29"
-      , updated: "2026-10-15"
+      , updated: "2026-10-21"
       , games: []
       , html: markdownToHtml joinAnEsportsTeamText
       }
@@ -56,7 +58,7 @@ guides = sortBy (flip $ comparing _.updated)
       , description: "Starting an amateur team? How to pick your format, recruit for the roles you're missing, "
             <> "run tryouts, find scrims, and the roster rules each game's tournament enforces."
       , published: "2026-09-29"
-      , updated: "2026-10-15"
+      , updated: "2026-10-21"
       , games: []
       , html: markdownToHtml makeAnEsportsTeamText
       }
@@ -66,9 +68,19 @@ guides = sortBy (flip $ comparing _.updated)
       , description: "Every member at Platinum 3, one platform, a roster that locks at sign-up: how to recruit a Faction "
             <> "for the Marvel Rivals Championship and the way to Ignite."
       , published: "2026-09-30"
-      , updated: "2026-09-30"
+      , updated: "2026-10-21"
       , games: [ { handle: "marvel-rivals", title: "Marvel Rivals" } ]
       , html: markdownToHtml marvelRivalsChampionshipTeamText
+      }
+    , { slug: "marvel-rivals-ranked-with-friends"
+      , heading: "Marvel Rivals team size, party size and playing ranked with friends"
+      , title: "Marvel Rivals ranked with friends: party size and what ranks can play together"
+      , description: "Marvel Rivals team size is six. Ranked with friends: any party size but five up to "
+            <> "Grandmaster, duos above, and what ranks can play together."
+      , published: "2026-10-21"
+      , updated: "2026-10-21"
+      , games: [ { handle: "marvel-rivals", title: "Marvel Rivals" } ]
+      , html: markdownToHtml marvelRivalsRankedWithFriendsText
       }
     , { slug: "rocket-league-tournaments"
       , heading: "Rocket League tournament times, rules and finding a partner"

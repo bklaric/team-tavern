@@ -47,19 +47,9 @@ Three rules decide who you recruit:
 
 ## Climbing to Platinum 3: who you can queue with
 
-In Competitive, players from Gold to Celestial can party only within three divisions of each other. From Bronze to Grandmaster any party size is allowed except five, and from Celestial up only solo or duo.
+In Competitive, players from Gold to Celestial can party only within three divisions of each other. From Bronze to Grandmaster any party size is allowed except five, and from Celestial up only solo or duo, by the [Season 5 patch notes](https://www.marvelrivals.com/gameupdate/20251112/41548_1270590.html). [Who can queue Competitive together](/guides/marvel-rivals-ranked-with-friends) works that out for every rank, with the stricter rules for placement matches.
 
-The [Season 5 patch notes](https://www.marvelrivals.com/gameupdate/20251112/41548_1270590.html) set the party sizes, and the game's rank restrictions panel spells out the rest:
-
-- Competitive opens at account level 15, by the [Season 2 patch notes](https://www.marvelrivals.com/gameupdate/20250401/41548_1223996.html).
-- The three-division limit starts at Gold, so Bronze and Silver players aren't held to it.
-- An Eternity or One Above All player queues solo or in a duo, and the panel lets them team with a Celestial II player within 200 points.
-- When a party's ranks are too far apart, the game refuses the queue with "Team member RANK gap is significant."
-- While anyone in the party is still playing placement matches, the party can have at most three players, and its highest and lowest must be less than three divisions apart. The game's message then is "Has placement match player, rank gap too great".
-- PC and console players can't queue Competitive together, as the [closed beta FAQ](https://www.marvelrivals.com/news/official/20240719/40185_1168280.html) first set out. PlayStation (PS5 and PS4) and Xbox players can. NetEase's [cross-progression Q&A](https://www.marvelrivals.com/announcements/20250924/40955_1261246.html) says rank is kept separately for PC, PlayStation and Xbox, so the same player can be Grandmaster on PlayStation and Gold on Xbox.
-- Each season starts with 10 placement matches. The starting estimate is last season's final rank less three divisions, capped at Grandmaster II. Since the [Season 7 patch notes](https://www.marvelrivals.com/gameupdate/20260318/41548_1291772.html), placements move it by up to 100 points either way on your own play, not your team's.
-
-For a Faction, that means members within three divisions of each other can climb together, as a full six below Celestial once everyone has finished placements. A Faction spread wider, from Gold to Diamond say, climbs in smaller parties of close ranks. From Celestial up the Faction can't queue Competitive together at all, and practises in custom games and scrims against other Factions.
+For a Faction, that means members within three divisions of each other can climb together, as a full six below Celestial once everyone has finished placements. A Faction spread wider, from Gold to Diamond say, climbs in smaller parties of close ranks. Each platform keeps its own rank, so check every member's rank on the platform the Faction plays on. From Celestial up the Faction can't queue Competitive together at all, and practises in custom games and scrims against other Factions.
 
 ## Recruiting your Faction
 
@@ -103,11 +93,7 @@ At least six to register, and up to twelve in all. Any six registered members ca
 
 ### Can PC and console players play Competitive together?
 
-No. PC and console are matched separately, and the Championship runs separate PC and Console events. PlayStation and Xbox players can queue together, though each platform keeps its own rank.
-
-### Why can't I queue Competitive as a party of five?
-
-Five is the one party size Competitive refuses from Bronze to Grandmaster. Queue as four, or add a sixth. From Celestial up, it's solo or duo only.
+No. PC and console are matched separately, and the Championship runs separate PC and Console events. PlayStation and Xbox players can queue together, though each platform keeps its own rank: see [PC, PlayStation and Xbox](/guides/marvel-rivals-ranked-with-friends#pc-playstation-and-xbox).
 
 ### Can console players reach Ignite?
 

@@ -253,6 +253,7 @@ const scenes = [
         "the-finals-ranked-with-friends",
         "deadlock-ranked-with-friends",
         "rainbow-six-siege-ranked-with-friends",
+        "marvel-rivals-ranked-with-friends",
     ].map(slug => ({
         name: `guide-${slug}`, run: async (page, shot) => {
             // The covers are lazy, and those below the window never load on their own, so

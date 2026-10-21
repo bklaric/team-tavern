@@ -90,6 +90,7 @@ Every format has its own way to create a team and its own roster rules, and some
 | **Rainbow Six Siege: Siege Cup** | The squad leader registers a squad of five | The team can't be edited once registered |
 | **Rainbow Six Siege: Challenger Series** | The team's creator invites players on Challengermode | A player who wasn't in the lineup needs an admin's approval to join mid-tournament |
 | **Overwatch: OWCS** | Up to 8 players, aged 17 or over | The 2026 open qualifier requires Masters 1 |
+| **Marvel Rivals: Competitive** | Nobody: a party of up to 4, or 6, queues together below Celestial, and a duo above. The game fills empty places | From Gold, everyone within three divisions. In placements, at most 3 players, less than three divisions apart |
 | **Marvel Rivals: the Championship** | The captain or coach registers the Faction in the Tournament tab, and every member confirms. 6–12 players on one platform | From registration until the Faction is out, nobody can be added or removed |
 | **Team Fortress 2: ETF2L** | Created from the "team admin" tab. 6 to sign up for 6v6, 5 to play a match | A player can change team twice in a competition |
 | **Team Fortress 2: RGL Sixes** | A team leader, whom two thirds of the roster can replace. 5–12 players | Rosters lock 2 weeks before the regular season ends |
