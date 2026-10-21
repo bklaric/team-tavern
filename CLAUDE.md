@@ -329,6 +329,7 @@ A server holds no checkout. Everything lives under `~/team-tavern`:
 | `prod/docker-caddy/`              | Caddy's `data` and `config` dirs, its certificates among them |
 | `releases/<id>/`                  | one unpacked `dist/<environment>` per deploy, `<date>-<time>-<short sha>` |
 | `releases/current`                | a link to the release that is up |
+| `backup.log`                      | what each night's backup wrote |
 
 The `.env` sets every variable `stacks/server.docker-compose.yml` requires,
 `${NAME:?}`: the database's name and credentials, the real AWS key pair, Steam
@@ -382,8 +383,13 @@ ssh user@host "cd team-tavern/releases && docker compose -f <id>/docker-compose.
 ```
 
 The nightly backup is `cron.txt`, run from the crontab of the user that owns
-`~/team-tavern`: the release's `backup-database.sh` mails a gzipped dump
-through SES, signing the request with curl's `--aws-sigv4`.
+`~/team-tavern`. No release carries it, so a change to it is made in each
+server's crontab by hand. The release's `backup-database.sh` mails a gzipped dump
+through SES, signing the request with curl's `--aws-sigv4`. It mails one only
+once `pg_dump` has finished it, and otherwise mails "Database backup failed"
+with the error. Its output goes to `~/team-tavern/backup.log`, which also
+holds why a night came without either email. `AWS_ENDPOINT_URL_SESV2` points
+it elsewhere than SES, as it does the server.
 
 Email goes out through SES in `eu-central-1`, where `teamtavern.net` is
 verified by the Easy DKIM records in its Namecheap DNS. The key pair is the IAM
