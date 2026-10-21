@@ -517,6 +517,19 @@ test.describe("a path with a trailing slash", () => {
             expect(response.status()).toBe(301);
             expect(response.headers()["location"]).toBe(location);
         });
+
+    // A redirect to a path that starts with two slashes names another site, and a browser
+    // reads a backslash as a slash and drops a tab or a newline. The request takes each
+    // path encoded, since Playwright would read a bare `//` as another site itself. URL
+    // resolves the redirect as a browser does, and without one the browser stays put.
+    for (const path of ["/%5Cexample.com/", "/%09/example.com/", "/%0A/example.com/", "/%2F%2Fexample.com/"])
+        test(`isn't sent off the site from ${path}`, async ({ request, baseURL }) => {
+            const response = await request.get(path, { maxRedirects: 0 });
+
+            expect([200, 301]).toContain(response.status());
+            const destination = new URL(response.headers()["location"] ?? baseURL!, baseURL);
+            expect(destination.origin).toBe(new URL(baseURL!).origin);
+        });
 });
 
 // A game that left the catalogue and the old players' and teams' own pages have nothing to
