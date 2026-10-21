@@ -20,7 +20,7 @@ import TeamTavern.Server.Conversation.Infrastructure.LoadConversation (loadConve
 import TeamTavern.Server.Conversation.Infrastructure.SendMessageEmail (MessageEmail)
 import TeamTavern.Server.Conversation.Infrastructure.Unread (unreadFor)
 import TeamTavern.Server.Infrastructure.Error (Terror(..), TerrorVar, elaborate)
-import TeamTavern.Server.Infrastructure.Postgres (LoadSingleError, queryFirstNotFound, queryNone)
+import TeamTavern.Server.Infrastructure.Postgres (LoadSingleError, queryFirstInternal, queryFirstNotFound, queryNone)
 import Type.Row (type (+))
 
 trailingSpace :: Regex
@@ -102,10 +102,14 @@ type Recipient =
     , renewal_nonce :: String
     }
 
+-- Stamped as it is written, behind the lock, so a conversation's messages are
+-- stamped in the order they commit. The column's default is the transaction's
+-- start, which can come before the message of a send ahead in the queue.
 insertQuery :: Query
 insertQuery = Query """
-    insert into message (conversation_id, sender_id, content)
-    values ($1, $2, $3::text[])
+    insert into message (conversation_id, sender_id, content, created)
+    values ($1, $2, $3::text[], clock_timestamp())
+    returning to_jsonb(created) as created
     """
 
 -- The email goes when the recipient had nothing unread in the conversation
@@ -130,8 +134,8 @@ emailOf conversation content recipient = case recipient.email of
 
 -- | Adds the message to the conversation from `sender`, who has then read it
 -- | all, and answers with the conversation as they now read it and the email
--- | the other side is owed, if any. The message's time and the sender's read
--- | mark are both the transaction's, so their own message never reads unread.
+-- | the other side is owed, if any. The sender's read mark is their message's
+-- | time, which is the conversation's newest while the lock is held.
 postMessage :: ∀ errors.
     Client -> Int -> Int -> Array String
     -> Async (LoadSingleError errors) { conversation :: Conversation, email :: Maybe MessageEmail }
@@ -139,8 +143,8 @@ postMessage client id sender content = do
     queryNone client lockQuery (id :| sender)
     recipient :: Recipient <- queryFirstNotFound client recipientQuery (id :| sender)
         # lmap (elaborate ("Can't find conversation " <> show id <> " for player " <> show sender))
-    queryNone client insertQuery (id : sender :| content)
-    markRead client id sender
+    { created } :: { created :: String } <- queryFirstInternal client insertQuery (id : sender :| content)
+    markRead client id sender created
     conversation <- loadConversation client id sender
         >>= note (Terror internal__ [ "Conversation " <> show id <> " went missing after a message." ])
     pure { conversation, email: emailOf id content recipient }

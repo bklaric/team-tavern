@@ -13,7 +13,7 @@ import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..), (:), (:|))
 import TeamTavern.Routes.Conversation.ViewPostConversation as ViewPostConversation
 import TeamTavern.Server.Block.Infrastructure.Blocked (blockedBetween)
-import TeamTavern.Server.Conversation.Infrastructure.LoadConversation (loadConversation, markRead)
+import TeamTavern.Server.Conversation.Infrastructure.LoadConversation (loadConversation, markShown)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstMaybe)
@@ -37,6 +37,6 @@ viewPostConversation pool handle postId cookies =
     { id } <- ensureSignedIn pool cookies
     let viewer = unwrap id
     found :: Maybe { id :: Int } <- queryFirstMaybe pool conversationQuery (handle : postId :| viewer)
-    conversation <- for found \{ id: conversationId } -> loadConversation pool conversationId viewer
-    for_ found \{ id: conversationId } -> markRead pool conversationId viewer
-    pure $ ok_ ({ conversation: join conversation } :: ViewPostConversation.OkContent)
+    conversation <- for found (\{ id: conversationId } -> loadConversation pool conversationId viewer) <#> join
+    for_ conversation \shown -> markShown pool shown viewer
+    pure $ ok_ ({ conversation } :: ViewPostConversation.OkContent)

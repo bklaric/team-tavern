@@ -8,7 +8,7 @@ import Data.Variant (Variant)
 import Jarilo (InternalRow_, NotAuthorizedRow_, NotFoundRow_, OkRow, notFound__, ok_)
 import JavaScript.Npm.Pg.Pool (Pool)
 import TeamTavern.Routes.Shared.Conversation (Conversation)
-import TeamTavern.Server.Conversation.Infrastructure.LoadConversation (loadConversation, markRead)
+import TeamTavern.Server.Conversation.Infrastructure.LoadConversation (loadConversation, markShown)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Error (Terror(..))
@@ -22,5 +22,5 @@ viewConversation pool id cookies =
     { id: viewer } <- ensureSignedIn pool cookies
     conversation <- loadConversation pool id (unwrap viewer)
         >>= note (Terror notFound__ [ "Can't find conversation " <> show id <> " for player " <> show (unwrap viewer) ])
-    markRead pool id (unwrap viewer)
+    markShown pool conversation (unwrap viewer)
     pure $ ok_ conversation

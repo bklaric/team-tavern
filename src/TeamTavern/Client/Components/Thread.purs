@@ -9,7 +9,7 @@ import Data.String (joinWith)
 import Halogen.HTML as HH
 import Halogen.HTML.Properties.ARIA as HPA
 import TeamTavern.Client.Icons as Icons
-import TeamTavern.Client.Script.Ago (millisOf)
+import TeamTavern.Client.Script.Ago (microsOf, millisOf)
 import TeamTavern.Client.Script.Day (dayLabel, timeOfDay)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Shared.Card (CardRow)
@@ -19,7 +19,7 @@ import TeamTavern.Routes.Shared.Conversation (Message)
 -- | after the viewer had read to (brief 10, Inbox), if there is one.
 newFrom :: Maybe String -> Array Message -> Maybe Int
 newFrom readTo = findIndex \message ->
-    not message.mine && maybe true (\read -> millisOf message.created > millisOf read) readTo
+    not message.mine && maybe true (\read -> microsOf message.created > microsOf read) readTo
 
 -- A run of messages from one side, close together, shares one line of who and
 -- when. The New line and a new day end a run too.

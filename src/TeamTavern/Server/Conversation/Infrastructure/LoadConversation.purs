@@ -1,9 +1,11 @@
-module TeamTavern.Server.Conversation.Infrastructure.LoadConversation (loadConversation, markRead) where
+module TeamTavern.Server.Conversation.Infrastructure.LoadConversation (loadConversation, markRead, markShown) where
 
 import Prelude
 
 import Async (Async)
+import Data.Array (last)
 import Data.Bifunctor (lmap)
+import Data.Foldable (for_)
 import Data.Maybe (Maybe(..))
 import Data.Traversable (for)
 import Foreign (Foreign)
@@ -83,15 +85,21 @@ messagesQuery = Query """
     order by message.created, message.id
     """
 
+-- A mark only moves forward, so one another answer has already set further
+-- stays, and a thread read again writes nothing.
 markReadQuery :: Query
 markReadQuery = Query """
     update conversation
     set owner_read_at = case when post.player_id = $2
-            then now() else conversation.owner_read_at end,
+            then $3::timestamptz else conversation.owner_read_at end,
         messager_read_at = case when conversation.messager_id = $2
-            then now() else conversation.messager_read_at end
+            then $3::timestamptz else conversation.messager_read_at end
     from post
     where post.id = conversation.post_id and conversation.id = $1
+        and $3::timestamptz > coalesce(
+            case when post.player_id = $2
+                then conversation.owner_read_at else conversation.messager_read_at end,
+            '-infinity')
     """
 
 -- | The conversation as `viewer` reads it, or nothing where they aren't one of
@@ -120,6 +128,17 @@ loadConversation querier id viewer = do
     where
     readError errors = Terror internal__ [ "Error reading conversation row: " <> show errors ]
 
--- | Marks the conversation read to now on `viewer`'s side.
-markRead :: ∀ querier errors. Querier querier => querier -> Int -> Int -> Async (InternalTerror_ errors) Unit
-markRead querier id viewer = queryNone querier markReadQuery (id :| viewer)
+-- | Marks the conversation read on `viewer`'s side to `created`, a message's
+-- | time. A message that commits while the reader is being answered is newer
+-- | than any they were shown, so a mark set to what they were shown leaves it
+-- | unread.
+markRead :: ∀ querier errors. Querier querier =>
+    querier -> Int -> Int -> String -> Async (InternalTerror_ errors) Unit
+markRead querier id viewer created = queryNone querier markReadQuery (id : viewer :| created)
+
+-- | Marks the conversation read on `viewer`'s side to the newest message of
+-- | the conversation they were shown.
+markShown :: ∀ querier errors. Querier querier =>
+    querier -> Conversation -> Int -> Async (InternalTerror_ errors) Unit
+markShown querier conversation viewer =
+    for_ (last conversation.messages) \{ created } -> markRead querier conversation.id viewer created
