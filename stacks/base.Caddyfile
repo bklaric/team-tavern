@@ -20,10 +20,27 @@ header {
     Content-Security-Policy "frame-ancestors 'self'"
 }
 
+# A missing image, font, icon, script or stylesheet is a 404, not the SPA shell,
+# which a browser would refuse under nosniff: a page loaded before a deploy
+# names its own build's script and stylesheet. The 404 is never kept, since a
+# release brought back up can have the file.
+#
+# Caddy keeps handles whose matcher isn't a single path in written order, so
+# this one runs before the prerenderer's and the bots' below, and neither is
+# handed a file.
+
+@files path /images/* /fonts/* /favicon.* /logo-* /app.min.* /style.min.*
+
+handle @files {
+    @missing not file
+    header @missing Cache-Control no-store
+    file_server
+}
+
 # Serve index.prerender.html to the prerenderer.
 #
-# Caddy orders handle blocks itself (named matchers before path matchers), so
-# this block runs before the /api/* block for every request. The prerenderer's
+# Caddy sorts handle blocks by their matchers rather than as written, so this
+# block runs before the /api/* block for every request. The prerenderer's
 # browser sends X-RenderReady on its API calls too, so the API must be excluded
 # here or it receives this HTML instead of JSON and every page prerenders empty.
 # The sitemap, robots and llms.txt have no file behind them either, and are
@@ -55,12 +72,12 @@ handle @prerender_header {
 # The prerenderer passes on the validators of the shell it was served, which
 # every page shares, so they are dropped rather than let pages claim them.
 #
-# Any path without a file behind it is rendered, and the client router decides
-# whether it is a page: one it does not know declares a 404 the prerenderer
-# answers with. So the routes live only in the router. The root is a directory,
-# which the file matcher counts as a file, so it is let through by name. The
-# sitemap, robots and llms.txt are answered below without a file, and nothing
-# under /.well-known/ is a page, so they are kept out by name.
+# Any other path without a file behind it is rendered, and the client router
+# decides whether it is a page: one it does not know declares a 404 the
+# prerenderer answers with. So the routes live only in the router. The root is a
+# directory, which the file matcher counts as a file, so it is let through by
+# name. The sitemap, robots and llms.txt are answered below without a file, and
+# nothing under /.well-known/ is a page, so they are kept out by name.
 #
 # A bot is any user agent that calls itself a bot, a crawler or a spider, which
 # most do, so one nobody has heard of is rendered for too. The names after
@@ -70,7 +87,7 @@ handle @prerender_header {
 @bot_page {
     header_regexp User-Agent (?i)(bot|crawl|spider|ahrefssiteaudit|amzn-user|cardyb|chatgpt-user|claude-user|cohere-ai|embedly|facebookexternalhit|gemini-deep-research|google-inspectiontool|googleagent-urlcontext|googleother|iframely|kagi-fetcher|kimi-user|mastodon|meta-external|meta-webindexer|mistralai|notebooklm|outbrain|perplexity-user|pinterest|quora\slink\spreview|skypeuripreview|steamchaturllookup|vkshare|W3C_Validator|whatsapp|yandex)
     not header_regexp User-Agent (?i)cubot
-    not path /api/* /images/* /sitemap.xml /robots.txt /llms.txt /.well-known/*
+    not path /api/* /sitemap.xml /robots.txt /llms.txt /.well-known/*
     expression `{path} == "/" || !file({"try_files": [{path}]})`
 }
 
@@ -165,12 +182,6 @@ handle /robots.txt {
 
 handle /llms.txt {
     reverse_proxy tt-node
-}
-
-# A missing image is a 404, not the SPA shell.
-
-handle /images/* {
-    file_server
 }
 
 # The site publishes nothing under /.well-known/, so what a client looks for

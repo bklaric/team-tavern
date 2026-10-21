@@ -1,4 +1,4 @@
-import { expect, Page, test } from "@playwright/test";
+import { APIResponse, expect, Page, test } from "@playwright/test";
 import compose from "docker-compose";
 import { expectPage, postPath } from "../pages";
 import { localStack, rethrowComposeError, waitForApi } from "../stack";
@@ -15,6 +15,20 @@ const home = { path: "/", title: "TeamTavern: LFG for players, groups and commun
 const feedPath = "/games/valorant";
 let nightOwlsPath: string;
 let expiredPath: string;
+
+// Files no build has, of each kind Caddy answers 404 for when missing.
+const missingFiles = [
+    "/images/games/nogame.webp", "/favicon.ico", "/logo-0.png", "/fonts/inter-nolang.woff2",
+    "/app.min.0000000000000000.js", "/style.min.0000000000000000.css",
+];
+
+// The shell in a missing file's place would be refused under nosniff, and a 404 that was
+// kept would outlast a release brought back up with the file.
+function expectMissing(response: APIResponse) {
+    expect(response.status()).toBe(404);
+    expect(response.headers()["content-type"] ?? "").not.toContain("text/html");
+    expect(response.headers()["cache-control"]).toBe("no-store");
+}
 
 test.beforeAll(async ({ browser }, testInfo) => {
     const baseURL = testInfo.project.use.baseURL!;
@@ -120,6 +134,12 @@ test.describe("a browser", () => {
             expect(cacheControl.get("/fonts/inter.css")).toBe("public, max-age=604800");
         });
 
+    // A page loaded before a deploy names its own build's script and stylesheet.
+    for (const path of missingFiles)
+        test(`is answered 404 for ${path}, which does not exist`, async ({ request }) => {
+            expectMissing(await request.get(path));
+        });
+
     test("is told to keep to HTTPS, to trust the content types, to send only the origin away and to let only the site frame it", async ({ page }) => {
         const response = await page.goto(feedPath);
 
@@ -180,6 +200,11 @@ test.describe("a headless browser", () => {
             await expect(page.locator('script[src*="vntsm.com"]')).toHaveCount(0);
             await kind.expectRendered(page);
         });
+
+    for (const path of missingFiles)
+        test(`is answered 404 for ${path}, which does not exist`, async ({ request }) => {
+            expectMissing(await request.get(path));
+        });
 });
 
 // Caddy hands a bot's page request to the prerenderer. With scripts off, what the page shows
@@ -212,16 +237,14 @@ test.describe("a bot", () => {
         await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "index, follow");
     });
 
-    // Caddy answers a missing image itself rather than rendering it as a page.
-    test("is answered 404 for an image that does not exist, without a render", async ({ page }) => {
-        const response = await page.goto("/images/games/nogame.webp");
+    // Caddy answers a missing file itself rather than rendering it as a page.
+    for (const path of missingFiles)
+        test(`is answered 404 for ${path}, which does not exist, without a render`, async ({ request }) => {
+            expectMissing(await request.get(path));
+        });
 
-        expect(response?.status()).toBe(404);
-        expect(response?.headers()["content-type"] ?? "").not.toContain("text/html");
-    });
-
-    // Caddy knows no routes: every path without a file behind it is rendered, and the router
-    // declares the 404 for one it does not know, whether or not the path looks like a file.
+    // Caddy knows no routes: every other path without a file behind it is rendered, and the
+    // router declares the 404 for one it does not know, whether or not it looks like a file.
     for (const path of ["/nopage", "/nopage.txt"])
         test(`is answered 404 for ${path}, which is neither a page nor a file`, async ({ page }) => {
             test.slow();
