@@ -44,8 +44,21 @@ validateMessage text = let
     then left $ Terror badRequest__ [ "Message is empty or longer than " <> show maxLength <> " characters." ]
     else pure lines
 
--- Locks the conversation, so two messages sent at once can't both find it
--- read and both email. Only a side finds it, and not after a block either way.
+-- Two messages sent at once queue here, so they can't both find the
+-- conversation read and both email. The lock is a statement of its own because
+-- a statement reads `message` as it stood when it started, even after waiting
+-- for a lock, and the recipient query that follows has to see the message the
+-- one ahead in the queue added. Only a side takes it.
+lockQuery :: Query
+lockQuery = Query """
+    select
+    from conversation
+    join post on post.id = conversation.post_id
+    where conversation.id = $1 and $2 in (post.player_id, conversation.messager_id)
+    for update of conversation
+    """
+
+-- Only a side finds the conversation, and not after a block either way.
 recipientQuery :: Query
 recipientQuery = Query $ """
     select
@@ -72,7 +85,6 @@ recipientQuery = Query $ """
     where conversation.id = $1
         and $2 in (post.player_id, conversation.messager_id)
         and not """ <> blockedBetween "post.player_id" "conversation.messager_id" <> """
-    for update of conversation
     """
 
 type Recipient =
@@ -124,6 +136,7 @@ postMessage :: ∀ errors.
     Client -> Int -> Int -> Array String
     -> Async (LoadSingleError errors) { conversation :: Conversation, email :: Maybe MessageEmail }
 postMessage client id sender content = do
+    queryNone client lockQuery (id :| sender)
     recipient :: Recipient <- queryFirstNotFound client recipientQuery (id :| sender)
         # lmap (elaborate ("Can't find conversation " <> show id <> " for player " <> show sender))
     queryNone client insertQuery (id : sender :| content)
