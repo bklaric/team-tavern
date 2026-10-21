@@ -13,3 +13,4 @@
 /playwright-report/
 /test-results/
 /test-playwright/screenshots/
+/.playwright-mcp/
