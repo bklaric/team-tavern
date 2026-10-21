@@ -1,3 +1,20 @@
 staging.teamtavern.net {
+    # Staging is production's pages under another name, so crawlers are kept
+    # off it, and whatever fetches it anyway, a link preview say, is told not
+    # to index it. Caddy keeps handle blocks with the same path in the order
+    # they are written, so this robots.txt comes before the one the import
+    # brings.
+
+    header X-Robots-Tag "noindex, nofollow"
+
+    handle /robots.txt {
+        header Content-Type "text/plain; charset=utf-8"
+        respond <<TXT
+            User-agent: *
+            Disallow: /
+
+            TXT 200
+    }
+
     import base.Caddyfile https://staging.teamtavern.net
 }

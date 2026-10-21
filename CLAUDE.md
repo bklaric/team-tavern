@@ -463,6 +463,8 @@ outside `/api`: the one route that answers with something other than JSON, an
 `OkText` whose absolute addresses are built from the origin the request came
 in on. Caddy answers `/robots.txt` itself, naming that origin's sitemap, and
 redirects the old site's feed paths to the new ones by `legacy.game_map`.
+Staging's robots.txt disallows everything instead, and every response there
+says `X-Robots-Tag: noindex, nofollow`, so staging stays out of search.
 
 ## Server conventions
 
