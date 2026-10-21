@@ -3,5 +3,12 @@ www.teamtavern.net {
 }
 
 teamtavern.net {
+    # The apex imports none of base.Caddyfile's headers, so it sends HSTS
+    # itself, and a browser that has been here once comes back over HTTPS.
+    # Without includeSubDomains, which would hold every host in the DNS zone to
+    # HTTPS, not only the ones this Caddy serves.
+
+    header Strict-Transport-Security "max-age=31536000"
+
     redir https://www.{host}{uri} 308
 }
