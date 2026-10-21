@@ -23,6 +23,8 @@ foreign import rocketLeagueTournamentsText :: String
 
 foreign import theFinalsRankedWithFriendsText :: String
 
+foreign import valorantRankedWithFriendsText :: String
+
 foreign import markdownToHtml :: String -> String
 
 -- | The slug is the guide's URL, so it never changes. `updated` is the date a
@@ -134,5 +136,15 @@ guides = sortBy (flip $ comparing _.updated)
       , updated: "2026-10-21"
       , games: [ { handle: "overwatch", title: "Overwatch" } ]
       , html: markdownToHtml overwatchRankedWithFriendsText
+      }
+    , { slug: "valorant-ranked-with-friends"
+      , heading: "Valorant team size, party size and playing ranked with friends"
+      , title: "Valorant ranked with friends: what ranks can play together, five-stacks and party size"
+      , description: "Valorant team size is five. Ranked with friends: what ranks can duo or trio, why four can't "
+            <> "queue, and what a five-stack of any ranks costs."
+      , published: "2026-10-21"
+      , updated: "2026-10-21"
+      , games: [ { handle: "valorant", title: "Valorant" } ]
+      , html: markdownToHtml valorantRankedWithFriendsText
       }
     ]

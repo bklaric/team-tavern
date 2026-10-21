@@ -10,6 +10,7 @@ import overwatchRankedWithFriends from "../../src/TeamTavern/Server/Guide/overwa
 import rainbowSixSiegeRankedWithFriends from "../../src/TeamTavern/Server/Guide/rainbow-six-siege-ranked-with-friends.md";
 import rocketLeagueTournaments from "../../src/TeamTavern/Server/Guide/rocket-league-tournaments.md";
 import theFinalsRankedWithFriends from "../../src/TeamTavern/Server/Guide/the-finals-ranked-with-friends.md";
+import valorantRankedWithFriends from "../../src/TeamTavern/Server/Guide/valorant-ranked-with-friends.md";
 
 export const deadlockRankedWithFriendsText = deadlockRankedWithFriends;
 
@@ -28,6 +29,8 @@ export const rainbowSixSiegeRankedWithFriendsText = rainbowSixSiegeRankedWithFri
 export const rocketLeagueTournamentsText = rocketLeagueTournaments;
 
 export const theFinalsRankedWithFriendsText = theFinalsRankedWithFriends;
+
+export const valorantRankedWithFriendsText = valorantRankedWithFriends;
 
 // A heading's id is its text as GitHub makes it, lowercased, punctuation
 // dropped and spaces turned to hyphens, so a link can name the section.

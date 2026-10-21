@@ -121,6 +121,8 @@ A dash means the organiser's own page doesn't say, so check its rules before you
 
 [Premier's divisions](https://support.riotgames.com/en-us/valorant/gameplay/premier-divisions) run Open, Intermediate, Advanced and Elite, each in five steps, then Contender and Invite, and a team moves up by winning its division's playoff bracket. The top teams of each [Invite division](https://support.riotgames.com/en-us/valorant/gameplay/premier-contender-invite-divisions) can earn a place in a Challengers league.
 
+Most players start in Competitive, where a duo or trio queues within Riot's rank limits, a party of four can't queue, and a five-stack can be any ranks. [Valorant team size, party size and playing ranked with friends](/guides/valorant-ranked-with-friends) covers who can queue together, what a five-stack costs and how to find players in range.
+
 [Valorant players and groups on TeamTavern](/games/valorant)
 
 ### League of Legends: Clash

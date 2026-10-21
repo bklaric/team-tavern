@@ -223,6 +223,33 @@ test("the Overwatch ranked guide leads to the Overwatch section of the guide to 
     await expect(page.getByRole("heading", { name: "Overwatch", exact: true, level: 3 })).toBeInViewport();
 });
 
+test("the guide to joining a team leads to the Valorant ranked guide, and that to its game's feed", async ({ page }) => {
+    const valorantHeading = "Valorant team size, party size and playing ranked with friends";
+    await page.goto(guidePath);
+    await expect(page.getByRole("heading", { name: guideHeading, level: 1 })).toBeVisible();
+
+    await page.getByRole("link", { name: valorantHeading }).click();
+
+    await expectPage(page, "/guides/valorant-ranked-with-friends");
+    await expect(page.getByRole("heading", { name: valorantHeading, level: 1 })).toBeVisible();
+    await expect(page.getByRole("table")).toContainText("Gold 3 with Diamond 1: no");
+
+    await page.getByRole("link", { name: "Valorant players and groups on TeamTavern" }).last().click();
+
+    await expectPage(page, "/games/valorant");
+    await expect(page.getByRole("heading", { name: "Valorant", level: 1 })).toBeVisible();
+});
+
+test("the Valorant ranked guide leads to the Premier section of the guide to joining a team", async ({ page }) => {
+    await page.goto("/guides/valorant-ranked-with-friends");
+    await expect(page.getByRole("heading", { name: "Valorant team size, party size and playing ranked with friends", level: 1 })).toBeVisible();
+
+    await page.getByRole("link", { name: "Joining a Premier team", exact: true }).click();
+
+    await expectPage(page, "/guides/join-an-esports-team");
+    await expect(page.getByRole("heading", { name: "Valorant: Premier", level: 3 })).toBeInViewport();
+});
+
 test("the Marvel Rivals guides lead to each other", async ({ page }) => {
     await page.goto("/guides/marvel-rivals-championship-team");
     await expect(page.getByRole("heading", { name: "How to build a Marvel Rivals Championship team", level: 1 })).toBeVisible();
