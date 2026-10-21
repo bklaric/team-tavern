@@ -22,7 +22,7 @@ import TeamTavern.Server.Player.Domain.Provider (Provider(..))
 import TeamTavern.Server.Player.Infrastructure.SendConfirmation (sendConfirmation)
 import TeamTavern.Server.Session.Domain.Token as Token
 import TeamTavern.Server.Session.Infrastructure.RevokeSession (revokeSession)
-import TeamTavern.Server.Session.Start.CheckPassword (checkPassword)
+import TeamTavern.Server.Session.Start.CheckPassword (checkPassword, confirmPassword)
 import TeamTavern.Server.Session.Start.CheckProvider (checkProvider)
 import TeamTavern.Server.Session.Start.CreateSession (createSession)
 import TeamTavern.Server.Session.Start.Unknown (unknownDiscord, unknownGoogle, unknownSteam)
@@ -50,12 +50,15 @@ start environment mailer discordClient steamOpenIdUrl steamApi googleClient pool
                 checkProvider provider client providerId email >>= traverse (startFor client)
             maybe unknown pure started
 
-    -- Discord, Steam and Google are asked before the transaction, which holds
-    -- a connection from the pool until it ends.
+    -- Discord, Steam and Google are asked, and the password is compared,
+    -- before the transaction, which holds a connection from the pool until it
+    -- ends.
     {confirmation} <- body # match
-        { password: \bodyEmail -> pool # transaction \client -> do
-            {id} <- checkPassword bodyEmail client
-            startFor client { id, confirmation: Nothing }
+        { password: \bodyEmail -> do
+            checked <- checkPassword bodyEmail pool
+            pool # transaction \client -> do
+                confirmPassword checked client
+                startFor client { id: checked.id, confirmation: Nothing }
         , discord: \{code} -> do
             discordUser <- exchangeDiscordCode discordClient origin code
             startWith Discord discordUser.discordId discordUser.email $ unknownDiscord pool discordUser
