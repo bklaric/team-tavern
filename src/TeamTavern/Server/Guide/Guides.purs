@@ -15,6 +15,8 @@ foreign import marvelRivalsChampionshipTeamText :: String
 
 foreign import marvelRivalsRankedWithFriendsText :: String
 
+foreign import overwatchRankedWithFriendsText :: String
+
 foreign import rainbowSixSiegeRankedWithFriendsText :: String
 
 foreign import rocketLeagueTournamentsText :: String
@@ -122,5 +124,15 @@ guides = sortBy (flip $ comparing _.updated)
       , updated: "2026-10-15"
       , games: [ { handle: "rainbow-six-siege", title: "Rainbow Six Siege" } ]
       , html: markdownToHtml rainbowSixSiegeRankedWithFriendsText
+      }
+    , { slug: "overwatch-ranked-with-friends"
+      , heading: "Overwatch team size, party size and playing ranked with friends"
+      , title: "Overwatch ranked with friends: wide groups, party size and what ranks can play together"
+      , description: "Overwatch team size is five. Ranked with friends: narrow and wide groups, what ranks can "
+            <> "play together, and why a wide four can't queue."
+      , published: "2026-10-21"
+      , updated: "2026-10-21"
+      , games: [ { handle: "overwatch", title: "Overwatch" } ]
+      , html: markdownToHtml overwatchRankedWithFriendsText
       }
     ]

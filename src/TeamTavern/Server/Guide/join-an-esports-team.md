@@ -145,7 +145,7 @@ Clash doesn't lead to pro play. Teams that want more than Clash play scrims and 
 
 ### Overwatch
 
-<img class="guide-cover" src="/images/games/400/overwatch.webp" alt="" width="400" height="600" loading="lazy"> Overwatch has no in-game group finder, so teams form outside the game. The open path to the top runs through FACEIT. Under [Blizzard's OWCS rules](https://esports.overwatch.com/en-us/news/owcs-2026-season-competitive-details), each season in North America and EMEA starts with an open qualifier there, and between stages the top two teams of the FACEIT League Master Division play the bottom two OWCS teams for their places.
+<img class="guide-cover" src="/images/games/400/overwatch.webp" alt="" width="400" height="600" loading="lazy"> Overwatch has no in-game group finder, so teams form outside the game. The open path to the top runs through FACEIT. Under [Blizzard's OWCS rules](https://esports.overwatch.com/en-us/news/owcs-2026-season-competitive-details), each season in North America and EMEA starts with an open qualifier there, and between stages the top two teams of the FACEIT League Master Division play the bottom two OWCS teams for their places. Most groups start in Competitive, where a group of up to five queues together and stays narrow within five divisions up to Diamond. [Overwatch team size, party size and playing ranked with friends](/guides/overwatch-ranked-with-friends) covers who can queue together, what a wide group costs and how to find a group in range.
 
 [Overwatch players and groups on TeamTavern](/games/overwatch)
 

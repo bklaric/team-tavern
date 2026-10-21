@@ -89,6 +89,7 @@ Every format has its own way to create a team and its own roster rules, and some
 | **Rainbow Six Siege: Ranked** | Nobody: a squad of up to 5 queues together, and the game fills empty places | Squadmates must be within three full ranks, or two with a Diamond or Champion, except in placements |
 | **Rainbow Six Siege: Siege Cup** | The squad leader registers a squad of five | The team can't be edited once registered |
 | **Rainbow Six Siege: Challenger Series** | The team's creator invites players on Challengermode | A player who wasn't in the lineup needs an admin's approval to join mid-tournament |
+| **Overwatch: Competitive** | Nobody: a group of up to 5 queues Role Queue together, and the game fills empty places | Narrow within five divisions up to Diamond, fewer above; a wider group plays only wide groups, and a wide group of 4 can't queue |
 | **Overwatch: OWCS** | Up to 8 players, aged 17 or over | The 2026 open qualifier requires Masters 1 |
 | **Marvel Rivals: Competitive** | Nobody: a party of up to 4, or 6, queues together below Celestial, and a duo above. The game fills empty places | From Gold, everyone within three divisions. In placements, at most 3 players, less than three divisions apart |
 | **Marvel Rivals: the Championship** | The captain or coach registers the Faction in the Tournament tab, and every member confirms. 6–12 players on one platform | From registration until the Faction is out, nobody can be added or removed |
