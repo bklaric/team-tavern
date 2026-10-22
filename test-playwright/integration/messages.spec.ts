@@ -1,10 +1,11 @@
 import { expect, Page, test } from "@playwright/test";
 import { signIn, signUp } from "../accounts";
+import { body, emails, openMail } from "../mail";
 import { expectPage } from "../pages";
 
 // A player new to the run writes to HeroesOfTheStormTester (`stacks/test-seed/players.sql`),
 // whose post no other spec messages, so its conversations are only this spec's, one per
-// writer.
+// writer, unless the test says otherwise.
 
 const handle = "heroes-of-the-storm";
 const owner = "HeroesOfTheStormTester";
@@ -111,6 +112,38 @@ test.describe("messaging", () => {
         await signUp(page, "W");
         await page.goto("/messages");
         await expect(page.getByRole("heading", { name: "No messages yet" })).toBeVisible();
+    });
+
+    // Each owner is emailed what's written to them, so an account starts three conversations
+    // a day until its email is confirmed. Writing on in one doesn't count. This writes to the
+    // testers of games whose owners no other spec signs in as or reads the mail of.
+    test("starts three conversations a day until the email is confirmed", async ({ page }) => {
+        const nickname = await signUp(page, "W");
+        const write = async (game: string, owner: string) => {
+            await page.goto(`/games/${game}`);
+            await expect(page.locator(".feed")).toHaveAttribute("aria-busy", "false");
+            await card(page, owner).locator(".card-contact").click();
+            const panel = page.getByRole("dialog", { name: owner });
+            await panel.getByRole("textbox", { name: "Message" }).fill("Want to play tonight?");
+            await panel.getByRole("button", { name: "Send" }).click();
+            return panel;
+        };
+
+        for (const [game, owner] of [["deadlock", "DeadlockTester"], ["fortnite", "FortniteTester"], ["the-finals", "TheFinalsTester"]]) {
+            await expect((await write(game, owner)).locator(".message-own")).toHaveCount(1);
+        }
+        const refused = await write("rocket-league", "RocketLeagueTester");
+        await expect(refused.locator(".field-error"))
+            .toHaveText("Confirm an email address on your account page to start more conversations today, or try again in 24 hours.");
+        await expect(refused.locator(".message")).toHaveCount(0);
+        await expect(refused.getByRole("textbox", { name: "Message" })).toHaveValue("Want to play tonight?");
+
+        await expect((await write("deadlock", "DeadlockTester")).locator(".message-own")).toHaveCount(2);
+
+        await openMail(page, `${nickname.toLowerCase()}@example.com`);
+        await body(emails(page, "Confirm your email")).getByRole("link", { name: "Confirm email" }).click();
+        await expect(page.getByRole("heading", { name: "Your email is confirmed" })).toBeVisible();
+        await expect((await write("rocket-league", "RocketLeagueTester")).locator(".message-own")).toHaveCount(1);
     });
 
     test("sends nothing that is only blank", async ({ page }) => {

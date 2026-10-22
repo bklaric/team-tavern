@@ -3,13 +3,16 @@ module TeamTavern.Client.Components.Composer
     , ComposerState
     , UseComposer
     , composer
+    , couldntSend
     , idleComposer
     , useComposer
     ) where
 
 import Prelude
 
+import Data.Either (Either(..))
 import Data.Foldable (traverse_)
+import Data.Maybe (Maybe(..))
 import Data.String (trim)
 import Data.Tuple.Nested ((/\))
 import Effect.Class (class MonadEffect, liftEffect)
@@ -32,14 +35,18 @@ import Web.UIEvent.KeyboardEvent as KeyboardEvent
 -- The message box under a conversation (brief 5.6), in the contact panel and
 -- in the inbox.
 
--- | `unsent` is whether the last message couldn't be sent, which is then
--- | still in the box.
-type ComposerState = { draft :: String, sending :: Boolean, unsent :: Boolean }
+-- | `unsent` says why the last message couldn't be sent, which is then still
+-- | in the box.
+type ComposerState = { draft :: String, sending :: Boolean, unsent :: Maybe String }
 
 type ComposerActions i = { onDraft :: String -> i, onKeyDown :: KeyboardEvent -> i, onSend :: Event -> i }
 
 idleComposer :: ComposerState
-idleComposer = { draft: "", sending: false, unsent: false }
+idleComposer = { draft: "", sending: false, unsent: Nothing }
+
+-- | Why a message didn't go, when nothing more is known.
+couldntSend :: String
+couldntSend = "Your message couldn't be sent. Try again."
 
 -- | The box and Send, filled when the message box is the way the post asks to
 -- | be reached and outlined when it comes second, and under them what went
@@ -70,20 +77,20 @@ composer { ref, primary, state, actions } =
             [ HH.text "Send" ]
         ]
     ]
-    <> if state.unsent
-        then [ HH.span [ HS.class_ "field-error", HP.attr (HH.AttrName "role") "alert" ]
-            [ Icons.circleAlert, HH.text "Your message couldn't be sent. Try again." ] ]
-        else []
+    <> case state.unsent of
+        Just why -> [ HH.span [ HS.class_ "field-error", HP.attr (HH.AttrName "role") "alert" ]
+            [ Icons.circleAlert, HH.text why ] ]
+        Nothing -> []
 
 foreign import data UseComposer :: HookType
 
 instance HookNewtype UseComposer (UsePhone <> UseState ComposerState <> Pure)
 
 -- | The box's draft and its sending, given how to send a message, which
--- | answers whether it went. Enter sends and Shift+Enter starts a new line, as
--- | on Discord; on a phone Enter is a new line and Send sends.
+-- | answers that it went, or why it didn't. Enter sends and Shift+Enter starts
+-- | a new line, as on Discord; on a phone Enter is a new line and Send sends.
 useComposer :: ∀ m. MonadEffect m =>
-    H.RefLabel -> (String -> HookM m Boolean)
+    H.RefLabel -> (String -> HookM m (Either String Unit))
     -> Hook m UseComposer { state :: ComposerState, actions :: ComposerActions (HookM m Unit), clear :: HookM m Unit }
 useComposer ref send = Hooks.wrap Hooks.do
     phone <- usePhone
@@ -94,13 +101,12 @@ useComposer ref send = Hooks.wrap Hooks.do
         submit = do
             { draft, sending } <- Hooks.get stateId
             when (not sending && trim draft /= "") do
-                Hooks.modify_ stateId _ { sending = true, unsent = false }
+                Hooks.modify_ stateId _ { sending = true, unsent = Nothing }
                 sent <- send draft
                 -- What was written while it went stays.
-                Hooks.modify_ stateId \state' ->
-                    if sent
-                    then state' { draft = if state'.draft == draft then "" else state'.draft, sending = false }
-                    else state' { sending = false, unsent = true }
+                Hooks.modify_ stateId \state' -> case sent of
+                    Right _ -> state' { draft = if state'.draft == draft then "" else state'.draft, sending = false }
+                    Left why -> state' { sending = false, unsent = Just why }
                 fit
 
         actions =

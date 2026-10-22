@@ -12,6 +12,7 @@ module TeamTavern.Server.Infrastructure.RateLimit
     , createClientLimiter
     , createLimiter
     , ensureAdmission
+    , ensureAdmissionWith
     , ensureAdmitted
     , ensureRoom
     , release
@@ -105,10 +106,16 @@ ensureAdmitted limiter key = ensureAdmission (admit limiter key)
 -- | `admitAll`.
 ensureAdmission :: ∀ errors.
     Effect Admission -> String -> Async (TerrorVar (TooManyRequestsRow Wait + errors)) Unit
-ensureAdmission admission line = fromEffect admission >>= case _ of
+ensureAdmission = ensureAdmissionWith { seconds: _ }
+
+-- | As `ensureAdmission`, with a body made of the seconds to wait, for a route
+-- | that says more than how long.
+ensureAdmissionWith :: ∀ body errors.
+    (Int -> body) -> Effect Admission -> String -> Async (TerrorVar (TooManyRequestsRow body + errors)) Unit
+ensureAdmissionWith body admission line = fromEffect admission >>= case _ of
     Admitted -> pure unit
     Refused seconds -> left $ Terror
-        (tooManyRequests (MultiMap.singleton' "Retry-After" $ show seconds) { seconds })
+        (tooManyRequests (MultiMap.singleton' "Retry-After" $ show seconds) (body seconds))
         [ line ]
 
 -- | Runs `async` once `ensureAdmitted` lets it through, and `release`s one

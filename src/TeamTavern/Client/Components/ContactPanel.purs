@@ -22,7 +22,7 @@ import Async as Async
 import Control.Alt ((<|>))
 import Data.Array (catMaybes, elem, find, null)
 import Data.DateTime.Instant (Instant)
-import Data.Either (hush, isRight)
+import Data.Either (Either(..), hush, isRight)
 import Data.Foldable (for_)
 import Data.Int (fromString)
 import Data.Maybe (Maybe(..), isJust, isNothing, maybe)
@@ -41,7 +41,7 @@ import Halogen.Hooks as Hooks
 import Halogen.Hooks.Hook (class HookNewtype)
 import TeamTavern.Client.Components.BlockReport (BlockReport, UseBlockReport, blockReportBody, moreMenu, useBlockReport)
 import TeamTavern.Client.Components.Card (postName)
-import TeamTavern.Client.Components.Composer (ComposerActions, ComposerState, UseComposer, composer, useComposer)
+import TeamTavern.Client.Components.Composer (ComposerActions, ComposerState, UseComposer, composer, couldntSend, useComposer)
 import TeamTavern.Client.Components.Divider (rule)
 import TeamTavern.Client.Components.Overlay (Panel, Presentation(..), UseOverlay, panelHeader, sidePanel, useOverlay)
 import TeamTavern.Client.Components.Thread (newFrom, olderPostNote, thread)
@@ -56,7 +56,8 @@ import TeamTavern.Client.Script.Thread (scrollThreadsToEnd)
 import TeamTavern.Client.Script.Unread (announceUnread)
 import TeamTavern.Client.Shared.Block (reportPost)
 import TeamTavern.Client.Shared.Contacts (contactLabel)
-import TeamTavern.Client.Shared.Fetch (fetchPath, fetchPathBody)
+import TeamTavern.Client.Shared.AccountErrors (inTime, tryAgainIn)
+import TeamTavern.Client.Shared.Fetch (expecting, fetchPath, fetchPathBody)
 import TeamTavern.Client.Shared.Me (fetchMe)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Conversation.SendMessage (SendMessage)
@@ -338,21 +339,32 @@ useContactPanel { onMessaged, onBlockChange, showToast } = Hooks.wrap Hooks.do
         wentBack <- back
         unless wentBack closePanel
 
-    let send draft = Hooks.get panelId >>= case _ of
-            Nothing -> pure false
+    let sent post conversation = do
+            let messaged = post.messaged <|> (find _.mine conversation.messages <#> _.created)
+            update post.id _ { thread = Just conversation, post = post { messaged = messaged } }
+            for_ messaged $ onMessaged post.id
+            liftEffect do
+                announceUnread
+                scrollThreadsToEnd
+            pure $ Right unit
+
+        send draft = Hooks.get panelId >>= case _ of
+            Nothing -> pure $ Left couldntSend
             Just { game, post } -> do
                 result <- H.lift $ Async.attempt $
-                    fetchPathBody (Proxy :: _ SendMessage) { handle: game.handle, id: post.id } { content: draft }
-                case hush result >>= onMatch { ok: Just } (const Nothing) of
-                    Just conversation -> do
-                        let messaged = post.messaged <|> (find _.mine conversation.messages <#> _.created)
-                        update post.id _ { thread = Just conversation, post = post { messaged = messaged } }
-                        for_ messaged $ onMessaged post.id
-                        liftEffect do
-                            announceUnread
-                            scrollThreadsToEnd
-                        pure true
-                    Nothing -> pure false
+                    fetchPathBody (expecting [ "tooManyRequests" ] (Proxy :: _ SendMessage))
+                    { handle: game.handle, id: post.id } { content: draft }
+                case result of
+                    Right response -> response # onMatch
+                        { ok: sent post
+                        , tooManyRequests: \{ seconds, confirmed } -> pure $ Left
+                            if confirmed
+                            then "You've started too many conversations today. " <> tryAgainIn seconds
+                            else "Confirm an email address on your account page to start more conversations today, "
+                                <> "or try again " <> inTime seconds <> "."
+                        }
+                        (const $ pure $ Left couldntSend)
+                    Left _ -> pure $ Left couldntSend
 
     message <- useComposer messageRef send
 

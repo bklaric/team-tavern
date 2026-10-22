@@ -536,7 +536,9 @@ says `X-Robots-Tag: noindex, nofollow`, so staging stays out of search.
   in `X-Forwarded-For` in place of any the client sent, or for the site as a
   whole. A route refuses with `ensureAdmitted`, which answers 429 with the
   seconds to wait in `Retry-After` and in the body, a `Wait` from
-  `Routes/Shared/Wait.purs`, so the page can say when to try again. A
+  `Routes/Shared/Wait.purs`, so the page can say when to try again. A route
+  whose page has more to say builds its own body with `ensureAdmissionWith`,
+  as starting a conversation says whether confirming the email would help. A
   refusal is an answer the client handles, so it isn't logged; each
   limiter logs once a minute how many it refused. Every spec comes from one
   address, so the local stack keeps no limits per client address, and those

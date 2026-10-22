@@ -38,7 +38,7 @@ import TeamTavern.Server.Block.ReportPost (reportPost)
 import TeamTavern.Server.Block.Unblock (unblock)
 import TeamTavern.Server.Block.ViewBlocked (viewBlocked)
 import TeamTavern.Server.ClientError.ReportClientError (ClientErrorLimits, createClientErrorLimits, reportClientError)
-import TeamTavern.Server.Conversation.SendMessage (sendMessage)
+import TeamTavern.Server.Conversation.SendMessage (ConversationLimits, createConversationLimits, sendMessage)
 import TeamTavern.Server.Conversation.SendReply (sendReply)
 import TeamTavern.Server.Conversation.ViewConversation (viewConversation)
 import TeamTavern.Server.Conversation.ViewInbox (viewInbox)
@@ -244,6 +244,7 @@ type Limits =
     , providerSignIn :: Limiter
     , switchSignIn :: Limiter
     , register :: Limiter
+    , conversations :: ConversationLimits
     }
 
 createLimits :: ClientLimits -> Effect Limits
@@ -256,7 +257,8 @@ createLimits clientLimits = do
     providerSignIn <- Session.createProviderSignInLimit clientLimits
     switchSignIn <- createSwitchLimit
     register <- createRegisterLimit clientLimits
-    pure { clientErrors, forgotPassword, confirmation, updateEmail, signIn, providerSignIn, switchSignIn, register }
+    conversations <- createConversationLimits
+    pure { clientErrors, forgotPassword, confirmation, updateEmail, signIn, providerSignIn, switchSignIn, register, conversations }
 
 runServer :: Environment -> Mailer -> DiscordClient -> SteamApi -> SteamOpenIdUrl -> GoogleClient -> AdminEmail -> Limits -> Bcrypt -> Pool -> Effect Unit
 runServer environment mailer discordClient steamApi steamOpenIdUrl googleClient adminEmail limits bcrypt pool = serve (Proxy :: _ AllRoutes) serveOptions
@@ -326,7 +328,7 @@ runServer environment mailer discordClient steamApi steamOpenIdUrl googleClient 
     , viewPostConversation: \{ path, cookies } ->
         viewPostConversation pool path.handle path.id cookies
     , sendMessage: \{ path, cookies, body } ->
-        sendMessage mailer pool path.handle path.id cookies body
+        sendMessage limits.conversations mailer pool path.handle path.id cookies body
     , sendReply: \{ path: { id }, cookies, body } ->
         sendReply mailer pool id cookies body
     , block: \{ path: { nickname }, cookies } ->

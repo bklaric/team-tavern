@@ -5,7 +5,7 @@ import Prelude
 import Async (Async, fromEffectCont)
 import Async as Async
 import Data.Array (length, null)
-import Data.Either (hush, isRight)
+import Data.Either (Either(..), hush, isRight)
 import Data.Foldable (for_, traverse_)
 import Data.Map (Map)
 import Data.Map as Map
@@ -27,7 +27,7 @@ import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.BlockReport (blockReportBody, moreMenu, useBlockReport)
 import TeamTavern.Client.Components.Button (Size(..), Weight(..), button, buttonLink)
 import TeamTavern.Client.Components.Card (Viewer, postFacts, postName)
-import TeamTavern.Client.Components.Composer (composer, useComposer)
+import TeamTavern.Client.Components.Composer (composer, couldntSend, useComposer)
 import TeamTavern.Client.Components.ContactPanel (Revealed(..), contactRows)
 import TeamTavern.Client.Components.EmptyState (emptyState)
 import TeamTavern.Client.Components.InboxRow (inboxCover, inboxPostName, inboxRow)
@@ -193,9 +193,9 @@ component = Hooks.component \_ { conversation: openId, visit } -> Hooks.do
                             scrollThreadsToEnd
                         visit' <- Hooks.get stateId <#> _.visit
                         void $ Hooks.fork $ loadInbox visit'
-                        pure true
-                    Nothing -> pure false
-            _ -> pure false
+                        pure $ Right unit
+                    Nothing -> pure $ Left couldntSend
+            _ -> pure $ Left couldntSend
 
     message <- useComposer messageRef send
 
