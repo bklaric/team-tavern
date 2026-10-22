@@ -1,26 +1,30 @@
 module TeamTavern.Server.Session.Start.CheckPassword
-    (CheckPasswordError, CheckedPassword, checkPassword, confirmPassword) where
+    (CheckPasswordError, CheckedPassword, SignInLimits, checkPassword, confirmPassword, createSignInLimits) where
 
 import Prelude
 
-import Async (Async, left)
+import Async (Async, fromEffect, left)
 import Bcrypt.Async as Bcrypt
 import Data.Array (singleton)
 import Data.Bifunctor (lmap)
 import Data.Maybe (Maybe, isNothing)
 import Data.Variant (Variant, inj)
-import Jarilo (InternalRow_, BadRequestRow, badRequest_, internal__)
+import Effect (Effect)
+import Jarilo (InternalRow_, BadRequestRow, TooManyRequestsRow, badRequest_, internal__)
 import JavaScript.Npm.Pg.Query (class Querier, Query(..), (:), (:|))
 import TeamTavern.Routes.Session.StartSession as StartSession
+import TeamTavern.Routes.Shared.Wait (Wait)
 import TeamTavern.Server.Infrastructure.Error (Terror(..), TerrorVar, lmapElaborate)
 import TeamTavern.Server.Infrastructure.Log (print)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirst, queryFirstMaybe)
+import TeamTavern.Server.Infrastructure.RateLimit (ClientLimits, Limiter, clear, createClientLimiter, createLimiter, ensureAdmitted, release)
 import Type.Proxy (Proxy(..))
 import Type.Row (type (+))
 
 type CheckPasswordError errors = TerrorVar
     ( InternalRow_
     + BadRequestRow StartSession.BadContent
+    + TooManyRequestsRow Wait
     + errors
     )
 
@@ -51,23 +55,47 @@ confirmString = Query """
     for update
     """
 
+-- | Passwords can be guessed, so a client gets 20 failed sign-ins a quarter
+-- | of an hour, and an account 10 wrong passwords, after which it takes none,
+-- | the right one included, until the quarter is over or the password is
+-- | reset. Only failures count, and an account is counted by its id once
+-- | it's found. The right password clears its account's failures.
+type SignInLimits = { perClient :: Limiter, perAccount :: Limiter }
+
+createSignInLimits :: ClientLimits -> Effect SignInLimits
+createSignInLimits clientLimits = do
+    perClient <- createClientLimiter clientLimits "Failed sign-ins from one client" { count: 20, seconds: 900 }
+    perAccount <- createLimiter "Failed sign-ins to one account" { count: 10, seconds: 900 }
+    pure { perClient, perAccount }
+
 checkPassword
     :: ∀ querier errors
     .  Querier querier
-    => StartSession.RequestContentEmail
+    => SignInLimits
+    -> String
+    -> StartSession.RequestContentEmail
     -> querier
     -> Async (CheckPasswordError errors) CheckedPassword
-checkPassword model querier = do
+checkPassword limits client model querier = do
+    -- Each try counts as a failure until the password matches, so tries sent
+    -- at once can't all find room while bcrypt runs.
+    ensureAdmitted limits.perClient client "Too many failed sign-ins from one client."
+
     -- Load player hash.
-    checked @ { nickname, hash } :: CheckedPassword <-
+    checked @ { id, nickname, hash } :: CheckedPassword <-
         queryFirst unknownPlayer querier queryString (model.emailOrNickname : [])
         # lmapElaborate ("Can't find player: " <> model.emailOrNickname)
+    let account = show id
+    ensureAdmitted limits.perAccount account "Too many failed sign-ins to one account."
 
     -- Compare hash with password.
     matches <- Bcrypt.compare model.password hash # lmap
         (print >>> ("Bcrypt error while checking hash: " <> _) >>> singleton >>> Terror internal__)
     when (not matches) $ left $ Terror wrongPassword [ "Wrong password entered for user: " <> nickname ]
 
+    fromEffect do
+        release limits.perClient client
+        clear limits.perAccount account
     pure checked
 
 -- | Locks the player for the session's transaction and checks that the hash

@@ -2,11 +2,12 @@ module TeamTavern.Routes.Session.StartSession where
 
 import Data.Variant (Variant)
 import Foreign.Object (Object)
-import Jarilo (type (!), type (==>), BadRequestJson, Internal_, Literal, NoContent, PostJson_)
+import Jarilo (type (!), type (==>), BadRequestJson, Internal_, Literal, NoContent, PostJson_, TooManyRequestsJson)
+import TeamTavern.Routes.Shared.Wait (Wait)
 
 type StartSession =
     PostJson_ (Literal "sessions") RequestContent
-    ==> (NoContent ! BadRequestJson BadContent ! Internal_)
+    ==> (NoContent ! BadRequestJson BadContent ! TooManyRequestsJson Wait ! Internal_)
 
 type RequestContentEmail =
     { emailOrNickname :: String

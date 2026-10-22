@@ -56,7 +56,7 @@ import TeamTavern.Server.Infrastructure.Environment as Environment
 import TeamTavern.Server.Infrastructure.GoogleSignIn (GoogleClient(..), googleEndpoint)
 import TeamTavern.Server.Infrastructure.Log (logStamped, print)
 import TeamTavern.Server.Infrastructure.Postgres (databaseErrorLines)
-import TeamTavern.Server.Infrastructure.RateLimit (ClientLimits(..), Limiter)
+import TeamTavern.Server.Infrastructure.RateLimit (ClientLimits(..), Limiter, clientAddress)
 import TeamTavern.Server.Infrastructure.RequestOrigin (requestOrigin)
 import TeamTavern.Server.Infrastructure.ResolveSteamId (SteamApi(..))
 import TeamTavern.Server.Infrastructure.Ses (createClient)
@@ -83,6 +83,7 @@ import TeamTavern.Server.Post.ViewOwnPosts (viewOwnPosts)
 import TeamTavern.Server.Post.ViewPost (viewPost)
 import TeamTavern.Server.Session.End (end) as Session
 import TeamTavern.Server.Session.Start (start) as Session
+import TeamTavern.Server.Session.Start.CheckPassword (SignInLimits, createSignInLimits)
 import TeamTavern.Server.Sitemap.ViewSitemap (viewSitemap)
 import TeamTavern.Server.Worker (startWorker)
 import Type.Proxy (Proxy(..))
@@ -237,6 +238,7 @@ type Limits =
     , forgotPassword :: ForgotPasswordLimits
     , confirmation :: ConfirmationLimits
     , updateEmail :: Limiter
+    , signIn :: SignInLimits
     }
 
 createLimits :: ClientLimits -> Effect Limits
@@ -245,18 +247,20 @@ createLimits clientLimits = do
     forgotPassword <- createForgotPasswordLimits clientLimits
     confirmation <- createConfirmationLimits
     updateEmail <- createUpdateEmailLimit
-    pure { clientErrors, forgotPassword, confirmation, updateEmail }
+    signIn <- createSignInLimits clientLimits
+    pure { clientErrors, forgotPassword, confirmation, updateEmail, signIn }
 
 runServer :: Environment -> Mailer -> DiscordClient -> SteamApi -> SteamOpenIdUrl -> GoogleClient -> AdminEmail -> Limits -> Pool -> Effect Unit
 runServer environment mailer discordClient steamApi steamOpenIdUrl googleClient adminEmail limits pool = serve (Proxy :: _ AllRoutes) serveOptions
     { startSession: \{ cookies, headers, body } ->
-        Session.start environment limits.confirmation mailer discordClient steamOpenIdUrl steamApi googleClient pool cookies (requestOrigin headers) body
+        Session.start environment limits.signIn limits.confirmation mailer discordClient steamOpenIdUrl steamApi googleClient
+            pool cookies (clientAddress headers) (requestOrigin headers) body
     , endSession: \{ cookies } ->
         Session.end pool cookies
     , forgotPassword: \{ headers, body } ->
         forgotPassword limits.forgotPassword mailer pool headers body
     , resetPassword: \{ body } ->
-        resetPassword pool body
+        resetPassword limits.signIn pool body
     , registerPlayer: \{ cookies, body } ->
         register environment limits.confirmation mailer pool cookies body
     , viewMe: \{ cookies } ->

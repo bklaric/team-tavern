@@ -5,6 +5,7 @@ module TeamTavern.Server.Infrastructure.RateLimit
     , Limiter
     , admit
     , admitAll
+    , clear
     , clientAddress
     , countOne
     , createClientLimiter
@@ -12,6 +13,7 @@ module TeamTavern.Server.Infrastructure.RateLimit
     , ensureAdmission
     , ensureAdmitted
     , ensureRoom
+    , release
     ) where
 
 import Prelude
@@ -122,6 +124,19 @@ ensureRoom limiter key = ensureAdmission do
 -- | Counts one for `key`, whether or not it had room.
 countOne :: Limiter -> String -> Effect Unit
 countOne limiter key = nowMilliseconds >>= count limiter key
+
+-- | Takes back the latest one counted for `key`, for a request counted before
+-- | it knew whether it would count, so that requests at once can't all find
+-- | room before any is counted.
+release :: Limiter -> String -> Effect Unit
+release Unlimited _ = pure unit
+release (Limiter _ ref) key = ref # Ref.modify_ \state ->
+    state { admitted = Map.update (Array.init >=> \times -> if Array.null times then Nothing else Just times) key state.admitted }
+
+-- | Forgets everything counted for `key`.
+clear :: Limiter -> String -> Effect Unit
+clear Unlimited _ = pure unit
+clear (Limiter _ ref) key = ref # Ref.modify_ \state -> state { admitted = Map.delete key state.admitted }
 
 -- | Lets one through for `key` and counts it, or refuses it.
 admit :: Limiter -> String -> Effect Admission

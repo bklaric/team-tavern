@@ -6,9 +6,10 @@ import Async (Async, foreach)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Traversable (traverse)
 import Data.Variant (Variant, match)
-import Jarilo (BadRequestRow, InternalRow_, NoContentRow_, noContent)
+import Jarilo (BadRequestRow, InternalRow_, NoContentRow_, TooManyRequestsRow, noContent)
 import JavaScript.Npm.Pg.Pool (Pool)
 import TeamTavern.Routes.Session.StartSession as StartSession
+import TeamTavern.Routes.Shared.Wait (Wait)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies, setCookieHeader)
 import TeamTavern.Server.Infrastructure.DiscordSignIn (DiscordClient, exchangeDiscordCode)
 import TeamTavern.Server.Infrastructure.Email (Mailer)
@@ -22,17 +23,19 @@ import TeamTavern.Server.Player.Domain.Provider (Provider(..))
 import TeamTavern.Server.Player.Infrastructure.SendConfirmation (ConfirmationLimits, sendConfirmation)
 import TeamTavern.Server.Session.Domain.Token as Token
 import TeamTavern.Server.Session.Infrastructure.RevokeSession (revokeSession)
-import TeamTavern.Server.Session.Start.CheckPassword (checkPassword, confirmPassword)
+import TeamTavern.Server.Session.Start.CheckPassword (SignInLimits, checkPassword, confirmPassword)
 import TeamTavern.Server.Session.Start.CheckProvider (checkProvider)
 import TeamTavern.Server.Session.Start.CreateSession (createSession)
 import TeamTavern.Server.Session.Start.Unknown (unknownDiscord, unknownGoogle, unknownSteam)
 import Type.Row (type (+))
 
+-- | `clientAddress` is the address of the client that asks, and `origin` the
+-- | one it asked on.
 start :: ∀ left.
-    Environment -> ConfirmationLimits -> Mailer -> DiscordClient -> SteamOpenIdUrl -> SteamApi -> GoogleClient
-    -> Pool -> Cookies -> String -> StartSession.RequestContent
-    -> Async left (Variant (NoContentRow_ + BadRequestRow StartSession.BadContent + InternalRow_ + ()))
-start environment confirmationLimits mailer discordClient steamOpenIdUrl steamApi googleClient pool cookies origin body =
+    Environment -> SignInLimits -> ConfirmationLimits -> Mailer -> DiscordClient -> SteamOpenIdUrl -> SteamApi -> GoogleClient
+    -> Pool -> Cookies -> String -> String -> StartSession.RequestContent
+    -> Async left (Variant (NoContentRow_ + BadRequestRow StartSession.BadContent + TooManyRequestsRow Wait + InternalRow_ + ()))
+start environment signInLimits confirmationLimits mailer discordClient steamOpenIdUrl steamApi googleClient pool cookies clientAddress origin body =
     sendResponse "Error starting session" do
     -- Generate session token.
     token <- Token.generate
@@ -55,7 +58,7 @@ start environment confirmationLimits mailer discordClient steamOpenIdUrl steamAp
     -- ends.
     {confirmation} <- body # match
         { password: \bodyEmail -> do
-            checked <- checkPassword bodyEmail pool
+            checked <- checkPassword signInLimits clientAddress bodyEmail pool
             pool # transaction \client -> do
                 confirmPassword checked client
                 startFor client { id: checked.id, confirmation: Nothing }

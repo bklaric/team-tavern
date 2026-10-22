@@ -2,13 +2,14 @@ module TeamTavern.Server.Password.ResetPassword (resetPassword) where
 
 import Prelude
 
-import Async (Async)
+import Async (Async, fromEffect)
 import Data.Variant (Variant)
 import Jarilo (BadRequestRow, InternalRow_, NoContentRow_, NotFoundRow_, noContent_)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (class Querier, Query(..), (:), (:|))
 import TeamTavern.Routes.Password.ResetPassword as ResetPassword
 import TeamTavern.Server.Infrastructure.Postgres (LoadSingleError, queryFirstNotFound, queryNone, transaction)
+import TeamTavern.Server.Infrastructure.RateLimit (clear)
 import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Password.Infrastructure.DeleteResets (deleteResets)
@@ -16,6 +17,7 @@ import TeamTavern.Server.Player.Domain.Hash (Hash, generateHash)
 import TeamTavern.Server.Player.Domain.Password (validatePassword')
 import TeamTavern.Server.Session.Domain.Token (Token(..))
 import TeamTavern.Server.Session.Domain.Token as Token
+import TeamTavern.Server.Session.Start.CheckPassword (SignInLimits)
 import Type.Row (type (+))
 
 -- A link holds only while the account signs in with a password. One that has
@@ -70,10 +72,12 @@ revokeSessions :: forall querier errors. Querier querier =>
 revokeSessions querier playerId =
     queryNone querier sessionsQueryString (playerId : [])
 
+-- | The reset clears the account's failed sign-ins: whoever reset it holds
+-- | its address, so it's theirs to sign in to.
 resetPassword :: forall left.
-    Pool -> ResetPassword.RequestContent
+    SignInLimits -> Pool -> ResetPassword.RequestContent
     -> Async left (Variant (NoContentRow_ + BadRequestRow ResetPassword.BadContent + NotFoundRow_ + InternalRow_ + ()))
-resetPassword pool {password, nonce} =
+resetPassword signInLimits pool {password, nonce} =
     sendResponse "Error resetting password" do
     -- Validate password.
     validPassword <- validatePassword' password
@@ -81,7 +85,7 @@ resetPassword pool {password, nonce} =
     -- Generate password hash.
     hash <- generateHash validPassword
 
-    pool # transaction \client -> do
+    playerId <- pool # transaction \client -> do
         -- Ensure nonce is valid.
         playerId <- ensureValidNonce client nonce
 
@@ -89,5 +93,8 @@ resetPassword pool {password, nonce} =
         updatePassword client playerId hash
         revokeSessions client playerId
         deleteResets client playerId
+        pure playerId
+
+    fromEffect $ clear signInLimits.perAccount $ show playerId
 
     pure noContent_

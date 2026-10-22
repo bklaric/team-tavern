@@ -1,8 +1,8 @@
 import { expect, Page, test } from "@playwright/test";
-import { expectSignedInAs, password, signIn, signOut, submitPasswordSignIn, unique } from "../accounts";
+import { expectSignedInAs, password, signIn, signOut, signUp, submitPasswordSignIn, unique } from "../accounts";
 import { discordUser, fakeDiscord, signUpWithDiscord } from "../discord";
 import { fakeGoogle, googleUser, signUpWithGoogle } from "../google";
-import { emails, openMail } from "../mail";
+import { body, emails, openMail } from "../mail";
 import { expectPage } from "../pages";
 import { fakeSteam, signUpWithSteam, startSteamTrip, steamAnswer, steamId, steamNickname } from "../steam";
 
@@ -60,6 +60,39 @@ test("signing in with a password says which half is wrong", async ({ page }) => 
 
     await submitPasswordSignIn(page, unique("nobody"));
     await expect(page.getByText("No account exists with this email or nickname.")).toBeVisible();
+});
+
+// Passwords can be guessed, so an account takes ten wrong ones in a quarter of an hour, and
+// then nothing, the right one included, until the quarter is over. Whoever can reset the
+// password owns the address, so a reset lets them in at once.
+test("signing in with a password waits after ten wrong ones, until a reset", async ({ page }) => {
+    const nickname = await signUp(page, "W");
+    const address = `${nickname.toLowerCase()}@example.com`;
+    await signOut(page);
+
+    for (let i = 0; i < 10; i++) {
+        await submitPasswordSignIn(page, nickname, "wrong-password");
+        await expect(page.getByText("Entered password is incorrect.")).toBeVisible();
+    }
+    for (const password_ of ["wrong-password", password]) {
+        await submitPasswordSignIn(page, nickname.toLowerCase(), password_);
+        await expect(page.getByText("Too many failed sign-ins. Try again in 15 minutes.")).toBeVisible();
+    }
+
+    await page.goto("/forgot-password");
+    await page.getByLabel("Email").fill(address);
+    await page.getByRole("button", { name: "Send link" }).click();
+    await expect(page.getByRole("heading", { name: "Check your email" })).toBeVisible();
+    await openMail(page, address);
+    await body(emails(page, "Password reset")).getByRole("link", { name: "Reset password" }).click();
+    await expectPage(page, "/reset-password");
+    await page.getByLabel("New password").fill("a-new-password");
+    await page.getByRole("button", { name: "Change password" }).click();
+    await expect(page.getByRole("heading", { name: "Your password is changed" })).toBeVisible();
+
+    await submitPasswordSignIn(page, nickname, "a-new-password");
+    await expectPage(page, "/");
+    await expectSignedInAs(page, nickname);
 });
 
 test("signing in from the header returns the player to the page they came from", async ({ page }) => {
