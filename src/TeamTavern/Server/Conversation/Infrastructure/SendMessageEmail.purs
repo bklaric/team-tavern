@@ -28,6 +28,8 @@ messageEmail email =
         , Paragraph $ email.sender <> " wrote to you about " <> email.about <> ":"
         , Quote email.content
         , Button { label: "Reply", path: "/messages/" <> show email.conversation }
+        , Paragraph $ "Replying to this email won't reach " <> email.sender
+            <> ". Use the Reply button to answer on TeamTavern."
         ]
         <> maybe []
             (\nonce ->

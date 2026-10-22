@@ -58,6 +58,7 @@ test.describe("email", () => {
         await expect(email).toHaveCount(1);
         await expect(body(email).getByText("Hi, want to play tonight?")).toBeVisible();
         await expect(body(email).getByText("I'm on from nine.")).toHaveCount(0);
+        await expect(body(email).getByText(`Replying to this email won't reach ${nickname}.`)).toBeVisible();
         await expect(body(email).getByRole("link", { name: "Renew" })).toHaveCount(0);
 
         await body(email).getByRole("link", { name: "Reply" }).click();
