@@ -8,6 +8,7 @@ import Jarilo (BadRequestRow, InternalRow_, NoContentRow_, NotFoundRow_, noConte
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (class Querier, Query(..), (:), (:|))
 import TeamTavern.Routes.Password.ResetPassword as ResetPassword
+import TeamTavern.Server.Infrastructure.Bcrypt (Bcrypt)
 import TeamTavern.Server.Infrastructure.Postgres (LoadSingleError, queryFirstNotFound, queryNone, transaction)
 import TeamTavern.Server.Infrastructure.RateLimit (clear)
 import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
@@ -15,7 +16,7 @@ import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Password.Infrastructure.DeleteResets (deleteResets)
 import TeamTavern.Server.Player.Domain.Hash (Hash, generateHash)
 import TeamTavern.Server.Player.Domain.Password (validatePassword')
-import TeamTavern.Server.Session.Domain.Token (Token(..))
+import TeamTavern.Server.Session.Domain.Token (Token(..), TokenHash)
 import TeamTavern.Server.Session.Domain.Token as Token
 import TeamTavern.Server.Session.Start.CheckPassword (SignInLimits)
 import Type.Row (type (+))
@@ -39,12 +40,30 @@ nonceQueryString = Query """
     """
 
 ensureValidNonce :: forall errors querier. Querier querier =>
-    querier -> String -> Async (LoadSingleError errors) Int
-ensureValidNonce querier nonce = do
-    nonceHash <- Token.hash $ Token nonce
+    querier -> TokenHash -> Async (LoadSingleError errors) Int
+ensureValidNonce querier nonceHash = do
     {playerId} :: {playerId :: Int} <-
         queryFirstNotFound querier nonceQueryString (nonceHash : [])
     pure playerId
+
+-- The same link as `nonceQueryString` takes, left in place. Hashing the new
+-- password waits its turn at bcrypt with every sign-in, so a link that can't
+-- reset anything is turned away before it.
+liveQueryString :: Query
+liveQueryString = Query """
+    select 1 as one
+    from password_reset
+    join player on player.id = password_reset.player_id
+    where password_reset.nonce_hash = $1
+        and password_reset.created > now() - interval '1 hour'
+        and player.password_hash is not null
+    """
+
+ensureLiveNonce :: forall errors querier. Querier querier =>
+    querier -> TokenHash -> Async (LoadSingleError errors) Unit
+ensureLiveNonce querier nonceHash = do
+    _ :: {one :: Int} <- queryFirstNotFound querier liveQueryString (nonceHash : [])
+    pure unit
 
 passwordQueryString :: Query
 passwordQueryString = Query """
@@ -75,19 +94,22 @@ revokeSessions querier playerId =
 -- | The reset clears the account's failed sign-ins: whoever reset it holds
 -- | its address, so it's theirs to sign in to.
 resetPassword :: forall left.
-    SignInLimits -> Pool -> ResetPassword.RequestContent
+    SignInLimits -> Bcrypt -> Pool -> ResetPassword.RequestContent
     -> Async left (Variant (NoContentRow_ + BadRequestRow ResetPassword.BadContent + NotFoundRow_ + InternalRow_ + ()))
-resetPassword signInLimits pool {password, nonce} =
+resetPassword signInLimits bcrypt pool {password, nonce} =
     sendResponse "Error resetting password" do
     -- Validate password.
     validPassword <- validatePassword' password
 
+    nonceHash <- Token.hash $ Token nonce
+    ensureLiveNonce pool nonceHash
+
     -- Generate password hash.
-    hash <- generateHash validPassword
+    hash <- generateHash bcrypt validPassword
 
     playerId <- pool # transaction \client -> do
         -- Ensure nonce is valid.
-        playerId <- ensureValidNonce client nonce
+        playerId <- ensureValidNonce client nonceHash
 
         -- Update the password and end every session and other link.
         updatePassword client playerId hash

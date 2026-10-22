@@ -10,6 +10,7 @@ import Jarilo (BadRequestRow, InternalRow_, NoContentRow_, TooManyRequestsRow, n
 import JavaScript.Npm.Pg.Pool (Pool)
 import TeamTavern.Routes.Session.StartSession as StartSession
 import TeamTavern.Routes.Shared.Wait (Wait)
+import TeamTavern.Server.Infrastructure.Bcrypt (Bcrypt)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies, setCookieHeader)
 import TeamTavern.Server.Infrastructure.DiscordSignIn (DiscordClient, exchangeDiscordCode)
 import TeamTavern.Server.Infrastructure.Email (Mailer)
@@ -32,10 +33,10 @@ import Type.Row (type (+))
 -- | `clientAddress` is the address of the client that asks, and `origin` the
 -- | one it asked on.
 start :: ∀ left.
-    Environment -> SignInLimits -> ConfirmationLimits -> Mailer -> DiscordClient -> SteamOpenIdUrl -> SteamApi -> GoogleClient
+    Environment -> SignInLimits -> ConfirmationLimits -> Bcrypt -> Mailer -> DiscordClient -> SteamOpenIdUrl -> SteamApi -> GoogleClient
     -> Pool -> Cookies -> String -> String -> StartSession.RequestContent
     -> Async left (Variant (NoContentRow_ + BadRequestRow StartSession.BadContent + TooManyRequestsRow Wait + InternalRow_ + ()))
-start environment signInLimits confirmationLimits mailer discordClient steamOpenIdUrl steamApi googleClient pool cookies clientAddress origin body =
+start environment signInLimits confirmationLimits bcrypt mailer discordClient steamOpenIdUrl steamApi googleClient pool cookies clientAddress origin body =
     sendResponse "Error starting session" do
     -- Generate session token.
     token <- Token.generate
@@ -58,7 +59,7 @@ start environment signInLimits confirmationLimits mailer discordClient steamOpen
     -- ends.
     {confirmation} <- body # match
         { password: \bodyEmail -> do
-            checked <- checkPassword signInLimits clientAddress bodyEmail pool
+            checked <- checkPassword signInLimits bcrypt clientAddress bodyEmail pool
             pool # transaction \client -> do
                 confirmPassword checked client
                 startFor client { id: checked.id, confirmation: Nothing }

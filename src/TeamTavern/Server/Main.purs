@@ -49,6 +49,7 @@ import TeamTavern.Server.Game.ViewGame (viewGame)
 import TeamTavern.Server.Game.ViewGames (viewGames)
 import TeamTavern.Server.Guide.ViewGuide (viewGuide)
 import TeamTavern.Server.Guide.ViewGuides (viewGuides)
+import TeamTavern.Server.Infrastructure.Bcrypt (Bcrypt, createBcrypt)
 import TeamTavern.Server.Infrastructure.DiscordSignIn (DiscordClient(..), discordEndpoint)
 import TeamTavern.Server.Infrastructure.Email (Mailer(..))
 import TeamTavern.Server.Infrastructure.Environment (Environment(..))
@@ -252,19 +253,19 @@ createLimits clientLimits = do
     register <- createRegisterLimit clientLimits
     pure { clientErrors, forgotPassword, confirmation, updateEmail, signIn, register }
 
-runServer :: Environment -> Mailer -> DiscordClient -> SteamApi -> SteamOpenIdUrl -> GoogleClient -> AdminEmail -> Limits -> Pool -> Effect Unit
-runServer environment mailer discordClient steamApi steamOpenIdUrl googleClient adminEmail limits pool = serve (Proxy :: _ AllRoutes) serveOptions
+runServer :: Environment -> Mailer -> DiscordClient -> SteamApi -> SteamOpenIdUrl -> GoogleClient -> AdminEmail -> Limits -> Bcrypt -> Pool -> Effect Unit
+runServer environment mailer discordClient steamApi steamOpenIdUrl googleClient adminEmail limits bcrypt pool = serve (Proxy :: _ AllRoutes) serveOptions
     { startSession: \{ cookies, headers, body } ->
-        Session.start environment limits.signIn limits.confirmation mailer discordClient steamOpenIdUrl steamApi googleClient
+        Session.start environment limits.signIn limits.confirmation bcrypt mailer discordClient steamOpenIdUrl steamApi googleClient
             pool cookies (clientAddress headers) (requestOrigin headers) body
     , endSession: \{ cookies } ->
         Session.end pool cookies
     , forgotPassword: \{ headers, body } ->
         forgotPassword limits.forgotPassword mailer pool headers body
     , resetPassword: \{ body } ->
-        resetPassword limits.signIn pool body
+        resetPassword limits.signIn bcrypt pool body
     , registerPlayer: \{ cookies, headers, body } ->
-        register environment limits.register limits.confirmation mailer pool cookies (clientAddress headers) body
+        register environment limits.register limits.confirmation bcrypt mailer pool cookies (clientAddress headers) body
     , viewMe: \{ cookies } ->
         viewMe environment pool cookies
     , confirmEmail: \{ body } ->
@@ -286,7 +287,7 @@ runServer environment mailer discordClient steamApi steamOpenIdUrl googleClient 
     , switchToGoogle: \{ cookies, headers, body } ->
         switchToGoogle googleClient pool cookies (requestOrigin headers) body
     , switchToPassword: \{ cookies, body } ->
-        switchToPassword limits.confirmation mailer pool cookies body
+        switchToPassword limits.confirmation bcrypt mailer pool cookies body
     , deleteAccount: \{ cookies } ->
         deleteAccount pool cookies
     , viewGames: const $
@@ -368,5 +369,6 @@ main = either (\error -> logStamped error *> exit 1) pure =<< runExceptT do
     mailer <- loadMailer environment
     clientLimits <- lift loadClientLimits
     limits <- lift $ createLimits clientLimits
+    bcrypt <- lift createBcrypt
     lift $ startWorker workerPeriod mailer pool
-    lift $ runServer environment mailer discordClient steamApi steamOpenIdUrl googleClient adminEmail limits pool
+    lift $ runServer environment mailer discordClient steamApi steamOpenIdUrl googleClient adminEmail limits bcrypt pool

@@ -4,7 +4,6 @@ module TeamTavern.Server.Session.Start.CheckPassword
 import Prelude
 
 import Async (Async, fromEffect, left)
-import Bcrypt.Async as Bcrypt
 import Data.Array (singleton)
 import Data.Bifunctor (lmap)
 import Data.Maybe (Maybe, isNothing)
@@ -14,6 +13,7 @@ import Jarilo (InternalRow_, BadRequestRow, TooManyRequestsRow, badRequest_, int
 import JavaScript.Npm.Pg.Query (class Querier, Query(..), (:), (:|))
 import TeamTavern.Routes.Session.StartSession as StartSession
 import TeamTavern.Routes.Shared.Wait (Wait)
+import TeamTavern.Server.Infrastructure.Bcrypt (Bcrypt, comparePassword)
 import TeamTavern.Server.Infrastructure.Error (Terror(..), TerrorVar, lmapElaborate)
 import TeamTavern.Server.Infrastructure.Log (print)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirst, queryFirstMaybe)
@@ -72,11 +72,12 @@ checkPassword
     :: ∀ querier errors
     .  Querier querier
     => SignInLimits
+    -> Bcrypt
     -> String
     -> StartSession.RequestContentEmail
     -> querier
     -> Async (CheckPasswordError errors) CheckedPassword
-checkPassword limits client model querier = do
+checkPassword limits bcrypt client model querier = do
     -- Each try counts as a failure until the password matches, so tries sent
     -- at once can't all find room while bcrypt runs.
     ensureAdmitted limits.perClient client "Too many failed sign-ins from one client."
@@ -89,7 +90,7 @@ checkPassword limits client model querier = do
     ensureAdmitted limits.perAccount account "Too many failed sign-ins to one account."
 
     -- Compare hash with password.
-    matches <- Bcrypt.compare model.password hash # lmap
+    matches <- comparePassword bcrypt model.password hash # lmap
         (print >>> ("Bcrypt error while checking hash: " <> _) >>> singleton >>> Terror internal__)
     when (not matches) $ left $ Terror wrongPassword [ "Wrong password entered for user: " <> nickname ]
 

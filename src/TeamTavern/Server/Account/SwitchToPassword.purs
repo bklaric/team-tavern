@@ -16,6 +16,7 @@ import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..), (:), (:|))
 import TeamTavern.Routes.Account.SwitchToPassword as SwitchToPassword
 import TeamTavern.Server.Account.Infrastructure.EmailTaken (emailTakenOrInternal)
+import TeamTavern.Server.Infrastructure.Bcrypt (Bcrypt)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.Email (Mailer)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
@@ -69,14 +70,14 @@ switchQuery = Query """
     where id = $1
     """
 
-switchToPassword :: ∀ left. ConfirmationLimits -> Mailer -> Pool -> Cookies -> SwitchToPassword.RequestContent
+switchToPassword :: ∀ left. ConfirmationLimits -> Bcrypt -> Mailer -> Pool -> Cookies -> SwitchToPassword.RequestContent
     -> Async left (Variant (NoContentRow_ + BadRequestRow SwitchToPassword.BadContent + NotAuthorizedRow_ + InternalRow_ + ()))
-switchToPassword confirmationLimits mailer pool cookies { password, email } =
+switchToPassword confirmationLimits bcrypt mailer pool cookies { password, email } =
     sendResponse "Error switching to a password" do
     { id, token } <- ensureSignedIn pool cookies
     password' <- validatePassword' password
     given <- traverse (validateEmail' >>> map Email.toString) email
-    hash <- generateHash password'
+    hash <- generateHash bcrypt password'
     let playerId = unwrap id
     confirmation <- pool # transaction \client -> do
         held :: { nickname :: String, email :: Maybe String, emailConfirmed :: Boolean } <-

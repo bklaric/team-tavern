@@ -4,6 +4,7 @@ package:
     - arrays
     - bifunctors
     - bklaric
+    - catenable-lists
     - console
     - const
     - contravariant

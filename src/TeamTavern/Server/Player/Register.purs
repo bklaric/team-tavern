@@ -11,6 +11,7 @@ import Jarilo (BadRequestRow, InternalRow_, NoContentRow_, TooManyRequestsRow, n
 import JavaScript.Npm.Pg.Pool (Pool)
 import TeamTavern.Routes.Player.RegisterPlayer as RegisterPlayer
 import TeamTavern.Routes.Shared.Wait (Wait)
+import TeamTavern.Server.Infrastructure.Bcrypt (Bcrypt)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies, setCookieHeader)
 import TeamTavern.Server.Infrastructure.Email (Mailer)
 import TeamTavern.Server.Infrastructure.Environment (Environment)
@@ -41,9 +42,9 @@ createRegisterLimit clientLimits =
     createClientLimiter clientLimits "Registrations from one client" { count: 10, seconds: 3600 }
 
 register :: ∀ left.
-    Environment -> Limiter -> ConfirmationLimits -> Mailer -> Pool -> Cookies -> String -> RegisterPlayer.RequestContent
+    Environment -> Limiter -> ConfirmationLimits -> Bcrypt -> Mailer -> Pool -> Cookies -> String -> RegisterPlayer.RequestContent
     -> Async left (Variant (NoContentRow_ + BadRequestRow RegisterPlayer.BadContent + TooManyRequestsRow Wait + InternalRow_ + ()))
-register environment limit confirmationLimits mailer pool cookies clientAddress content =
+register environment limit confirmationLimits bcrypt mailer pool cookies clientAddress content =
     sendResponse "Error registering player" do
     -- Validate register model.
     registration <- validateRegistration content
@@ -56,7 +57,7 @@ register environment limit confirmationLimits mailer pool cookies clientAddress 
     {confirmation} <- registration # match
         { password: \{email, nickname, password} -> do
             -- Generate password hash.
-            hash <- generateHash password
+            hash <- generateHash bcrypt password
 
             pool # transaction \client -> do
                 -- Add player to database.
