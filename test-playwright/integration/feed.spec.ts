@@ -263,7 +263,7 @@ test.describe("what fits between players", () => {
         await describe(page, "Rank", editor => editor.getByRole("combobox").selectOption("platinum-2"));
         await describe(page, "Age", editor => editor.getByLabel("Your age").fill("17"));
 
-        await expect(card(page, "ValorantTester").locator(".fact-miss")).toHaveText([/^Doesn't fit:Age \d+$/]);
+        await expect(card(page, "ValorantTester").locator(".fact-miss")).toHaveText([/^Doesn't fit:Age\s\d+$/]);
     });
 
     test("misses a group that wants a microphone when the player doesn't say they use one", async ({ page }) => {

@@ -86,36 +86,28 @@
     white-space: nowrap;
 }
 
-/* Every fact opens with its separator, and the row is pulled left by one
-   separator's width and clipped, so no line of a wrapped row starts with one. */
-
-.facts-clip {
-    overflow: hidden;
-}
+/* The fact line is running text, so a long fact wraps within itself. Every
+   fact but the last ends with its separator, which keeps to the fact's last
+   word, and the zero-width space after it is where the line may break between
+   facts. A wrapped line ends with a separator, so the next one opens a new
+   fact rather than going on with the last. */
 
 .facts {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    row-gap: 2px;
-    margin-left: -16px;
     font-size: var(--size-14);
     font-weight: 500;
+    overflow-wrap: break-word;
 }
 
-.fact {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-1);
-}
-
-.fact::before {
-    content: "·";
-    width: 16px;
-    margin-right: calc(-1 * var(--space-1));
+.fact:not(:last-child)::after {
+    content: "·\200B";
+    margin: 0 6px;
     color: var(--text-faint);
     font-weight: 400;
-    text-align: center;
+}
+
+.fact-lead,
+.fact-icon {
+    white-space: nowrap;
 }
 
 /* Match marks sit on the facts themselves. Both carry their glyph, and a
@@ -132,6 +124,7 @@
 .fact-mark {
     width: 14px;
     height: 14px;
+    margin-right: var(--space-1);
 }
 
 .card-text {

@@ -7,7 +7,7 @@ import Data.Array (catMaybes, elem, filter, find, findIndex, head, index, length
 import Data.DateTime.Instant (Instant)
 import Data.Int (floor)
 import Data.Maybe (Maybe(..), fromMaybe, isJust, isNothing, maybe)
-import Data.String (joinWith, toLower, trim)
+import Data.String (Pattern(..), Replacement(..), indexOf, joinWith, replaceAll, split, splitAt, toLower, trim)
 import Data.String.CodeUnits as CodeUnits
 import Effect.Class (class MonadEffect)
 import Foreign.Object as Object
@@ -201,12 +201,29 @@ matchClass (Just Fit) = "fact fact-fit"
 matchClass (Just Miss) = "fact fact-miss"
 matchClass Nothing = "fact"
 
+-- A fact wraps after a comma between the things it lists or after a range's
+-- dash, never inside one of them.
+breakable :: String -> String
+breakable text = text
+    # split (Pattern ", ")
+    <#> replaceAll (Pattern " ") (Replacement "\x00a0") >>> replaceAll (Pattern "\x00a0–\x00a0") (Replacement "\x00a0– ")
+    # joinWith ", "
+
+-- A fact's mark keeps to its first word and an icon fact stays whole, so no
+-- line ends with a lone glyph.
 renderFact :: ∀ w i. Fact -> HH.HTML w i
-renderFact (TextFact { text, tabular, match }) =
-    HH.span [ HS.class_ $ matchClass match ] $ renderMatch match
-    <> [ if tabular then HH.span [ HS.class_ "tabular" ] [ HH.text text ] else HH.span_ [ HH.text text ] ]
+renderFact (TextFact { text, tabular, match }) = let
+    shown text' = if tabular then HH.span [ HS.class_ "tabular" ] [ HH.text text' ] else HH.span_ [ HH.text text' ]
+    wrapping = breakable text
+    { before, after } = indexOf (Pattern " ") wrapping <#> (\at -> splitAt at wrapping)
+        # fromMaybe { before: wrapping, after: "" }
+    in
+    HH.span [ HS.class_ $ matchClass match ] case match of
+    Nothing -> [ shown wrapping ]
+    Just _ -> [ HH.span [ HS.class_ "fact-lead" ] $ renderMatch match <> [ shown before ] ]
+        <> if after == "" then [] else [ shown after ]
 renderFact (IconFact { icon, label, match }) =
-    HH.span [ HS.class_ $ matchClass match ] $ renderMatch match
+    HH.span [ HS.class_ $ matchClass match <> " fact-icon" ] $ renderMatch match
     <> [ case icon of
             Mic -> Icons.mic
             MicOff -> Icons.micOff
@@ -216,7 +233,7 @@ renderFact (IconFact { icon, label, match }) =
 factLine :: ∀ w i. Array Fact -> Maybe (HH.HTML w i)
 factLine facts
     | null facts = Nothing
-    | otherwise = Just $ HH.div [ HS.class_ "facts-clip" ] [ HH.div [ HS.class_ "facts" ] $ renderFact <$> facts ]
+    | otherwise = Just $ HH.div [ HS.class_ "facts" ] $ renderFact <$> facts
 
 -- The post's hours in the viewer's clock, where it gives any.
 hoursOf :: Viewer -> CardRow -> Maybe Hours
