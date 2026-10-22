@@ -374,6 +374,42 @@ test.describe("the account page", () => {
         await expectSignedInAs(page, nickname);
     });
 
+    // Discord, Steam and Google hold back the site's own address when it sends them too many
+    // codes they refuse, so an account tries ten switches in ten minutes that the provider
+    // doesn't confirm. One it confirms doesn't count.
+    test("holds back a switch of the sign-in past ten refused in ten minutes", async ({ page }) => {
+        await signUp(page, "W");
+        const discord = await fakeDiscord(page, discordUser(null, false));
+        discord.application = "1";
+        await fakeGoogle(page, googleUser(`${unique("elsewhere")}@example.com`, true));
+        const signInRow = page.locator("#sign-in");
+
+        // Each try leaves the page for Discord, so its toast is looked for only once the browser
+        // is back, or the last try's toast would do.
+        const refusedDiscord = async () => {
+            const back = page.waitForEvent("framenavigated", frame =>
+                frame === page.mainFrame() && new URL(frame.url()).pathname === "/signin");
+            await signInRow.getByRole("button", { name: "Change" }).click();
+            await signInRow.getByRole("button", { name: "Continue with Discord" }).click();
+            await back;
+            await expect(page.locator(".toast-text")).toHaveText("Discord couldn't confirm it's your account. Try again.");
+        };
+
+        await openAccount(page);
+        for (let i = 0; i < 9; i++) await refusedDiscord();
+        await signInRow.getByRole("button", { name: "Change" }).click();
+        await signInRow.getByRole("button", { name: "Continue with Google" }).click();
+        await expect(page.locator(".toast-text")).toHaveText("You sign in with Google now.");
+        await refusedDiscord();
+
+        discord.application = null;
+        await signInRow.getByRole("button", { name: "Change" }).click();
+        await signInRow.getByRole("button", { name: "Continue with Discord" }).click();
+        await expect(page.locator(".toast-text"))
+            .toHaveText("You've tried to change your sign-in too often. Try again in 10 minutes.");
+        await expect(row(page, "Sign-in")).toHaveText("Google");
+    });
+
     test("keeps the sign-in as it was when the player turns back at Discord", async ({ page }) => {
         await signUp(page, "K");
         const discord = await fakeDiscord(page, discordUser(null, false));

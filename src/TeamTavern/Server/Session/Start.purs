@@ -6,6 +6,7 @@ import Async (Async, foreach)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Traversable (traverse)
 import Data.Variant (Variant, match)
+import Effect (Effect)
 import Jarilo (BadRequestRow, InternalRow_, NoContentRow_, TooManyRequestsRow, noContent)
 import JavaScript.Npm.Pg.Pool (Pool)
 import TeamTavern.Routes.Session.StartSession as StartSession
@@ -17,6 +18,7 @@ import TeamTavern.Server.Infrastructure.Email (Mailer)
 import TeamTavern.Server.Infrastructure.Environment (Environment)
 import TeamTavern.Server.Infrastructure.GoogleSignIn (GoogleClient, exchangeGoogleCode)
 import TeamTavern.Server.Infrastructure.Postgres (transaction)
+import TeamTavern.Server.Infrastructure.RateLimit (ClientLimits, Limiter, countFailures, createClientLimiter)
 import TeamTavern.Server.Infrastructure.ResolveSteamId (SteamApi)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Infrastructure.SteamOpenId (SteamOpenIdUrl, verifySteamReturn)
@@ -30,13 +32,21 @@ import TeamTavern.Server.Session.Start.CreateSession (createSession)
 import TeamTavern.Server.Session.Start.Unknown (unknownDiscord, unknownGoogle, unknownSteam)
 import Type.Row (type (+))
 
+-- | A sign-in with Discord, Steam or Google asks the provider from the site's
+-- | own address, which the provider holds back for everyone once it has
+-- | refused too much from it, so a client tries 20 in 10 minutes that the
+-- | provider doesn't vouch for.
+createProviderSignInLimit :: ClientLimits -> Effect Limiter
+createProviderSignInLimit clientLimits =
+    createClientLimiter clientLimits "Failed provider sign-ins from one client" { count: 20, seconds: 600 }
+
 -- | `clientAddress` is the address of the client that asks, and `origin` the
 -- | one it asked on.
 start :: ∀ left.
-    Environment -> SignInLimits -> ConfirmationLimits -> Bcrypt -> Mailer -> DiscordClient -> SteamOpenIdUrl -> SteamApi -> GoogleClient
+    Environment -> SignInLimits -> Limiter -> ConfirmationLimits -> Bcrypt -> Mailer -> DiscordClient -> SteamOpenIdUrl -> SteamApi -> GoogleClient
     -> Pool -> Cookies -> String -> String -> StartSession.RequestContent
     -> Async left (Variant (NoContentRow_ + BadRequestRow StartSession.BadContent + TooManyRequestsRow Wait + InternalRow_ + ()))
-start environment signInLimits confirmationLimits bcrypt mailer discordClient steamOpenIdUrl steamApi googleClient pool cookies clientAddress origin body =
+start environment signInLimits providerLimit confirmationLimits bcrypt mailer discordClient steamOpenIdUrl steamApi googleClient pool cookies clientAddress origin body =
     sendResponse "Error starting session" do
     -- Generate session token.
     token <- Token.generate
@@ -54,6 +64,8 @@ start environment signInLimits confirmationLimits bcrypt mailer discordClient st
                 checkProvider provider client providerId email >>= traverse (startFor client)
             maybe unknown pure started
 
+        refusedTooOften = "Too many failed provider sign-ins from one client."
+
     -- Discord, Steam and Google are asked, and the password is compared,
     -- before the transaction, which holds a connection from the pool until it
     -- ends.
@@ -65,12 +77,15 @@ start environment signInLimits confirmationLimits bcrypt mailer discordClient st
                 startFor client { id: checked.id, confirmation: Nothing }
         , discord: \{code} -> do
             discordUser <- exchangeDiscordCode discordClient origin code
+                # countFailures providerLimit clientAddress refusedTooOften
             startWith Discord discordUser.discordId discordUser.email $ unknownDiscord pool discordUser
         , steam: \{assertion} -> do
             steamId <- verifySteamReturn steamOpenIdUrl origin pool assertion
+                # countFailures providerLimit clientAddress refusedTooOften
             startWith Steam steamId Nothing $ unknownSteam steamApi pool steamId
         , google: \{code} -> do
             googleUser <- exchangeGoogleCode googleClient origin code
+                # countFailures providerLimit clientAddress refusedTooOften
             startWith Google googleUser.googleId googleUser.email $ unknownGoogle pool googleUser
         }
 

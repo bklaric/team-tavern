@@ -154,11 +154,14 @@ component = Hooks.component \_ _ -> Hooks.do
         startSession provider back content onUnknown = do
             set _ { screen = Returning provider, back = back, publishing = publishing back }
             let failed = returnFailed back somethingWrong
-            result <- H.lift $ Async.attempt $ fetchBody (expecting [ "badRequest" ] (Proxy :: _ StartSession)) content
+            result <- H.lift $ Async.attempt $
+                fetchBody (expecting [ "badRequest", "tooManyRequests" ] (Proxy :: _ StartSession)) content
             case result of
                 Right response -> response # onMatch
                     { noContent: const $ navigateReplace_ back
                     , badRequest: onUnknown failed
+                    , tooManyRequests: \{ seconds } -> returnFailed back $
+                        "Too many failed sign-ins from here. " <> tryAgainIn seconds
                     }
                     (const failed)
                 Left _ -> failed

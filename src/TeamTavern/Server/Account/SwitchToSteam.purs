@@ -5,13 +5,15 @@ import Prelude
 import Async (Async)
 import Data.Newtype (unwrap)
 import Data.Variant (Variant, inj)
-import Jarilo (BadRequestRow, InternalRow_, NotAuthorizedRow_, OkRow, ok_)
+import Jarilo (BadRequestRow, InternalRow_, NotAuthorizedRow_, OkRow, TooManyRequestsRow, ok_)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..), (:|))
 import TeamTavern.Routes.Account.SwitchToSteam as SwitchToSteam
-import TeamTavern.Server.Account.Infrastructure.SwitchSignIn (switchSignIn)
+import TeamTavern.Routes.Shared.Wait (Wait)
+import TeamTavern.Server.Account.Infrastructure.SwitchSignIn (askProvider, switchSignIn)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
+import TeamTavern.Server.Infrastructure.RateLimit (Limiter)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Infrastructure.SteamOpenId (SteamOpenIdUrl, verifySteamReturn)
 import Type.Proxy (Proxy(..))
@@ -34,12 +36,12 @@ queryString = Query """
     """
 
 switchToSteam :: ∀ left.
-    SteamOpenIdUrl -> Pool -> Cookies -> String -> SwitchToSteam.RequestContent
-    -> Async left (Variant (OkRow SwitchToSteam.OkContent + BadRequestRow SwitchToSteam.BadContent + NotAuthorizedRow_ + InternalRow_ + ()))
-switchToSteam steamOpenIdUrl pool cookies origin { assertion } =
+    Limiter -> SteamOpenIdUrl -> Pool -> Cookies -> String -> SwitchToSteam.RequestContent
+    -> Async left (Variant (OkRow SwitchToSteam.OkContent + BadRequestRow SwitchToSteam.BadContent + NotAuthorizedRow_ + TooManyRequestsRow Wait + InternalRow_ + ()))
+switchToSteam limit steamOpenIdUrl pool cookies origin { assertion } =
     sendResponse "Error switching to Steam" do
     { id, token } <- ensureSignedIn pool cookies
-    steamId <- verifySteamReturn steamOpenIdUrl origin pool assertion
+    steamId <- verifySteamReturn steamOpenIdUrl origin pool assertion # askProvider limit (unwrap id)
     content :: SwitchToSteam.OkContent <-
         switchSignIn pool (unwrap id) token queryString (unwrap id :| steamId)
             { constraint: "player_steam_sign_in_id_key", taken: inj (Proxy :: _ "steamTaken") {} }

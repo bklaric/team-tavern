@@ -1,13 +1,14 @@
 module TeamTavern.Routes.Account.SwitchToGoogle where
 
 import Data.Variant (Variant)
-import Jarilo (type (!), type (/), type (==>), BadRequestJson, Internal_, Literal, NoContent, NotAuthorized_, PostJson_)
+import Jarilo (type (!), type (/), type (==>), BadRequestJson, Internal_, Literal, NoContent, NotAuthorized_, PostJson_, TooManyRequestsJson)
+import TeamTavern.Routes.Shared.Wait (Wait)
 
 -- | Signs the account in with the Google account the code is for, in place of
 -- | its password, Discord or Steam, leaving its email as it is (brief 11.5).
 type SwitchToGoogle =
     PostJson_ (Literal "account" / Literal "google") RequestContent
-    ==> NoContent ! BadRequestJson BadContent ! NotAuthorized_ ! Internal_
+    ==> NoContent ! BadRequestJson BadContent ! NotAuthorized_ ! TooManyRequestsJson Wait ! Internal_
 
 -- | `code` is the one Google sent the browser back to the sign-in page with.
 type RequestContent = { code :: String }

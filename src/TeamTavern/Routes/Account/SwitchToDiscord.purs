@@ -2,13 +2,14 @@ module TeamTavern.Routes.Account.SwitchToDiscord where
 
 import Data.Maybe (Maybe)
 import Data.Variant (Variant)
-import Jarilo (type (!), type (/), type (==>), BadRequestJson, Internal_, Literal, NotAuthorized_, OkJson, PostJson_)
+import Jarilo (type (!), type (/), type (==>), BadRequestJson, Internal_, Literal, NotAuthorized_, OkJson, PostJson_, TooManyRequestsJson)
+import TeamTavern.Routes.Shared.Wait (Wait)
 
 -- | Signs the account in with the Discord the code is for, in its password's,
 -- | Steam's or Google's place, leaving its email as it is (brief 11.5).
 type SwitchToDiscord =
     PostJson_ (Literal "account" / Literal "discord") RequestContent
-    ==> OkJson OkContent ! BadRequestJson BadContent ! NotAuthorized_ ! Internal_
+    ==> OkJson OkContent ! BadRequestJson BadContent ! NotAuthorized_ ! TooManyRequestsJson Wait ! Internal_
 
 -- | `code` is the one Discord sent the browser back to the sign-in page with.
 type RequestContent = { code :: String }

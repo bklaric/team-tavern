@@ -22,6 +22,7 @@ import JavaScript.Npm.Pg.Pool.Events as PoolEvents
 import Record as Record
 import TeamTavern.Routes.All (AllRoutes)
 import TeamTavern.Server.Account.DeleteAccount (deleteAccount)
+import TeamTavern.Server.Account.Infrastructure.SwitchSignIn (createSwitchLimit)
 import TeamTavern.Server.Account.SwitchToDiscord (switchToDiscord)
 import TeamTavern.Server.Account.SwitchToGoogle (switchToGoogle)
 import TeamTavern.Server.Account.SwitchToPassword (switchToPassword)
@@ -83,7 +84,7 @@ import TeamTavern.Server.Post.ViewOwnPost (viewOwnPost)
 import TeamTavern.Server.Post.ViewOwnPosts (viewOwnPosts)
 import TeamTavern.Server.Post.ViewPost (viewPost)
 import TeamTavern.Server.Session.End (end) as Session
-import TeamTavern.Server.Session.Start (start) as Session
+import TeamTavern.Server.Session.Start (createProviderSignInLimit, start) as Session
 import TeamTavern.Server.Session.Start.CheckPassword (SignInLimits, createSignInLimits)
 import TeamTavern.Server.Sitemap.ViewSitemap (viewSitemap)
 import TeamTavern.Server.Worker (startWorker)
@@ -240,6 +241,8 @@ type Limits =
     , confirmation :: ConfirmationLimits
     , updateEmail :: Limiter
     , signIn :: SignInLimits
+    , providerSignIn :: Limiter
+    , switchSignIn :: Limiter
     , register :: Limiter
     }
 
@@ -250,13 +253,15 @@ createLimits clientLimits = do
     confirmation <- createConfirmationLimits
     updateEmail <- createUpdateEmailLimit
     signIn <- createSignInLimits clientLimits
+    providerSignIn <- Session.createProviderSignInLimit clientLimits
+    switchSignIn <- createSwitchLimit
     register <- createRegisterLimit clientLimits
-    pure { clientErrors, forgotPassword, confirmation, updateEmail, signIn, register }
+    pure { clientErrors, forgotPassword, confirmation, updateEmail, signIn, providerSignIn, switchSignIn, register }
 
 runServer :: Environment -> Mailer -> DiscordClient -> SteamApi -> SteamOpenIdUrl -> GoogleClient -> AdminEmail -> Limits -> Bcrypt -> Pool -> Effect Unit
 runServer environment mailer discordClient steamApi steamOpenIdUrl googleClient adminEmail limits bcrypt pool = serve (Proxy :: _ AllRoutes) serveOptions
     { startSession: \{ cookies, headers, body } ->
-        Session.start environment limits.signIn limits.confirmation bcrypt mailer discordClient steamOpenIdUrl steamApi googleClient
+        Session.start environment limits.signIn limits.providerSignIn limits.confirmation bcrypt mailer discordClient steamOpenIdUrl steamApi googleClient
             pool cookies (clientAddress headers) (requestOrigin headers) body
     , endSession: \{ cookies } ->
         Session.end pool cookies
@@ -281,11 +286,11 @@ runServer environment mailer discordClient steamApi steamOpenIdUrl googleClient 
     , updateEmail: \{ cookies, body } ->
         updateEmail limits.updateEmail limits.confirmation mailer pool cookies body
     , switchToDiscord: \{ cookies, headers, body } ->
-        switchToDiscord discordClient pool cookies (requestOrigin headers) body
+        switchToDiscord limits.switchSignIn discordClient pool cookies (requestOrigin headers) body
     , switchToSteam: \{ cookies, headers, body } ->
-        switchToSteam steamOpenIdUrl pool cookies (requestOrigin headers) body
+        switchToSteam limits.switchSignIn steamOpenIdUrl pool cookies (requestOrigin headers) body
     , switchToGoogle: \{ cookies, headers, body } ->
-        switchToGoogle googleClient pool cookies (requestOrigin headers) body
+        switchToGoogle limits.switchSignIn googleClient pool cookies (requestOrigin headers) body
     , switchToPassword: \{ cookies, body } ->
         switchToPassword limits.confirmation bcrypt mailer pool cookies body
     , deleteAccount: \{ cookies } ->

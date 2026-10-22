@@ -295,10 +295,14 @@ component = Hooks.component \_ _ -> Hooks.do
         switchFailed provider =
             showToast { text: provider <> " couldn't take over your sign-in. Try again.", action: Nothing }
 
+        switchedTooOften { seconds } =
+            showToast { text: "You've tried to change your sign-in too often. " <> tryAgainIn seconds, action: Nothing }
+
         -- Back from Discord with the code of a switch to it.
         switchToDiscord :: String -> HookM (Async left) Unit
         switchToDiscord code = do
-            result <- H.lift $ Async.attempt $ fetchBody (expecting [ "badRequest" ] (Proxy :: _ SwitchToDiscord)) { code }
+            result <- H.lift $ Async.attempt $
+                fetchBody (expecting [ "badRequest", "tooManyRequests" ] (Proxy :: _ SwitchToDiscord)) { code }
             case hush result of
                 Nothing -> switchFailed "Discord"
                 Just response -> response # onMatch
@@ -310,13 +314,15 @@ component = Hooks.component \_ _ -> Hooks.do
                         , discordRefused: \_ -> showToast
                             { text: "Discord couldn't confirm it's your account. Try again.", action: Nothing }
                         }
+                    , tooManyRequests: switchedTooOften
                     }
                     (const $ switchFailed "Discord")
 
         -- Back from Steam with its answer for a switch to it.
         switchToSteam :: Object String -> HookM (Async left) Unit
         switchToSteam assertion = do
-            result <- H.lift $ Async.attempt $ fetchBody (expecting [ "badRequest" ] (Proxy :: _ SwitchToSteam)) { assertion }
+            result <- H.lift $ Async.attempt $
+                fetchBody (expecting [ "badRequest", "tooManyRequests" ] (Proxy :: _ SwitchToSteam)) { assertion }
             case hush result of
                 Nothing -> switchFailed "Steam"
                 Just response -> response # onMatch
@@ -328,13 +334,15 @@ component = Hooks.component \_ _ -> Hooks.do
                         , steamRefused: \_ -> showToast
                             { text: "Steam couldn't confirm it's your account. Try again.", action: Nothing }
                         }
+                    , tooManyRequests: switchedTooOften
                     }
                     (const $ switchFailed "Steam")
 
         -- Back from Google with the code of a switch to it.
         switchToGoogle :: String -> HookM (Async left) Unit
         switchToGoogle code = do
-            result <- H.lift $ Async.attempt $ fetchBody (expecting [ "badRequest" ] (Proxy :: _ SwitchToGoogle)) { code }
+            result <- H.lift $ Async.attempt $
+                fetchBody (expecting [ "badRequest", "tooManyRequests" ] (Proxy :: _ SwitchToGoogle)) { code }
             case hush result of
                 Nothing -> switchFailed "Google"
                 Just response -> response # onMatch
@@ -344,6 +352,7 @@ component = Hooks.component \_ _ -> Hooks.do
                         , googleRefused: \_ -> showToast
                             { text: "Google couldn't confirm it's your account. Try again.", action: Nothing }
                         }
+                    , tooManyRequests: switchedTooOften
                     }
                     (const $ switchFailed "Google")
 
