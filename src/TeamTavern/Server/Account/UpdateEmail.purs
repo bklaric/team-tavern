@@ -23,6 +23,7 @@ import TeamTavern.Server.Infrastructure.Postgres (transaction)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Infrastructure.ValidateEmail (validateEmail')
 import TeamTavern.Server.Infrastructure.ValidateEmail as Email
+import TeamTavern.Server.Password.Infrastructure.DeleteResets (deleteResets)
 import TeamTavern.Server.Player.Infrastructure.SendConfirmation (addConfirmation, sendConfirmation)
 import Type.Row (type (+))
 import Yoga.JSON.Async (read)
@@ -49,6 +50,8 @@ updateEmail mailer pool cookies { email } =
         changed <- for (result # rows # head) \row ->
             (read row :: _ _ { nickname :: String })
             # lmap \error -> Terror internal__ [ "Error reading nickname: " <> show error ]
-        for changed \{ nickname } -> addConfirmation client playerId email' <#> { email: email', nickname, nonce: _ }
+        for changed \{ nickname } -> do
+            deleteResets client playerId
+            addConfirmation client playerId email' <#> { email: email', nickname, nonce: _ }
     foreach confirmation $ sendConfirmation mailer
     pure noContent_

@@ -9,14 +9,21 @@ import TeamTavern.Server.Infrastructure.Email (Block(..), Email, Mailer, sendEma
 import TeamTavern.Server.Infrastructure.GenerateNonce (Nonce, generateNonce, toString)
 import TeamTavern.Server.Infrastructure.Postgres (queryNone)
 import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
+import TeamTavern.Server.Session.Domain.Token (Token(..))
+import TeamTavern.Server.Session.Domain.Token as Token
 
 type Confirmation = { email :: String, nickname :: String, nonce :: Nonce }
 
 -- The link confirms the address it was sent to, so it is stored beside the
--- nonce and a link to an address the player has since changed confirms nothing.
+-- nonce and a link to an address the player has since changed confirms nothing,
+-- and goes as the new one is added.
 addConfirmationQuery :: Query
 addConfirmationQuery = Query """
-    insert into email_confirmation (player_id, email, nonce)
+    with stale as (
+        delete from email_confirmation
+        where player_id = $1 and lower(email) <> lower($2)
+    )
+    insert into email_confirmation (player_id, email, nonce_hash)
     values ($1, $2, $3)
     """
 
@@ -24,7 +31,8 @@ addConfirmation :: ∀ querier errors. Querier querier =>
     querier -> Int -> String -> Async (InternalTerror_ errors) Nonce
 addConfirmation querier playerId email = do
     nonce <- generateNonce
-    queryNone querier addConfirmationQuery (playerId : email :| nonce)
+    nonceHash <- Token.hash $ Token $ toString nonce
+    queryNone querier addConfirmationQuery (playerId : email :| nonceHash)
     pure nonce
 
 confirmationEmail :: Confirmation -> Email

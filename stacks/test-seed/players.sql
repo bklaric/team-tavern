@@ -331,10 +331,10 @@ where player.nickname = 'OwnerTester';
 
 -- The post in its last week has had its notice that it is expiring, as the
 -- period worker gives one, so the bell's list has an expiry row. It is dated
--- when the last week began, before the worker started, so no period emails it.
+-- when the last week began, and has had its email.
 
-insert into notification (post_id, kind, created)
-select post.id, 'expiry', post.updated + interval '23 days'
+insert into notification (post_id, kind, created, email_pending)
+select post.id, 'expiry', post.updated + interval '23 days', false
 from post
 join player on player.id = post.player_id
 join game on game.id = post.game_id

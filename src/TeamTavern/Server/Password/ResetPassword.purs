@@ -11,30 +11,37 @@ import TeamTavern.Routes.Password.ResetPassword as ResetPassword
 import TeamTavern.Server.Infrastructure.Postgres (LoadSingleError, queryFirstNotFound, queryNone, transaction)
 import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
+import TeamTavern.Server.Password.Infrastructure.DeleteResets (deleteResets)
 import TeamTavern.Server.Player.Domain.Hash (Hash, generateHash)
 import TeamTavern.Server.Player.Domain.Password (validatePassword')
+import TeamTavern.Server.Session.Domain.Token (Token(..))
+import TeamTavern.Server.Session.Domain.Token as Token
 import Type.Row (type (+))
 
 -- A link holds only while the account signs in with a password. One that has
--- moved to Discord or Steam since isn't the email's to take back.
+-- moved to Discord, Steam or Google since isn't the email's to take back. A
+-- second reset with the same link, racing this one, waits on the deleted row
+-- and then finds none.
 nonceQueryString :: Query
 nonceQueryString = Query """
-    update password_reset
-    set consumed = true
-    from player
-    where password_reset.nonce = $1
-    and password_reset.consumed = false
-    and extract(epoch from (now() - password_reset.created)) < 3600 -- 1 hour
-    and player.id = password_reset.player_id
-    and player.password_hash is not null
-    returning password_reset.player_id as "playerId"
+    with used as (
+        delete from password_reset
+        where nonce_hash = $1
+        returning player_id, created
+    )
+    select player.id as "playerId"
+    from used
+    join player on player.id = used.player_id
+    where used.created > now() - interval '1 hour'
+        and player.password_hash is not null
     """
 
 ensureValidNonce :: forall errors querier. Querier querier =>
     querier -> String -> Async (LoadSingleError errors) Int
 ensureValidNonce querier nonce = do
+    nonceHash <- Token.hash $ Token nonce
     {playerId} :: {playerId :: Int} <-
-        queryFirstNotFound querier nonceQueryString (nonce : [])
+        queryFirstNotFound querier nonceQueryString (nonceHash : [])
     pure playerId
 
 passwordQueryString :: Query
@@ -78,8 +85,9 @@ resetPassword pool {password, nonce} =
         -- Ensure nonce is valid.
         playerId <- ensureValidNonce client nonce
 
-        -- Update the password and end every session.
+        -- Update the password and end every session and other link.
         updatePassword client playerId hash
         revokeSessions client playerId
+        deleteResets client playerId
 
     pure noContent_

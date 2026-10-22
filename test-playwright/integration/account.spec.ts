@@ -384,6 +384,32 @@ test.describe("the account page", () => {
         await expect(emails(page, "Confirm your email")).toHaveCount(1);
     });
 
+    // Anyone can sign up with an address they don't own, so a password account that never
+    // confirmed its address gives it up to one whose address Discord vouched for.
+    test("takes an address for a password from an account that never confirmed it", async ({ page, browser }) => {
+        const holder = await (await browser.newContext()).newPage();
+        const address = `${(await signUp(holder, "H")).toLowerCase()}@example.com`;
+
+        const nickname = await signUpWithDiscord(page, await fakeDiscord(page, discordUser(address, true)));
+        const signInRow = page.locator("#sign-in");
+        await openAccount(page);
+        await expect(row(page, "Email")).toHaveText(address);
+        await signInRow.getByRole("button", { name: "Change" }).click();
+        await expect(signInRow.getByRole("button", { name: "Continue with Steam" })).toBeFocused();
+        await page.getByLabel("Password").fill("a-new-password");
+        await signInRow.getByRole("button", { name: "Save", exact: true }).click();
+        await expect(page.locator(".toast-text")).toHaveText("You sign in with your email and password now.");
+        await expect(row(page, "Email")).toHaveText(address);
+
+        await signOut(page);
+        await submitPasswordSignIn(page, address, "a-new-password");
+        await expectPage(page, "/");
+        await expectSignedInAs(page, nickname);
+
+        await openAccount(holder);
+        await expect(row(holder, "Email")).toContainText("No address");
+    });
+
     test("moves the sign-in to Steam, on to Discord and back to Steam, each of which then signs in", async ({ page }) => {
         const nickname = await signUp(page, "M");
         const steam = await fakeSteam(page);

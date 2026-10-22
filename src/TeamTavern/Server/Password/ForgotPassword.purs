@@ -12,14 +12,20 @@ import TeamTavern.Server.Infrastructure.Email (Block(..), Email, Mailer, deliver
 import TeamTavern.Server.Infrastructure.GenerateNonce (Nonce, generateNonce, toString)
 import TeamTavern.Server.Infrastructure.Postgres (LoadSingleError, queryFirstNotFound)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
+import TeamTavern.Server.Session.Domain.Token (Token(..))
+import TeamTavern.Server.Session.Domain.Token as Token
 import Type.Row (type (+))
 
 type Player = {email :: String, nickname :: String}
 
+-- Each new link clears out those past their hour.
 queryString :: Query
 queryString = Query """
-    with inserted as (
-        insert into password_reset (player_id, nonce)
+    with stale as (
+        delete from password_reset where created < now() - interval '1 hour'
+    ),
+    inserted as (
+        insert into password_reset (player_id, nonce_hash)
         select player.id, $2
         from player
         where lower(player.email) = lower($1)
@@ -38,7 +44,8 @@ addPasswordReset
     -> Nonce
     -> Async (LoadSingleError errors) Player
 addPasswordReset pool email nonce = do
-    queryFirstNotFound pool queryString (email :| nonce)
+    nonceHash <- Token.hash $ Token $ toString nonce
+    queryFirstNotFound pool queryString (email :| nonceHash)
 
 resetEmail :: Player -> Nonce -> Email
 resetEmail { email, nickname } nonce =

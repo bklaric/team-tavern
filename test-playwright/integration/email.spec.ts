@@ -1,5 +1,5 @@
 import { expect, Locator, Page, test } from "@playwright/test";
-import { signIn, signOut, signUp, submitPasswordSignIn } from "../accounts";
+import { expectSignedInAs, signIn, signOut, signUp, submitPasswordSignIn } from "../accounts";
 import { body, emails, openMail } from "../mail";
 import { expectPage } from "../pages";
 import { fakeSteam } from "../steam";
@@ -131,6 +131,41 @@ test.describe("email", () => {
         await submitPasswordSignIn(page, address, "a-new-password");
         await expectPage(page, "/");
         await expect(page.getByRole("button", { name: "Account menu" })).toBeVisible();
+    });
+
+    // Two links asked for, say by whoever the reset locks out and by the owner, don't leave
+    // one working once the other has reset the password.
+    test("refuses a reset link once another has reset the password", async ({ page }) => {
+        const nickname = await signUp(page, "R");
+        const address = `${nickname.toLowerCase()}@example.com`;
+        await signOut(page);
+
+        for (let i = 0; i < 2; i++) {
+            await page.goto("/forgot-password");
+            await page.getByLabel("Email").fill(address);
+            await page.getByRole("button", { name: "Send link" }).click();
+            await expect(page.getByRole("heading", { name: "Check your email" })).toBeVisible();
+        }
+
+        await openMail(page, address);
+        const resets = emails(page, "Password reset");
+        await expect(resets).toHaveCount(2);
+        await body(resets.first()).getByRole("link", { name: "Reset password" }).click();
+        await expectPage(page, "/reset-password");
+        await page.getByLabel("New password").fill("a-new-password");
+        await page.getByRole("button", { name: "Change password" }).click();
+        await expect(page.getByRole("heading", { name: "Your password is changed" })).toBeVisible();
+
+        await openMail(page, address);
+        await body(resets.last()).getByRole("link", { name: "Reset password" }).click();
+        await expectPage(page, "/reset-password");
+        await page.getByLabel("New password").fill("another-password");
+        await page.getByRole("button", { name: "Change password" }).click();
+        await expect(page.getByRole("heading", { name: "This link doesn't work" })).toBeVisible();
+
+        await submitPasswordSignIn(page, address, "a-new-password");
+        await expectPage(page, "/");
+        await expectSignedInAs(page, nickname);
     });
 
     // The address of an account that signs in with Steam is no credential, so a reset link

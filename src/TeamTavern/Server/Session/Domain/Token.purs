@@ -41,5 +41,5 @@ generate = generateHexString tokenByteCount <#> Token
 hash :: ∀ errors. Token -> Async (InternalTerror_ errors) TokenHash
 hash token = do
     result <- hashHex "sha256" (unwrap token) # fromEffect
-    result # lmap (\error -> Terror internal__ [ "Hashing a session token failed: " <> print error ])
+    result # lmap (\error -> Terror internal__ [ "Hashing a token failed: " <> print error ])
         # fromEither <#> TokenHash

@@ -11,14 +11,15 @@ import TeamTavern.Server.Infrastructure.Postgres (queryNone)
 import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 
 -- A post that fits again, renewed after it expired, brings its notification
--- back to the top unread rather than adding a second (notification_fit_key).
+-- back to the top unread and to be emailed again, rather than adding a second
+-- (notification_fit_key).
 notifyQuery :: Query
 notifyQuery = Query $ """
     insert into notification (post_id, kind, fitting_post_id, created)
     select fits.id, 'fit', $1, $2
     from (""" <> fitsText <> """) fits
     on conflict (post_id, fitting_post_id) where kind = 'fit'
-    do update set created = excluded.created, read = false
+    do update set created = excluded.created, read = false, email_pending = true
     """
 
 -- | Tells the owners of the posts a post fits that it does (brief 8), when it

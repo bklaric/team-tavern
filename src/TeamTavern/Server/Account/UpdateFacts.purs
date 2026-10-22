@@ -85,7 +85,6 @@ updateFacts steamApi pool cookies { nickname, account } =
         :| writeImpl account'.contacts
         )
         # lmap \error -> case code error == unique_violation, constraint error of
-            true, Just "player_nickname_key" -> nicknameTaken error
             true, Just "player_lower_nickname_key" -> nicknameTaken error
             _, _ -> Terror internal__ $ databaseErrorLines error
     pure noContent_

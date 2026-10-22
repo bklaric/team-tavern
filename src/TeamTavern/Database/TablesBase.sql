@@ -37,8 +37,10 @@ create table player
     , email varchar(254)
     , email_confirmed boolean not null default false
 
-    -- The sign-in identity: a password or a Discord account, never both
-    -- (brief 11.5). The sign-in row on the account page moves it between them.
+    -- The sign-in identity: a password, a Discord account, a Steam account or
+    -- a Google account, one of them only (brief 11.5). The sign-in row on the
+    -- account page moves it between them. The Steam account's column is
+    -- steam_sign_in_id and the Google account's google_id, last.
     , password_hash character(60)
     , discord_id text unique
 
@@ -69,12 +71,29 @@ create table player
 
     , registered timestamptz not null default current_timestamp
 
-    , constraint player_identity_check check (num_nonnulls(password_hash, discord_id) = 1)
+    -- Contacts like those above. They sit last because a column added to a
+    -- live table can only go at the end, and this schema has to match one.
+    , marvel_rivals_username text
+    , epic_id text
+    , embark_id text
+
+    -- The SteamID64 of the Steam account the player signs in with, which
+    -- steam_id, the contact, starts out as but may part from.
+    , steam_sign_in_id text unique
+
+    -- The subject Google names the account by, which never changes.
+    , google_id text unique
+
+    -- A contact like those above, last for the same reason.
+    , pubg_nickname text
+
+    , constraint player_identity_check
+        check (num_nonnulls(password_hash, discord_id, steam_sign_in_id, google_id) = 1)
     );
 
 -- A password player signs in with the email, so it is unique among those only.
--- A Discord account is known by its Discord id, so its address is not a
--- credential and registering with Discord never fails on one.
+-- A Discord, Steam or Google account is known by its own id, so its address is
+-- not a credential and registering with one never fails on it.
 create unique index player_lower_email_key on player (lower(email)) where password_hash is not null;
 create unique index player_lower_nickname_key on player (lower(nickname));
 
@@ -109,6 +128,27 @@ create table email_confirmation
 
 create index email_confirmation_player_id_idx on email_confirmation (player_id);
 
+-- A Steam or Google account new to the site, between the provider vouching for
+-- it and the player picking a nickname, with the address the provider gave for
+-- it, which Steam never does. Each answers for a sign-in only once, so the
+-- registration that follows shows this instead. It lasts an hour.
+create table sign_in_ticket
+    ( token_hash character(64) not null primary key
+    , provider text not null check (provider in ('steam', 'google'))
+    , provider_id text not null
+    , email varchar(254)
+    , email_confirmed boolean not null
+    , created timestamptz not null default current_timestamp
+    );
+
+-- The nonce of every answer of Steam's the site accepted lately, so none is
+-- accepted twice. An answer counts only around its nonce's time, so a nonce
+-- kept a quarter hour is kept past any time it could count again.
+create table steam_nonce
+    ( nonce text not null primary key
+    , accepted timestamptz not null default current_timestamp
+    );
+
 -- Games and their fields
 
 create table game
@@ -130,8 +170,8 @@ create table game_contact
     , kind text not null
     , primary key (game_id, kind)
     , constraint game_contact_kind_check check (kind in
-        ('discord', 'steam', 'riot', 'battle_tag', 'ea'
-        , 'ubisoft', 'psn', 'gamer_tag', 'friend_code'))
+        ('discord', 'steam', 'riot', 'battle_tag', 'ea', 'epic', 'embark', 'pubg'
+        , 'ubisoft', 'marvel_rivals', 'psn', 'gamer_tag', 'friend_code'))
     );
 
 create table field

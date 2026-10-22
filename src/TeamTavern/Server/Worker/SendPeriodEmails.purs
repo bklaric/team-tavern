@@ -2,35 +2,58 @@ module TeamTavern.Server.Worker.SendPeriodEmails (sendPeriodEmails) where
 
 import Prelude
 
-import Async (Async, foreach)
+import Async (Async, alwaysRightWithEffect, safeForeach)
 import Data.Array (catMaybes, length)
 import Data.Foldable (sum)
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import JavaScript.Date (Date)
 import JavaScript.Npm.Pg.Pool (Pool)
-import JavaScript.Npm.Pg.Query (Query(..), (:|))
-import TeamTavern.Server.Infrastructure.Email (Block(..), Email, Mailer, sendEmail)
-import TeamTavern.Server.Infrastructure.Postgres (queryMany)
+import JavaScript.Npm.Pg.Query (Query(..), (:))
+import TeamTavern.Server.Infrastructure.Email (Block(..), Email, Mailer, deliver)
+import TeamTavern.Server.Infrastructure.Log (logError)
+import TeamTavern.Server.Infrastructure.Postgres (queryMany, queryNone)
 import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 import TeamTavern.Server.Notification.Infrastructure.Visible (visibleNotification)
+import Yoga.JSON (writeJSON)
 
--- The notifications created in the period, each owner's in one row, grouped by
--- their post: a confirmed address only, fits under the Matches switch and
--- expiries under the Renewals switch (brief 11.5). A fit a block has come
--- between since is left out, as the list leaves it out.
+-- Whether the owner of a notification's post takes its email, as SQL over the
+-- notification, its post and the post's `owner`: a confirmed address only,
+-- fits under the Matches switch and expiries under the Renewals switch
+-- (brief 11.5). A fit a block has come between since is left out, as the list
+-- leaves it out.
+emailable :: String
+emailable = """
+    owner.email is not null and owner.email_confirmed
+    and (
+        notification.kind = 'fit' and owner.email_matches and """ <> visibleNotification <> """
+        or notification.kind = 'expiry' and owner.email_renewals
+    )
+    """
+
+-- A notification its owner takes no email for is let go now, so switching an
+-- email on or confirming an address later sends none of what came before. One
+-- whose email has failed for a day is let go too.
+dropQuery :: Query
+dropQuery = Query $ """
+    update notification
+    set email_pending = false
+    from post
+    join player owner on owner.id = post.player_id
+    where post.id = notification.post_id and notification.email_pending
+        and (notification.created <= $1::timestamptz - interval '1 day' or not (""" <> emailable <> """))
+    """
+
+-- The notifications not emailed yet, each owner's in one row, grouped by their
+-- post, along with which of them the email tells of.
 emailsQuery :: Query
 emailsQuery = Query $ """
     with news as (
-        select notification.post_id, notification.kind, notification.created, notification.fitting_post_id
+        select notification.id, notification.post_id, notification.kind, notification.created,
+            notification.fitting_post_id, post.player_id as owner_id
         from notification
         join post on post.id = notification.post_id
         join player owner on owner.id = post.player_id
-        where notification.created > $1::timestamptz and notification.created <= $2::timestamptz
-            and owner.email is not null and owner.email_confirmed
-            and (
-                notification.kind = 'fit' and owner.email_matches and """ <> visibleNotification <> """
-                or notification.kind = 'expiry' and owner.email_renewals
-            )
+        where notification.email_pending and """ <> emailable <> """
     ),
     posts as (
         select
@@ -53,7 +76,7 @@ emailsQuery = Query $ """
                 ),
                 'expiry', case when bool_or(news.kind = 'expiry') then jsonb_build_object(
                     'days', round(extract(epoch from post.updated + case when post.ilk = 'community'
-                        then interval '90 days' else interval '30 days' end - $2::timestamptz)::numeric / 86400)::int,
+                        then interval '90 days' else interval '30 days' end - $1::timestamptz)::numeric / 86400)::int,
                     'nonce', post.renewal_nonce,
                     'join', post.contact_preference
                 ) end
@@ -65,10 +88,22 @@ emailsQuery = Query $ """
         left join player fitter on fitter.id = fitting.player_id
         group by post.id, game.id
     )
-    select owner.nickname, owner.email, jsonb_agg(posts.post order by posts.title, posts.ilk_order) as posts
+    select owner.nickname, owner.email, jsonb_agg(posts.post order by posts.title, posts.ilk_order) as posts,
+        (select jsonb_agg(jsonb_build_object('id', news.id, 'created', news.created))
+            from news where news.owner_id = owner.id) as told
     from posts
     join player owner on owner.id = posts.player_id
     group by owner.id
+    """
+
+-- A notification that fired again since the email was put together, which
+-- moves its created, waits for the next run.
+toldQuery :: Query
+toldQuery = Query """
+    update notification
+    set email_pending = false
+    from jsonb_to_recordset($1::jsonb) as told (id integer, created timestamptz)
+    where notification.id = told.id and notification.created = told.created
     """
 
 type Fit = { handle :: String, id :: Int, type :: String, name :: Maybe String, owner :: String }
@@ -77,7 +112,11 @@ type Expiry = { days :: Int, nonce :: String, join :: String }
 
 type OwnPost = { game :: String, type :: String, name :: Maybe String, fits :: Array Fit, expiry :: Maybe Expiry }
 
-type Owner = { nickname :: String, email :: String, posts :: Array OwnPost }
+-- A notification as the email tells of it, with the time it fired, read back
+-- as Postgres wrote it.
+type Told = { id :: Int, created :: String }
+
+type Owner = { nickname :: String, email :: String, posts :: Array OwnPost, told :: Array Told }
 
 subject :: Int -> Int -> String
 subject fits expiring = let
@@ -140,10 +179,16 @@ periodEmail owner =
     , unsubscribe: true
     }
 
--- | Sends each owner one email of the fits and expiries created between
--- | `since` and `now`, grouped by the post of theirs they are about (brief 8).
--- | Nothing records what was sent: a notification falls in one period.
-sendPeriodEmails :: ∀ errors. Mailer -> Pool -> Date -> Date -> Async (InternalTerror_ errors) Unit
-sendPeriodEmails mailer pool since now = do
-    owners :: Array Owner <- queryMany pool emailsQuery (since :| now)
-    foreach owners $ periodEmail >>> sendEmail mailer "Error sending period email"
+-- | Sends each owner one email of the fits and expiries not emailed yet,
+-- | grouped by the post of theirs they are about (brief 8), and marks them
+-- | emailed once it has gone. An owner whose email fails gets it on a later
+-- | run.
+sendPeriodEmails :: ∀ errors. Mailer -> Pool -> Date -> Async (InternalTerror_ errors) Unit
+sendPeriodEmails mailer pool now = do
+    queryNone pool dropQuery (now : [])
+    owners :: Array Owner <- queryMany pool emailsQuery (now : [])
+    safeForeach owners \owner ->
+        do
+            deliver mailer $ periodEmail owner
+            queryNone pool toldQuery (writeJSON owner.told : [])
+        # alwaysRightWithEffect (logError "Error sending period email") pure

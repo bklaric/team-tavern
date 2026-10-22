@@ -30,7 +30,7 @@ create index country_region_name_idx on country (region_name);
 
 create table player
     ( id serial not null primary key
-    , nickname varchar(40) not null unique
+    , nickname varchar(40) not null
 
     -- Where the site writes, whichever way the player signs in. Nullable: a
     -- Discord account may arrive without one, and the account page asks for it.
@@ -93,7 +93,10 @@ create table player
 
 -- A password player signs in with the email, so it is unique among those only.
 -- A Discord, Steam or Google account is known by its own id, so its address is
--- not a credential and registering with one never fails on it.
+-- not a credential and registering with one never fails on it. Anyone can sign
+-- up with an address they don't own, so a password account that hasn't
+-- confirmed its address loses it to one that has confirmed it and takes a
+-- password.
 create unique index player_lower_email_key on player (lower(email)) where password_hash is not null;
 create unique index player_lower_nickname_key on player (lower(nickname));
 
@@ -109,24 +112,31 @@ create table session
 create index session_player_id_idx on session (player_id);
 create index session_token_hash_idx on session (token_hash);
 
+-- The link of each email sent to reset or confirm, kept as a hash of its nonce
+-- as a session is kept as a hash of its token, and deleted once used. A reset
+-- link lasts an hour, and a password set any way ends every reset link of the
+-- player's. A confirmation link doesn't expire.
+
 create table password_reset
     ( id serial not null primary key
     , player_id integer not null references player(id) on delete cascade
-    , nonce character(20) not null
-    , consumed boolean not null default false
     , created timestamptz not null default current_timestamp
+    , nonce_hash character(64) not null
     );
+
+create index password_reset_player_id_idx on password_reset (player_id);
+create index password_reset_nonce_hash_idx on password_reset (nonce_hash);
 
 create table email_confirmation
     ( id serial not null primary key
     , player_id integer not null references player(id) on delete cascade
     , email varchar(254) not null
-    , nonce character(20) not null
-    , consumed boolean not null default false
     , created timestamptz not null default current_timestamp
+    , nonce_hash character(64) not null
     );
 
 create index email_confirmation_player_id_idx on email_confirmation (player_id);
+create index email_confirmation_nonce_hash_idx on email_confirmation (nonce_hash);
 
 -- A Discord, Steam or Google account new to the site, between the provider
 -- vouching for it and the player picking a nickname, with the address the
@@ -498,6 +508,8 @@ create table report
     );
 
 create index report_reported_id_idx on report (reported_id);
+create index report_reporter_id_idx on report (reporter_id);
+create index report_post_id_idx on report (post_id);
 
 -- Notifications
 --
@@ -521,6 +533,9 @@ create table notification
     -- of them and cannot outlive what it describes.
     , fitting_post_id integer references post(id) on delete cascade
 
+    -- Whether the worker has yet to email it. Firing again sets it again.
+    , email_pending boolean not null default true
+
     , constraint notification_kind_check check (kind in ('fit', 'expiry'))
     -- A fit row names a fitting post, an expiry row names none.
     , constraint notification_fit_post_check check
@@ -534,10 +549,11 @@ create index notification_post_id_created_idx on notification (post_id, created 
 -- only the post.
 create index notification_fitting_post_id_idx on notification (fitting_post_id);
 
+create index notification_email_pending_idx on notification (created) where email_pending;
+
 -- One expiry row per post, never a second; renewing the post deletes it
 -- (brief 11.3). The worker adds one as the post's last week begins and leaves
--- one it finds alone, since the period's email takes the rows created in the
--- period and a refreshed row would be emailed again.
+-- one it finds alone, so the owner is told once.
 create unique index notification_expiry_key on notification (post_id) where kind = 'expiry';
 
 -- One row per fitting post, however often it fits. A post renewed after it

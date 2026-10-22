@@ -10,19 +10,21 @@ import JavaScript.Npm.Pg.Query (Query(..), (:))
 import TeamTavern.Routes.Player.ConfirmEmail as ConfirmEmail
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotFound)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
+import TeamTavern.Server.Session.Domain.Token (Token(..))
+import TeamTavern.Server.Session.Domain.Token as Token
 import Type.Row (type (+))
 
 -- A link confirms the address it was sent to and nothing else: it is used up
 -- either way, and confirms only while the player's email is still that address.
--- One that confirmed nothing is answered as not found.
+-- One that confirmed nothing is answered as not found. Once the address is
+-- confirmed, the player's other links have nothing left to confirm.
 -- It doesn't expire, since until it is clicked the site sends the address
 -- nothing else, and works signed out, from whatever browser opens the email.
 queryString :: Query
 queryString = Query """
     with consumed as (
-        update email_confirmation
-        set consumed = true
-        where nonce = $1 and consumed = false
+        delete from email_confirmation
+        where nonce_hash = $1
         returning player_id, email
     ),
     confirmed as (
@@ -32,6 +34,11 @@ queryString = Query """
         where player.id = consumed.player_id
             and lower(player.email) = lower(consumed.email)
         returning player.id
+    ),
+    others as (
+        delete from email_confirmation
+        using confirmed
+        where email_confirmation.player_id = confirmed.id and email_confirmation.nonce_hash <> $1
     )
     select id as "playerId" from confirmed
     """
@@ -40,5 +47,6 @@ confirmEmail :: ∀ left. Pool -> ConfirmEmail.RequestContent
     -> Async left (Variant (NoContentRow_ + NotFoundRow_ + InternalRow_ + ()))
 confirmEmail pool {nonce} =
     sendResponse "Error confirming email" do
-    (_ :: {playerId :: Int}) <- queryFirstNotFound pool queryString (nonce : [])
+    nonceHash <- Token.hash $ Token nonce
+    (_ :: {playerId :: Int}) <- queryFirstNotFound pool queryString (nonceHash : [])
     pure noContent_

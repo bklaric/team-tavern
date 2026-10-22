@@ -20,10 +20,11 @@ import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.Email (Mailer)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Error (Terror(..))
-import TeamTavern.Server.Infrastructure.Postgres (queryFirstInternal, transaction)
+import TeamTavern.Server.Infrastructure.Postgres (queryFirstInternal, queryNone, transaction)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Infrastructure.ValidateEmail (validateEmail')
 import TeamTavern.Server.Infrastructure.ValidateEmail as Email
+import TeamTavern.Server.Password.Infrastructure.DeleteResets (deleteResets)
 import TeamTavern.Server.Player.Domain.Hash (generateHash)
 import TeamTavern.Server.Player.Domain.Password (validatePassword')
 import TeamTavern.Server.Player.Infrastructure.SendConfirmation (addConfirmation, sendConfirmation)
@@ -33,7 +34,26 @@ import Type.Row (type (+))
 
 heldQuery :: Query
 heldQuery = Query """
-    select nickname, email from player where id = $1 for update
+    select nickname, email, email_confirmed as "emailConfirmed" from player where id = $1 for update
+    """
+
+-- Anyone can sign up with an address they don't own, so a confirmed address
+-- that takes a password takes it from a password account that never confirmed
+-- it, with the links mailed to it. That account keeps its posts and sessions,
+-- and its account page asks for another address.
+freeQuery :: Query
+freeQuery = Query """
+    with freed as (
+        update player
+        set email = null
+        where lower(email) = lower($2) and id <> $1
+            and password_hash is not null and not email_confirmed
+        returning id
+    ),
+    resets as (
+        delete from password_reset using freed where password_reset.player_id = freed.id
+    )
+    delete from email_confirmation using freed where email_confirmation.player_id = freed.id
     """
 
 -- An account without an address takes the one given, unconfirmed.
@@ -59,16 +79,20 @@ switchToPassword mailer pool cookies { password, email } =
     hash <- generateHash password'
     let playerId = unwrap id
     confirmation <- pool # transaction \client -> do
-        held :: { nickname :: String, email :: Maybe String } <-
+        held :: { nickname :: String, email :: Maybe String, emailConfirmed :: Boolean } <-
             queryFirstInternal client heldQuery (playerId : [])
         taken <- case held.email, given of
             Just _, _ -> pure Nothing
             Nothing, Just email' -> pure $ Just email'
             Nothing, Nothing -> left $ Terror (badRequest_ $ inj (Proxy :: _ "email") {})
                 [ "A password needs an email to sign in with, and the account has none." ]
+        case held.email of
+            Just email' | held.emailConfirmed -> queryNone client freeQuery (playerId :| email')
+            _ -> pure unit
         void $ client # query switchQuery (playerId : hash :| toNullable taken)
             # lmap (emailTakenOrInternal $ fromMaybe "" $ held.email <|> taken)
         revokeOtherSessions client playerId token
+        deleteResets client playerId
         for taken \email' -> addConfirmation client playerId email' <#>
             { email: email', nickname: held.nickname, nonce: _ }
     foreach confirmation $ sendConfirmation mailer

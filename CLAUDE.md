@@ -496,7 +496,7 @@ says `X-Robots-Tag: noindex, nofollow`, so staging stays out of search.
   `redesign/feed/check-fits.mjs` checks that they agree. node-pg sends parameters
   untyped, so a query Postgres can't type from their first use casts them there.
   Postgres errors are mapped to typed errors by constraint name
-  (`player_nickname_key` and friends), so a new unique constraint needs a
+  (`player_lower_nickname_key` and friends), so a new unique constraint needs a
   matching branch where it can fire.
 - A guide is a Markdown file in `Server/Guide/`, imported as text by `Guides.js`
   the way `Feed.sql` is, and an entry in `Guides.purs` with its slug, titles
@@ -530,9 +530,12 @@ says `X-Robots-Tag: noindex, nofollow`, so staging stays out of search.
   well: the seconds between the worker's runs, an hour unless
   `stacks/local.env`'s 2.
 - `Server/Worker.purs` runs in the node process on that period. Each run gives
-  the posts that have entered their last week their expiry notification and
-  sends every owner one email of the fits and expiries created since the run
-  before, grouped by their post. Nothing records what was sent.
+  the posts that have entered their last week their expiry notification,
+  sends every owner one email of the fits and expiries not emailed yet,
+  grouped by their post, and deletes the sessions that can no longer sign
+  anyone in. A notification is pending its email until a run sends it; one
+  its owner takes no email for is let go at once, and one whose email keeps
+  failing after a day.
 - An email is an `Email` of blocks from `Server/Infrastructure/Email.purs`,
   which renders its HTML, in the site's palette, and its text from the same
   blocks. Links are paths, which the `Mailer` puts behind production's origin

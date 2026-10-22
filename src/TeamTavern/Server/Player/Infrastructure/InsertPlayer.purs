@@ -34,8 +34,7 @@ insertPlayer :: ∀ querier other errors. Querier querier =>
     -> querier -> Query -> Array QueryParameter -> Async (InsertPlayerError other errors) Int
 insertPlayer taken querier queryString parameters = do
     let nicknameTaken = inj (Proxy :: _ "nicknameTaken") {}
-        takenBy = [ Tuple "player_nickname_key" nicknameTaken, Tuple "player_lower_nickname_key" nicknameTaken ]
-            <> taken
+        takenBy = [ Tuple "player_lower_nickname_key" nicknameTaken ] <> taken
     result <- querier # query queryString parameters # lmap \error ->
         case code error == unique_violation, constraint error >>= flip lookup takenBy of
             true, Just content -> Terror (badRequest_ content)
