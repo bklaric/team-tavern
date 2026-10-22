@@ -99,3 +99,13 @@ services:
 
 volumes:
   node_modules:
+
+networks:
+  default:
+    # Without IPv6 on the network, Docker has no ip6tables rule for the
+    # published ports, so docker-proxy relays an IPv6 client to Caddy over IPv4,
+    # from the bridge's gateway. Every IPv6 client would then share one
+    # X-Forwarded-For, and so one key in each limit kept per client address.
+    # Changing this needs `docker compose down`: `up` does not recreate an
+    # existing network.
+    enable_ipv6: true
