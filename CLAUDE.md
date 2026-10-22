@@ -528,7 +528,16 @@ says `X-Robots-Tag: noindex, nofollow`, so staging stays out of search.
   itself: without it, the local stack only logs its email; with it, the server
   sends there. Only `stacks/local.env` sets it. `WORKER_PERIOD` is optional as
   well: the seconds between the worker's runs, an hour unless
-  `stacks/local.env`'s 2.
+  `stacks/local.env`'s 2. `RATE_LIMIT_CLIENTS=off`, which only
+  `stacks/local.env` sets, turns off the limits kept per client address.
+- Abuse is held back by limits kept in memory by
+  `Server/Infrastructure/RateLimit.purs`, so a restart starts them afresh.
+  A limit is kept by a key, such as the client's address, which Caddy puts
+  in `X-Forwarded-For` in place of any the client sent, or for the site as a
+  whole. A refusal is an answer the client handles, so it isn't logged; each
+  limiter logs once a minute how many it refused. Every spec comes from one
+  address, so the local stack keeps no limits per client address, and those
+  are checked by hand.
 - `Server/Worker.purs` runs in the node process on that period. Each run gives
   the posts that have entered their last week their expiry notification,
   sends every owner one email of the fits and expiries not emailed yet,
@@ -563,7 +572,8 @@ says `X-Robots-Tag: noindex, nofollow`, so staging stays out of search.
   `Client/Script/Unread.purs` and the header asks again.
 - The server logs only its own failures, so the client reports the ones it
   didn't expect to `/api/client/errors`, which logs each as a `Client error`
-  line, at most 60 a minute. `Client/Shared/Fetch.purs` reports a response
+  line, at most 10 a minute from one client and 60 in all.
+  `Client/Shared/Fetch.purs` reports a response
   the route doesn't declare, and any `badRequest`, `notAuthorized`,
   `forbidden` or `notFound` the call doesn't name. A call that handles one of
   those by name names it there too, as `fetchBody (expecting [ "badRequest" ]

@@ -36,7 +36,7 @@ import TeamTavern.Server.Block.ReportConversation (reportConversation)
 import TeamTavern.Server.Block.ReportPost (reportPost)
 import TeamTavern.Server.Block.Unblock (unblock)
 import TeamTavern.Server.Block.ViewBlocked (viewBlocked)
-import TeamTavern.Server.ClientError.ReportClientError (ClientErrorLimit, createClientErrorLimit, reportClientError)
+import TeamTavern.Server.ClientError.ReportClientError (ClientErrorLimits, createClientErrorLimits, reportClientError)
 import TeamTavern.Server.Conversation.SendMessage (sendMessage)
 import TeamTavern.Server.Conversation.SendReply (sendReply)
 import TeamTavern.Server.Conversation.ViewConversation (viewConversation)
@@ -56,6 +56,7 @@ import TeamTavern.Server.Infrastructure.Environment as Environment
 import TeamTavern.Server.Infrastructure.GoogleSignIn (GoogleClient(..), googleEndpoint)
 import TeamTavern.Server.Infrastructure.Log (logStamped, print)
 import TeamTavern.Server.Infrastructure.Postgres (databaseErrorLines)
+import TeamTavern.Server.Infrastructure.RateLimit (ClientLimits(..))
 import TeamTavern.Server.Infrastructure.RequestOrigin (requestOrigin)
 import TeamTavern.Server.Infrastructure.ResolveSteamId (SteamApi(..))
 import TeamTavern.Server.Infrastructure.Ses (createClient)
@@ -225,8 +226,13 @@ loadAdminEmail =
     <#> note "Couldn't read variable ADMIN_EMAIL."
     # ExceptT
 
-runServer :: Environment -> Mailer -> DiscordClient -> SteamApi -> SteamOpenIdUrl -> GoogleClient -> AdminEmail -> ClientErrorLimit -> Pool -> Effect Unit
-runServer environment mailer discordClient steamApi steamOpenIdUrl googleClient adminEmail clientErrorLimit pool = serve (Proxy :: _ AllRoutes) serveOptions
+-- | The limits kept per client address, unless RATE_LIMIT_CLIENTS is `off`, as
+-- | the local stack's is.
+loadClientLimits :: Effect ClientLimits
+loadClientLimits = lookupEnv "RATE_LIMIT_CLIENTS" <#> (_ /= Just "off") <#> ClientLimits
+
+runServer :: Environment -> Mailer -> DiscordClient -> SteamApi -> SteamOpenIdUrl -> GoogleClient -> AdminEmail -> ClientErrorLimits -> Pool -> Effect Unit
+runServer environment mailer discordClient steamApi steamOpenIdUrl googleClient adminEmail clientErrorLimits pool = serve (Proxy :: _ AllRoutes) serveOptions
     { startSession: \{ cookies, headers, body } ->
         Session.start environment mailer discordClient steamOpenIdUrl steamApi googleClient pool cookies (requestOrigin headers) body
     , endSession: \{ cookies } ->
@@ -324,7 +330,7 @@ runServer environment mailer discordClient steamApi steamOpenIdUrl googleClient 
     , viewLlmsTxt: \{ headers } ->
         viewLlmsTxt pool headers
     , reportClientError: \{ headers, body } ->
-        reportClientError clientErrorLimit headers body
+        reportClientError clientErrorLimits headers body
     }
 
 main :: Effect Unit
@@ -338,6 +344,7 @@ main = either (\error -> logStamped error *> exit 1) pure =<< runExceptT do
     workerPeriod <- loadWorkerPeriod
     pool <- createPostgresPool
     mailer <- loadMailer environment
-    clientErrorLimit <- lift createClientErrorLimit
+    clientLimits <- lift loadClientLimits
+    clientErrorLimits <- lift $ createClientErrorLimits clientLimits
     lift $ startWorker workerPeriod mailer pool
-    lift $ runServer environment mailer discordClient steamApi steamOpenIdUrl googleClient adminEmail clientErrorLimit pool
+    lift $ runServer environment mailer discordClient steamApi steamOpenIdUrl googleClient adminEmail clientErrorLimits pool

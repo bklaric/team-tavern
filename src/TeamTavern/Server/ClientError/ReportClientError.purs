@@ -1,9 +1,8 @@
-module TeamTavern.Server.ClientError.ReportClientError (ClientErrorLimit, createClientErrorLimit, reportClientError) where
+module TeamTavern.Server.ClientError.ReportClientError (ClientErrorLimits, createClientErrorLimits, reportClientError) where
 
 import Prelude
 
 import Async (Async, fromEffect)
-import Data.DateTime.Instant (Instant, diff)
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (fromMaybe, maybe)
@@ -11,21 +10,13 @@ import Data.String as String
 import Data.String.Regex (Regex, replace)
 import Data.String.Regex.Flags (global, unicode)
 import Data.String.Regex.Unsafe (unsafeRegex)
-import Data.Time.Duration (Milliseconds(..))
 import Data.Variant (Variant)
 import Effect (Effect)
-import Effect.Now (now)
-import Effect.Ref (Ref)
-import Effect.Ref as Ref
 import Jarilo (NoContentRow_, noContent_)
 import TeamTavern.Routes.ClientError.ReportClientError as ReportClientError
 import TeamTavern.Server.Infrastructure.Log (logStamped)
+import TeamTavern.Server.Infrastructure.RateLimit (Admission(..), ClientLimits, Limiter, admit, clientAddress, createClientLimiter, createLimiter)
 import Type.Row (type (+))
-
--- | Anyone can send a report, so at most this many a minute reach the log, and
--- | the rest are counted.
-perMinute :: Int
-perMinute = 60
 
 fieldLength :: Int
 fieldLength = 300
@@ -37,37 +28,31 @@ fieldLength = 300
 controls :: Regex
 controls = unsafeRegex """[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]""" (global <> unicode)
 
-type Minute = { start :: Instant, logged :: Int, dropped :: Int }
+-- | Anyone can send a report, so at most 10 a minute from one client and 60 a
+-- | minute in all reach the log. One client can't spend everyone's budget.
+type ClientErrorLimits = { perClient :: Limiter, inAll :: Limiter }
 
-newtype ClientErrorLimit = ClientErrorLimit (Ref Minute)
+createClientErrorLimits :: ClientLimits -> Effect ClientErrorLimits
+createClientErrorLimits clientLimits = do
+    perClient <- createClientLimiter clientLimits "Client errors from one client" { count: 10, seconds: 60 }
+    inAll <- createLimiter "Client errors" { count: 60, seconds: 60 }
+    pure { perClient, inAll }
 
-createClientErrorLimit :: Effect ClientErrorLimit
-createClientErrorLimit = do
-    start <- now
-    Ref.new { start, logged: 0, dropped: 0 } <#> ClientErrorLimit
-
--- Whether a report may be logged now. The count of those dropped is logged
--- by the first report of the next minute, as nothing runs in between.
-admit :: ClientErrorLimit -> Effect Boolean
-admit (ClientErrorLimit ref) = do
-    time <- now
-    minute <- Ref.read ref
-    if diff time minute.start >= Milliseconds 60000.0
-    then do
-        when (minute.dropped > 0) $ logStamped $
-            "Client errors dropped | " <> show minute.dropped <> " past " <> show perMinute <> " in a minute"
-        Ref.write { start: time, logged: 1, dropped: 0 } ref
-        pure true
-    else if minute.logged < perMinute
-    then Ref.write minute { logged = minute.logged + 1 } ref $> true
-    else Ref.write minute { dropped = minute.dropped + 1 } ref $> false
+-- A report the client's limit refuses doesn't count against everyone's.
+admitReport :: ClientErrorLimits -> Map String String -> Effect Boolean
+admitReport { perClient, inAll } headers =
+    admit perClient (clientAddress headers) >>= case _ of
+        Admitted -> admit inAll "" <#> case _ of
+            Admitted -> true
+            Refused _ -> false
+        Refused _ -> pure false
 
 reportClientError :: ∀ left.
-    ClientErrorLimit -> Map String String -> ReportClientError.RequestContent
+    ClientErrorLimits -> Map String String -> ReportClientError.RequestContent
     -> Async left (Variant (NoContentRow_ + ()))
-reportClientError limit headers { page, request, failure, bundle } = do
+reportClientError limits headers { page, request, failure, bundle } = do
     fromEffect do
-        admitted <- admit limit
+        admitted <- admitReport limits headers
         when admitted $ logStamped $ String.joinWith " | " $ map (String.take fieldLength >>> replace controls " ")
             [ "Client error"
             , "Page: " <> page
