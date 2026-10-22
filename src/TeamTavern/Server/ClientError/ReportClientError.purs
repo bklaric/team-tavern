@@ -8,6 +8,9 @@ import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (fromMaybe, maybe)
 import Data.String as String
+import Data.String.Regex (Regex, replace)
+import Data.String.Regex.Flags (global, unicode)
+import Data.String.Regex.Unsafe (unsafeRegex)
 import Data.Time.Duration (Milliseconds(..))
 import Data.Variant (Variant)
 import Effect (Effect)
@@ -26,6 +29,13 @@ perMinute = 60
 
 fieldLength :: Int
 fieldLength = 300
+
+-- Anyone writes a report, so each goes to the log as one line of plain text:
+-- a line break would start a line that reads as the server's own, an escape
+-- would move the cursor of a terminal reading the log, and a direction
+-- override would show the rest of the line reversed.
+controls :: Regex
+controls = unsafeRegex """[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]""" (global <> unicode)
 
 type Minute = { start :: Instant, logged :: Int, dropped :: Int }
 
@@ -58,7 +68,7 @@ reportClientError :: ∀ left.
 reportClientError limit headers { page, request, failure, bundle } = do
     fromEffect do
         admitted <- admit limit
-        when admitted $ logStamped $ String.joinWith " | " $ map (String.take fieldLength)
+        when admitted $ logStamped $ String.joinWith " | " $ map (String.take fieldLength >>> replace controls " ")
             [ "Client error"
             , "Page: " <> page
             , "Request: " <> maybe "-" identity request
