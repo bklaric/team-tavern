@@ -1,4 +1,4 @@
-module TeamTavern.Server.Player.Register (register) where
+module TeamTavern.Server.Player.Register (createRegisterLimit, register) where
 
 import Prelude
 
@@ -6,13 +6,16 @@ import Async (Async, foreach)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
 import Data.Variant (Variant, inj, match)
-import Jarilo (BadRequestRow, InternalRow_, NoContentRow_, noContent)
+import Effect (Effect)
+import Jarilo (BadRequestRow, InternalRow_, NoContentRow_, TooManyRequestsRow, noContent)
 import JavaScript.Npm.Pg.Pool (Pool)
 import TeamTavern.Routes.Player.RegisterPlayer as RegisterPlayer
+import TeamTavern.Routes.Shared.Wait (Wait)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies, setCookieHeader)
 import TeamTavern.Server.Infrastructure.Email (Mailer)
 import TeamTavern.Server.Infrastructure.Environment (Environment)
 import TeamTavern.Server.Infrastructure.Postgres (transaction)
+import TeamTavern.Server.Infrastructure.RateLimit (ClientLimits, Limiter, createClientLimiter, ensureAdmitted)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Infrastructure.ValidateEmail as Email
 import TeamTavern.Server.Player.Domain.Hash (generateHash)
@@ -30,13 +33,22 @@ import TeamTavern.Server.Session.Start.CreateSession (createSession)
 import Type.Proxy (Proxy(..))
 import Type.Row (type (+))
 
+-- | A client tries 10 registrations an hour. Each that passes validation
+-- | counts, whether or not it makes an account: a password's runs bcrypt, and
+-- | any can answer that a nickname or an address is taken.
+createRegisterLimit :: ClientLimits -> Effect Limiter
+createRegisterLimit clientLimits =
+    createClientLimiter clientLimits "Registrations from one client" { count: 10, seconds: 3600 }
+
 register :: ∀ left.
-    Environment -> ConfirmationLimits -> Mailer -> Pool -> Cookies -> RegisterPlayer.RequestContent
-    -> Async left (Variant (NoContentRow_ + BadRequestRow RegisterPlayer.BadContent + InternalRow_ + ()))
-register environment confirmationLimits mailer pool cookies content =
+    Environment -> Limiter -> ConfirmationLimits -> Mailer -> Pool -> Cookies -> String -> RegisterPlayer.RequestContent
+    -> Async left (Variant (NoContentRow_ + BadRequestRow RegisterPlayer.BadContent + TooManyRequestsRow Wait + InternalRow_ + ()))
+register environment limit confirmationLimits mailer pool cookies clientAddress content =
     sendResponse "Error registering player" do
     -- Validate register model.
     registration <- validateRegistration content
+
+    ensureAdmitted limit clientAddress "Too many registrations from one client."
 
     -- Generate session token.
     token <- Token.generate

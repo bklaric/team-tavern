@@ -2,11 +2,12 @@ module TeamTavern.Routes.Player.RegisterPlayer where
 
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Variant (Variant)
-import Jarilo (type (!), type (==>), BadRequestJson, Internal_, Literal, NoContent, PostJson_)
+import Jarilo (type (!), type (==>), BadRequestJson, Internal_, Literal, NoContent, PostJson_, TooManyRequestsJson)
+import TeamTavern.Routes.Shared.Wait (Wait)
 
 type RegisterPlayer =
     PostJson_ (Literal "players") RequestContent
-    ==> (NoContent ! BadRequestJson BadContent ! Internal_)
+    ==> (NoContent ! BadRequestJson BadContent ! TooManyRequestsJson Wait ! Internal_)
 
 -- | `ticket` is the one signing in with Discord, Steam or Google gave. Steam
 -- | gives no address, so the player types one in; Discord's and Google's ride

@@ -30,7 +30,7 @@ import TeamTavern.Client.Script.Google as Google
 import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_, replaceState)
 import TeamTavern.Client.Script.QueryParams (getQueryParam, removeQueryParam)
 import TeamTavern.Client.Script.Steam (authorizeWithSteam, keepSwitchAssertion, takeSteamReturn)
-import TeamTavern.Client.Shared.AccountErrors (emailError, emailInvalid, nicknameInvalid, nicknameTaken, somethingWrong, tryAgainIn)
+import TeamTavern.Client.Shared.AccountErrors (emailError, emailInvalid, inTime, nicknameInvalid, nicknameTaken, somethingWrong, tooManySignUps, tryAgainIn)
 import TeamTavern.Client.Shared.Fetch (expecting, fetchBody)
 import TeamTavern.Client.Shared.Me (fetchMe)
 import TeamTavern.Client.Shared.Slot (Slot___)
@@ -225,7 +225,8 @@ component = Hooks.component \_ _ -> Hooks.do
             then failWith errors
             else do
                 set _ { sending = true, errors = noErrors }
-                result <- H.lift $ Async.attempt $ fetchBody (expecting [ "badRequest" ] (Proxy :: _ RegisterPlayer))
+                result <- H.lift $ Async.attempt $
+                    fetchBody (expecting [ "badRequest", "tooManyRequests" ] (Proxy :: _ RegisterPlayer))
                     case registering of
                         WithDiscord { ticket } ->
                             inj (Proxy :: _ "discord") { nickname: trim state.nickname, ticket }
@@ -259,6 +260,16 @@ component = Hooks.component \_ _ -> Hooks.do
                             , googleTicket: const $ failWith noErrors
                                 { form = Just "Google's sign-in has run out. Go back and continue with Google again." }
                             , emailTaken: const $ failWith noErrors { form = Just somethingWrong }
+                            }
+                        -- The provider's sign-in lapses within the hour, so it
+                        -- is to be started again.
+                        , tooManyRequests: \{ seconds } -> failWith noErrors
+                            { form = Just $ tooManySignUps <> " Continue with "
+                                <> (case registering of
+                                    WithDiscord _ -> "Discord"
+                                    WithSteam _ -> "Steam"
+                                    WithGoogle _ -> "Google")
+                                <> " again " <> inTime seconds <> "."
                             }
                         }
                         (const $ failWith noErrors { form = Just somethingWrong })

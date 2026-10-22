@@ -26,7 +26,7 @@ import TeamTavern.Client.Script.Discord (authorizeWithDiscord)
 import TeamTavern.Client.Script.Google (authorizeWithGoogle)
 import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_)
 import TeamTavern.Client.Script.Steam (authorizeWithSteam)
-import TeamTavern.Client.Shared.AccountErrors (emailError, emailInvalid, nicknameInvalid, nicknameTaken, passwordShort, somethingWrong)
+import TeamTavern.Client.Shared.AccountErrors (emailError, emailInvalid, nicknameInvalid, nicknameTaken, passwordShort, somethingWrong, tooManySignUps, tryAgainIn)
 import TeamTavern.Client.Shared.Fetch (expecting, fetchBody)
 import TeamTavern.Client.Shared.Me (fetchMe)
 import TeamTavern.Client.Shared.Slot (Slot___)
@@ -83,7 +83,8 @@ component = Hooks.component \_ _ -> Hooks.do
             then failWith errors
             else do
                 set _ { sending = true, errors = noErrors }
-                result <- H.lift $ Async.attempt $ fetchBody (expecting [ "badRequest" ] (Proxy :: _ RegisterPlayer))
+                result <- H.lift $ Async.attempt $
+                    fetchBody (expecting [ "badRequest", "tooManyRequests" ] (Proxy :: _ RegisterPlayer))
                     (inj (Proxy :: _ "password")
                         { email: trim state.email, nickname: trim state.nickname, password: state.password })
                 case result of
@@ -108,6 +109,8 @@ component = Hooks.component \_ _ -> Hooks.do
                             , googleTaken: const $ failWith noErrors { form = Just somethingWrong }
                             , googleTicket: const $ failWith noErrors { form = Just somethingWrong }
                             }
+                        , tooManyRequests: \{ seconds } -> failWith noErrors
+                            { form = Just $ tooManySignUps <> " " <> tryAgainIn seconds }
                         }
                         (const $ failWith noErrors { form = Just somethingWrong })
                     Left _ -> failWith noErrors { form = Just somethingWrong }

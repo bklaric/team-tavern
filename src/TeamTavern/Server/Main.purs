@@ -69,7 +69,7 @@ import TeamTavern.Server.Password.ForgotPassword (ForgotPasswordLimits, createFo
 import TeamTavern.Server.Password.ResetPassword (resetPassword)
 import TeamTavern.Server.Player.ConfirmEmail (confirmEmail)
 import TeamTavern.Server.Player.Infrastructure.SendConfirmation (ConfirmationLimits, createConfirmationLimits)
-import TeamTavern.Server.Player.Register (register)
+import TeamTavern.Server.Player.Register (createRegisterLimit, register)
 import TeamTavern.Server.Player.ResendConfirmation (resendConfirmation)
 import TeamTavern.Server.Player.ViewMe (viewMe)
 import TeamTavern.Server.Post.CreatePost (createPost)
@@ -239,6 +239,7 @@ type Limits =
     , confirmation :: ConfirmationLimits
     , updateEmail :: Limiter
     , signIn :: SignInLimits
+    , register :: Limiter
     }
 
 createLimits :: ClientLimits -> Effect Limits
@@ -248,7 +249,8 @@ createLimits clientLimits = do
     confirmation <- createConfirmationLimits
     updateEmail <- createUpdateEmailLimit
     signIn <- createSignInLimits clientLimits
-    pure { clientErrors, forgotPassword, confirmation, updateEmail, signIn }
+    register <- createRegisterLimit clientLimits
+    pure { clientErrors, forgotPassword, confirmation, updateEmail, signIn, register }
 
 runServer :: Environment -> Mailer -> DiscordClient -> SteamApi -> SteamOpenIdUrl -> GoogleClient -> AdminEmail -> Limits -> Pool -> Effect Unit
 runServer environment mailer discordClient steamApi steamOpenIdUrl googleClient adminEmail limits pool = serve (Proxy :: _ AllRoutes) serveOptions
@@ -261,8 +263,8 @@ runServer environment mailer discordClient steamApi steamOpenIdUrl googleClient 
         forgotPassword limits.forgotPassword mailer pool headers body
     , resetPassword: \{ body } ->
         resetPassword limits.signIn pool body
-    , registerPlayer: \{ cookies, body } ->
-        register environment limits.confirmation mailer pool cookies body
+    , registerPlayer: \{ cookies, headers, body } ->
+        register environment limits.register limits.confirmation mailer pool cookies (clientAddress headers) body
     , viewMe: \{ cookies } ->
         viewMe environment pool cookies
     , confirmEmail: \{ body } ->
