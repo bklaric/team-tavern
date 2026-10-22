@@ -6,6 +6,7 @@ module TeamTavern.Client.Shared.AccountErrors
     , passwordShort
     , somethingWrong
     , tooYoung
+    , tryAgainIn
     ) where
 
 import Prelude
@@ -39,3 +40,11 @@ somethingWrong = "Something went wrong. Please try again."
 
 tooYoung :: String
 tooYoung = "You must be 16 or older to use TeamTavern."
+
+-- | When to try again, `seconds` from now, after the site has turned away
+-- | one try too many.
+tryAgainIn :: Int -> String
+tryAgainIn seconds
+    | seconds <= 60 = "Try again in a minute."
+    | seconds <= 90 * 60 = "Try again in " <> show ((seconds + 59) / 60) <> " minutes."
+    | otherwise = "Try again in " <> show ((seconds + 1799) / 3600) <> " hours."

@@ -65,7 +65,7 @@ import TeamTavern.Server.LlmsTxt.ViewLlmsTxt (viewLlmsTxt)
 import TeamTavern.Server.Notification.ReadNotification (readNotification)
 import TeamTavern.Server.Notification.ReadNotifications (readNotifications)
 import TeamTavern.Server.Notification.ViewNotifications (viewNotifications)
-import TeamTavern.Server.Password.ForgotPassword (forgotPassword)
+import TeamTavern.Server.Password.ForgotPassword (ForgotPasswordLimits, createForgotPasswordLimits, forgotPassword)
 import TeamTavern.Server.Password.ResetPassword (resetPassword)
 import TeamTavern.Server.Player.ConfirmEmail (confirmEmail)
 import TeamTavern.Server.Player.Register (register)
@@ -231,14 +231,25 @@ loadAdminEmail =
 loadClientLimits :: Effect ClientLimits
 loadClientLimits = lookupEnv "RATE_LIMIT_CLIENTS" <#> (_ /= Just "off") <#> ClientLimits
 
-runServer :: Environment -> Mailer -> DiscordClient -> SteamApi -> SteamOpenIdUrl -> GoogleClient -> AdminEmail -> ClientErrorLimits -> Pool -> Effect Unit
-runServer environment mailer discordClient steamApi steamOpenIdUrl googleClient adminEmail clientErrorLimits pool = serve (Proxy :: _ AllRoutes) serveOptions
+type Limits =
+    { clientErrors :: ClientErrorLimits
+    , forgotPassword :: ForgotPasswordLimits
+    }
+
+createLimits :: ClientLimits -> Effect Limits
+createLimits clientLimits = do
+    clientErrors <- createClientErrorLimits clientLimits
+    forgotPassword <- createForgotPasswordLimits clientLimits
+    pure { clientErrors, forgotPassword }
+
+runServer :: Environment -> Mailer -> DiscordClient -> SteamApi -> SteamOpenIdUrl -> GoogleClient -> AdminEmail -> Limits -> Pool -> Effect Unit
+runServer environment mailer discordClient steamApi steamOpenIdUrl googleClient adminEmail limits pool = serve (Proxy :: _ AllRoutes) serveOptions
     { startSession: \{ cookies, headers, body } ->
         Session.start environment mailer discordClient steamOpenIdUrl steamApi googleClient pool cookies (requestOrigin headers) body
     , endSession: \{ cookies } ->
         Session.end pool cookies
-    , forgotPassword: \{ body } ->
-        forgotPassword mailer pool body
+    , forgotPassword: \{ headers, body } ->
+        forgotPassword limits.forgotPassword mailer pool headers body
     , resetPassword: \{ body } ->
         resetPassword pool body
     , registerPlayer: \{ cookies, body } ->
@@ -330,7 +341,7 @@ runServer environment mailer discordClient steamApi steamOpenIdUrl googleClient 
     , viewLlmsTxt: \{ headers } ->
         viewLlmsTxt pool headers
     , reportClientError: \{ headers, body } ->
-        reportClientError clientErrorLimits headers body
+        reportClientError limits.clientErrors headers body
     }
 
 main :: Effect Unit
@@ -345,6 +356,6 @@ main = either (\error -> logStamped error *> exit 1) pure =<< runExceptT do
     pool <- createPostgresPool
     mailer <- loadMailer environment
     clientLimits <- lift loadClientLimits
-    clientErrorLimits <- lift $ createClientErrorLimits clientLimits
+    limits <- lift $ createLimits clientLimits
     lift $ startWorker workerPeriod mailer pool
-    lift $ runServer environment mailer discordClient steamApi steamOpenIdUrl googleClient adminEmail clientErrorLimits pool
+    lift $ runServer environment mailer discordClient steamApi steamOpenIdUrl googleClient adminEmail limits pool

@@ -534,7 +534,10 @@ says `X-Robots-Tag: noindex, nofollow`, so staging stays out of search.
   `Server/Infrastructure/RateLimit.purs`, so a restart starts them afresh.
   A limit is kept by a key, such as the client's address, which Caddy puts
   in `X-Forwarded-For` in place of any the client sent, or for the site as a
-  whole. A refusal is an answer the client handles, so it isn't logged; each
+  whole. A route refuses with `ensureAdmitted`, which answers 429 with the
+  seconds to wait in `Retry-After` and in the body, a `Wait` from
+  `Routes/Shared/Wait.purs`, so the page can say when to try again. A
+  refusal is an answer the client handles, so it isn't logged; each
   limiter logs once a minute how many it refused. Every spec comes from one
   address, so the local stack keeps no limits per client address, and those
   are checked by hand.
@@ -575,7 +578,8 @@ says `X-Robots-Tag: noindex, nofollow`, so staging stays out of search.
   line, at most 10 a minute from one client and 60 in all.
   `Client/Shared/Fetch.purs` reports a response
   the route doesn't declare, and any `badRequest`, `notAuthorized`,
-  `forbidden` or `notFound` the call doesn't name. A call that handles one of
+  `forbidden`, `notFound` or `tooManyRequests` the call doesn't name. A call
+  that handles one of
   those by name names it there too, as `fetchBody (expecting [ "badRequest" ]
   (Proxy :: _ UpdateEmail))`, or every time it happens lands in the log.
   Errors the site's own script throws and nothing catches are reported too;

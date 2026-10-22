@@ -7,16 +7,19 @@ module TeamTavern.Server.Infrastructure.RateLimit
     , clientAddress
     , createClientLimiter
     , createLimiter
+    , ensureAdmitted
     ) where
 
 import Prelude
 
+import Async (Async, fromEffect, left)
 import Data.Array as Array
 import Data.DateTime.Instant (unInstant)
 import Data.Int (ceil, toNumber)
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
+import Data.MultiMap as MultiMap
 import Data.Newtype (unwrap)
 import Data.String (Pattern(..), contains, joinWith, split, toLower, trim)
 import Data.String.CodeUnits (drop, lastIndexOf)
@@ -24,8 +27,12 @@ import Effect (Effect)
 import Effect.Now (now)
 import Effect.Ref (Ref)
 import Effect.Ref as Ref
+import Jarilo (TooManyRequestsRow, tooManyRequests)
 import JavaScript.Node.Timers (setInterval)
+import TeamTavern.Routes.Shared.Wait (Wait)
+import TeamTavern.Server.Infrastructure.Error (Terror(..), TerrorVar)
 import TeamTavern.Server.Infrastructure.Log (logStamped)
+import Type.Row (type (+))
 
 -- | At most `count` within any `seconds`.
 type Limit = { count :: Int, seconds :: Int }
@@ -77,6 +84,16 @@ keep { seconds } time times = let
     kept = times # Array.filter (_ > time - toNumber seconds * 1000.0)
     in
     if Array.null kept then Nothing else Just kept
+
+-- | Lets one through for `key` and counts it, or answers 429 with how long to
+-- | wait, in `Retry-After` and in the body.
+ensureAdmitted :: ∀ errors.
+    Limiter -> String -> String -> Async (TerrorVar (TooManyRequestsRow Wait + errors)) Unit
+ensureAdmitted limiter key line = fromEffect (admit limiter key) >>= case _ of
+    Admitted -> pure unit
+    Refused seconds -> left $ Terror
+        (tooManyRequests (MultiMap.singleton' "Retry-After" $ show seconds) { seconds })
+        [ line ]
 
 -- | Lets one through for `key` and counts it, or refuses it.
 admit :: Limiter -> String -> Effect Admission

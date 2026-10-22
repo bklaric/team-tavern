@@ -15,7 +15,7 @@ import Halogen.HTML.Properties as HP
 import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.Flow (flow, flowError, flowLead, flowLink, formTight, submitButton, textField)
 import TeamTavern.Client.Script.Back (authPath, readBack)
-import TeamTavern.Client.Shared.AccountErrors (somethingWrong)
+import TeamTavern.Client.Shared.AccountErrors (somethingWrong, tryAgainIn)
 import TeamTavern.Client.Shared.Fetch (expecting, fetchBody)
 import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.Class as HS
@@ -47,11 +47,14 @@ component = Hooks.component \_ _ -> Hooks.do
             then fail (Just "Enter your email address.") Nothing
             else do
                 set _ { sending = true, error = Nothing, formError = Nothing }
-                result <- H.lift $ Async.attempt $ fetchBody (expecting [ "notFound" ] (Proxy :: _ ForgotPassword)) { email }
+                result <- H.lift $ Async.attempt $
+                    fetchBody (expecting [ "notFound", "tooManyRequests" ] (Proxy :: _ ForgotPassword)) { email }
                 case result of
                     Right response -> response # onMatch
                         { noContent: const $ set _ { sending = false, sentTo = Just email }
                         , notFound: const $ fail (Just "No account signs in with a password at this email.") Nothing
+                        , tooManyRequests: \{ seconds } -> fail Nothing $ Just $
+                            "Too many links have been asked for. " <> tryAgainIn seconds
                         }
                         (const $ fail Nothing $ Just somethingWrong)
                     Left _ -> fail Nothing $ Just somethingWrong

@@ -168,6 +168,29 @@ test.describe("email", () => {
         await expectSignedInAs(page, nickname);
     });
 
+    // Anyone can ask for a reset link for any address, so an address gets three an hour,
+    // or a loop would flood its owner's mailbox.
+    test("holds back a reset link past three an hour", async ({ page }) => {
+        const nickname = await signUp(page, "R");
+        const address = `${nickname.toLowerCase()}@example.com`;
+        await signOut(page);
+
+        for (let i = 0; i < 3; i++) {
+            await page.goto("/forgot-password");
+            await page.getByLabel("Email").fill(address);
+            await page.getByRole("button", { name: "Send link" }).click();
+            await expect(page.getByRole("heading", { name: "Check your email" })).toBeVisible();
+        }
+        await page.goto("/forgot-password");
+        await page.getByLabel("Email").fill(address.toUpperCase());
+        await page.getByRole("button", { name: "Send link" }).click();
+        await expect(page.getByText("Too many links have been asked for. Try again in 60 minutes."))
+            .toBeVisible();
+
+        await openMail(page, address);
+        await expect(emails(page, "Password reset")).toHaveCount(3);
+    });
+
     // The address of an account that signs in with Steam is no credential, so a reset link
     // sent before the account moved to Steam doesn't move it back.
     test("refuses a reset link once the account signs in with Steam", async ({ page }) => {

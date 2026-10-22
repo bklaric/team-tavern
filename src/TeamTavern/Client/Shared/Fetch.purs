@@ -56,7 +56,7 @@ instance (FetchMethod method, FetchPath path pathParams) =>
 -- The labels of the failures a page can cause. Internal is the server's own,
 -- which it logs itself.
 failures :: Array String
-failures = [ "badRequest", "notAuthorized", "forbidden", "notFound" ]
+failures = [ "badRequest", "notAuthorized", "forbidden", "notFound", "tooManyRequests" ]
 
 -- A variant carries its label at runtime, which Data.Variant lets out only
 -- to a match naming it.
