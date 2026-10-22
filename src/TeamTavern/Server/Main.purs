@@ -68,6 +68,7 @@ import TeamTavern.Server.Notification.ViewNotifications (viewNotifications)
 import TeamTavern.Server.Password.ForgotPassword (ForgotPasswordLimits, createForgotPasswordLimits, forgotPassword)
 import TeamTavern.Server.Password.ResetPassword (resetPassword)
 import TeamTavern.Server.Player.ConfirmEmail (confirmEmail)
+import TeamTavern.Server.Player.Infrastructure.SendConfirmation (ConfirmationLimits, createConfirmationLimits)
 import TeamTavern.Server.Player.Register (register)
 import TeamTavern.Server.Player.ResendConfirmation (resendConfirmation)
 import TeamTavern.Server.Player.ViewMe (viewMe)
@@ -234,18 +235,20 @@ loadClientLimits = lookupEnv "RATE_LIMIT_CLIENTS" <#> (_ /= Just "off") <#> Clie
 type Limits =
     { clientErrors :: ClientErrorLimits
     , forgotPassword :: ForgotPasswordLimits
+    , confirmation :: ConfirmationLimits
     }
 
 createLimits :: ClientLimits -> Effect Limits
 createLimits clientLimits = do
     clientErrors <- createClientErrorLimits clientLimits
     forgotPassword <- createForgotPasswordLimits clientLimits
-    pure { clientErrors, forgotPassword }
+    confirmation <- createConfirmationLimits
+    pure { clientErrors, forgotPassword, confirmation }
 
 runServer :: Environment -> Mailer -> DiscordClient -> SteamApi -> SteamOpenIdUrl -> GoogleClient -> AdminEmail -> Limits -> Pool -> Effect Unit
 runServer environment mailer discordClient steamApi steamOpenIdUrl googleClient adminEmail limits pool = serve (Proxy :: _ AllRoutes) serveOptions
     { startSession: \{ cookies, headers, body } ->
-        Session.start environment mailer discordClient steamOpenIdUrl steamApi googleClient pool cookies (requestOrigin headers) body
+        Session.start environment limits.confirmation mailer discordClient steamOpenIdUrl steamApi googleClient pool cookies (requestOrigin headers) body
     , endSession: \{ cookies } ->
         Session.end pool cookies
     , forgotPassword: \{ headers, body } ->
@@ -253,13 +256,13 @@ runServer environment mailer discordClient steamApi steamOpenIdUrl googleClient 
     , resetPassword: \{ body } ->
         resetPassword pool body
     , registerPlayer: \{ cookies, body } ->
-        register environment mailer pool cookies body
+        register environment limits.confirmation mailer pool cookies body
     , viewMe: \{ cookies } ->
         viewMe environment pool cookies
     , confirmEmail: \{ body } ->
         confirmEmail pool body
     , resendConfirmation: \{ cookies } ->
-        resendConfirmation mailer pool cookies
+        resendConfirmation limits.confirmation mailer pool cookies
     , viewAccount: \{ cookies } ->
         viewAccount pool cookies
     , updateFacts: \{ cookies, body } ->
@@ -267,7 +270,7 @@ runServer environment mailer discordClient steamApi steamOpenIdUrl googleClient 
     , updateSwitches: \{ cookies, body } ->
         updateSwitches pool cookies body
     , updateEmail: \{ cookies, body } ->
-        updateEmail mailer pool cookies body
+        updateEmail limits.confirmation mailer pool cookies body
     , switchToDiscord: \{ cookies, headers, body } ->
         switchToDiscord discordClient pool cookies (requestOrigin headers) body
     , switchToSteam: \{ cookies, headers, body } ->
@@ -275,7 +278,7 @@ runServer environment mailer discordClient steamApi steamOpenIdUrl googleClient 
     , switchToGoogle: \{ cookies, headers, body } ->
         switchToGoogle googleClient pool cookies (requestOrigin headers) body
     , switchToPassword: \{ cookies, body } ->
-        switchToPassword mailer pool cookies body
+        switchToPassword limits.confirmation mailer pool cookies body
     , deleteAccount: \{ cookies } ->
         deleteAccount pool cookies
     , viewGames: const $

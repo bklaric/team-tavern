@@ -24,7 +24,7 @@ import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Infrastructure.ValidateEmail (validateEmail')
 import TeamTavern.Server.Infrastructure.ValidateEmail as Email
 import TeamTavern.Server.Password.Infrastructure.DeleteResets (deleteResets)
-import TeamTavern.Server.Player.Infrastructure.SendConfirmation (addConfirmation, sendConfirmation)
+import TeamTavern.Server.Player.Infrastructure.SendConfirmation (ConfirmationLimits, addConfirmation, sendConfirmation)
 import Type.Row (type (+))
 import Yoga.JSON.Async (read)
 
@@ -38,9 +38,9 @@ queryString = Query """
     returning nickname
     """
 
-updateEmail :: ∀ left. Mailer -> Pool -> Cookies -> UpdateEmail.RequestContent
+updateEmail :: ∀ left. ConfirmationLimits -> Mailer -> Pool -> Cookies -> UpdateEmail.RequestContent
     -> Async left (Variant (NoContentRow_ + BadRequestRow UpdateEmail.BadContent + NotAuthorizedRow_ + InternalRow_ + ()))
-updateEmail mailer pool cookies { email } =
+updateEmail confirmationLimits mailer pool cookies { email } =
     sendResponse "Error updating email" do
     { id } <- ensureSignedIn pool cookies
     email' <- validateEmail' email <#> Email.toString
@@ -53,5 +53,5 @@ updateEmail mailer pool cookies { email } =
         for changed \{ nickname } -> do
             deleteResets client playerId
             addConfirmation client playerId email' <#> { email: email', nickname, nonce: _ }
-    foreach confirmation $ sendConfirmation mailer
+    foreach confirmation $ sendConfirmation confirmationLimits mailer
     pure noContent_

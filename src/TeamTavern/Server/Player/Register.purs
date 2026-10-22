@@ -17,7 +17,7 @@ import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Infrastructure.ValidateEmail as Email
 import TeamTavern.Server.Player.Domain.Hash (generateHash)
 import TeamTavern.Server.Player.Domain.Provider (Provider(..))
-import TeamTavern.Server.Player.Infrastructure.SendConfirmation (addConfirmation, sendConfirmation)
+import TeamTavern.Server.Player.Infrastructure.SendConfirmation (ConfirmationLimits, addConfirmation, sendConfirmation)
 import TeamTavern.Server.Player.Infrastructure.SignInTicket (takeSignInTicket)
 import TeamTavern.Server.Player.Register.AddPlayer (addPlayer)
 import TeamTavern.Server.Player.Register.AddPlayerDiscord (addPlayerDiscord)
@@ -31,9 +31,9 @@ import Type.Proxy (Proxy(..))
 import Type.Row (type (+))
 
 register :: ∀ left.
-    Environment -> Mailer -> Pool -> Cookies -> RegisterPlayer.RequestContent
+    Environment -> ConfirmationLimits -> Mailer -> Pool -> Cookies -> RegisterPlayer.RequestContent
     -> Async left (Variant (NoContentRow_ + BadRequestRow RegisterPlayer.BadContent + InternalRow_ + ()))
-register environment mailer pool cookies content =
+register environment confirmationLimits mailer pool cookies content =
     sendResponse "Error registering player" do
     -- Validate register model.
     registration <- validateRegistration content
@@ -106,6 +106,6 @@ register environment mailer pool cookies content =
             pure {confirmation}
         }
 
-    foreach confirmation $ sendConfirmation mailer
+    foreach confirmation $ sendConfirmation confirmationLimits mailer
 
     pure $ noContent $ setCookieHeader environment token

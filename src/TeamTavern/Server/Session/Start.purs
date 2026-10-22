@@ -19,7 +19,7 @@ import TeamTavern.Server.Infrastructure.ResolveSteamId (SteamApi)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Infrastructure.SteamOpenId (SteamOpenIdUrl, verifySteamReturn)
 import TeamTavern.Server.Player.Domain.Provider (Provider(..))
-import TeamTavern.Server.Player.Infrastructure.SendConfirmation (sendConfirmation)
+import TeamTavern.Server.Player.Infrastructure.SendConfirmation (ConfirmationLimits, sendConfirmation)
 import TeamTavern.Server.Session.Domain.Token as Token
 import TeamTavern.Server.Session.Infrastructure.RevokeSession (revokeSession)
 import TeamTavern.Server.Session.Start.CheckPassword (checkPassword, confirmPassword)
@@ -29,10 +29,10 @@ import TeamTavern.Server.Session.Start.Unknown (unknownDiscord, unknownGoogle, u
 import Type.Row (type (+))
 
 start :: ∀ left.
-    Environment -> Mailer -> DiscordClient -> SteamOpenIdUrl -> SteamApi -> GoogleClient
+    Environment -> ConfirmationLimits -> Mailer -> DiscordClient -> SteamOpenIdUrl -> SteamApi -> GoogleClient
     -> Pool -> Cookies -> String -> StartSession.RequestContent
     -> Async left (Variant (NoContentRow_ + BadRequestRow StartSession.BadContent + InternalRow_ + ()))
-start environment mailer discordClient steamOpenIdUrl steamApi googleClient pool cookies origin body =
+start environment confirmationLimits mailer discordClient steamOpenIdUrl steamApi googleClient pool cookies origin body =
     sendResponse "Error starting session" do
     -- Generate session token.
     token <- Token.generate
@@ -70,6 +70,6 @@ start environment mailer discordClient steamOpenIdUrl steamApi googleClient pool
             startWith Google googleUser.googleId googleUser.email $ unknownGoogle pool googleUser
         }
 
-    foreach confirmation $ sendConfirmation mailer
+    foreach confirmation $ sendConfirmation confirmationLimits mailer
 
     pure $ noContent $ setCookieHeader environment token

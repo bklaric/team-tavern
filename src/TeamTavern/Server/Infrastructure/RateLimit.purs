@@ -4,9 +4,11 @@ module TeamTavern.Server.Infrastructure.RateLimit
     , Limit
     , Limiter
     , admit
+    , admitAll
     , clientAddress
     , createClientLimiter
     , createLimiter
+    , ensureAdmission
     , ensureAdmitted
     ) where
 
@@ -15,14 +17,17 @@ import Prelude
 import Async (Async, fromEffect, left)
 import Data.Array as Array
 import Data.DateTime.Instant (unInstant)
+import Data.Foldable (for_, maximum)
 import Data.Int (ceil, toNumber)
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Maybe (Maybe(..), fromMaybe, maybe)
+import Data.Maybe (Maybe(..), fromMaybe, isJust, maybe)
 import Data.MultiMap as MultiMap
 import Data.Newtype (unwrap)
 import Data.String (Pattern(..), contains, joinWith, split, toLower, trim)
 import Data.String.CodeUnits (drop, lastIndexOf)
+import Data.Traversable (for)
+import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Effect.Now (now)
 import Effect.Ref (Ref)
@@ -89,7 +94,13 @@ keep { seconds } time times = let
 -- | wait, in `Retry-After` and in the body.
 ensureAdmitted :: ∀ errors.
     Limiter -> String -> String -> Async (TerrorVar (TooManyRequestsRow Wait + errors)) Unit
-ensureAdmitted limiter key line = fromEffect (admit limiter key) >>= case _ of
+ensureAdmitted limiter key = ensureAdmission (admit limiter key)
+
+-- | As `ensureAdmitted`, for an admission made some other way, such as by
+-- | `admitAll`.
+ensureAdmission :: ∀ errors.
+    Effect Admission -> String -> Async (TerrorVar (TooManyRequestsRow Wait + errors)) Unit
+ensureAdmission admission line = fromEffect admission >>= case _ of
     Admitted -> pure unit
     Refused seconds -> left $ Terror
         (tooManyRequests (MultiMap.singleton' "Retry-After" $ show seconds) { seconds })
@@ -97,20 +108,48 @@ ensureAdmitted limiter key line = fromEffect (admit limiter key) >>= case _ of
 
 -- | Lets one through for `key` and counts it, or refuses it.
 admit :: Limiter -> String -> Effect Admission
-admit Unlimited _ = pure Admitted
-admit (Limiter limit ref) key = do
+admit limiter = admitAll [ limiter ]
+
+-- | Lets one through for `key` when every limiter would, and counts it in
+-- | each, or counts it in none and answers the longest wait. Each limiter that
+-- | refused counts the refusal.
+admitAll :: Array Limiter -> String -> Effect Admission
+admitAll limiters key = do
     time <- nowMilliseconds
+    waits <- for limiters \limiter -> waitFor limiter key time
+    case Array.catMaybes waits # maximum of
+        Nothing -> do
+            for_ limiters \limiter -> count limiter key time
+            pure Admitted
+        Just seconds -> do
+            for_ (Array.zip limiters waits) \(Tuple limiter wait) ->
+                when (isJust wait) $ countRefusal limiter
+            pure $ Refused seconds
+
+-- The times `key` was let through for within the limit's span.
+timesOf :: Limit -> State -> String -> Number -> Array Number
+timesOf limit state key time = Map.lookup key state.admitted >>= keep limit time # fromMaybe []
+
+-- The seconds until `key` would be let through, if it wouldn't be now.
+waitFor :: Limiter -> String -> Number -> Effect (Maybe Int)
+waitFor Unlimited _ _ = pure Nothing
+waitFor (Limiter limit ref) key time = do
     state <- Ref.read ref
-    let times = Map.lookup key state.admitted >>= keep limit time # fromMaybe []
+    let times = timesOf limit state key time
         span = toNumber limit.seconds * 1000.0
-    if Array.length times < limit.count
-    then do
-        Ref.write state { admitted = Map.insert key (Array.snoc times time) state.admitted } ref
-        pure Admitted
-    else do
-        Ref.write state { refused = state.refused + 1 } ref
-        pure $ Refused $ max 1 $ ceil $
+    pure if Array.length times < limit.count
+        then Nothing
+        else Just $ max 1 $ ceil $
             (Array.head times # maybe span \oldest -> oldest + span - time) / 1000.0
+
+count :: Limiter -> String -> Number -> Effect Unit
+count Unlimited _ _ = pure unit
+count (Limiter limit ref) key time = ref # Ref.modify_ \state ->
+    state { admitted = Map.insert key (Array.snoc (timesOf limit state key time) time) state.admitted }
+
+countRefusal :: Limiter -> Effect Unit
+countRefusal Unlimited = pure unit
+countRefusal (Limiter _ ref) = ref # Ref.modify_ \state -> state { refused = state.refused + 1 }
 
 -- | The address of the client that sent the request, which Caddy puts in
 -- | `X-Forwarded-For` in place of any the client sent. An IPv6 address is cut

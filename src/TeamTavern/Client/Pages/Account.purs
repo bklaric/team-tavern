@@ -49,7 +49,7 @@ import TeamTavern.Client.Script.Scroll (focusCentered, focusFirstInvalid)
 import TeamTavern.Client.Script.Steam (authorizeSwitchToSteam, takeSwitchAssertion)
 import TeamTavern.Client.Script.Timezone (getListedTimezone)
 import TeamTavern.Client.Script.Unread (announceUnread)
-import TeamTavern.Client.Shared.AccountErrors (emailInvalid, nicknameInvalid, nicknameTaken, passwordShort, somethingWrong, tooYoung)
+import TeamTavern.Client.Shared.AccountErrors (emailInvalid, nicknameInvalid, nicknameTaken, passwordShort, somethingWrong, tooYoung, tryAgainIn)
 import TeamTavern.Client.Shared.Block (block, unblock)
 import TeamTavern.Client.Shared.Contacts (contactError, contactFormat, contactLabel, contactPlaceholder, steamUnavailable)
 import TeamTavern.Client.Shared.Facts (ageOn, dateText, timezoneOptions, timezoneText)
@@ -500,12 +500,17 @@ component = Hooks.component \_ _ -> Hooks.do
                 _, _ -> pure unit
 
         sendAgain email = do
-            result <- H.lift $ Async.attempt $ fetchSimple (Proxy :: _ ResendConfirmation)
+            result <- H.lift $ Async.attempt $
+                fetchSimple (expecting [ "tooManyRequests" ] (Proxy :: _ ResendConfirmation))
             showToast
-                { text:
-                    if isJust $ hush result >>= onMatch { noContent: const $ Just unit } (const Nothing)
-                    then "Sent again to " <> email <> "."
-                    else "The link couldn't be sent. Try again."
+                { text: hush result
+                    >>= onMatch
+                        { noContent: const $ Just $ "Sent again to " <> email <> "."
+                        , tooManyRequests: \{ seconds } -> Just $
+                            "Too many links have been sent to this address. " <> tryAgainIn seconds
+                        }
+                        (const Nothing)
+                    # fromMaybe "The link couldn't be sent. Try again."
                 , action: Nothing
                 }
 

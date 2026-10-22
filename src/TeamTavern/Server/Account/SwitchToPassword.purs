@@ -27,7 +27,7 @@ import TeamTavern.Server.Infrastructure.ValidateEmail as Email
 import TeamTavern.Server.Password.Infrastructure.DeleteResets (deleteResets)
 import TeamTavern.Server.Player.Domain.Hash (generateHash)
 import TeamTavern.Server.Player.Domain.Password (validatePassword')
-import TeamTavern.Server.Player.Infrastructure.SendConfirmation (addConfirmation, sendConfirmation)
+import TeamTavern.Server.Player.Infrastructure.SendConfirmation (ConfirmationLimits, addConfirmation, sendConfirmation)
 import TeamTavern.Server.Session.Infrastructure.RevokeSession (revokeOtherSessions)
 import Type.Proxy (Proxy(..))
 import Type.Row (type (+))
@@ -69,9 +69,9 @@ switchQuery = Query """
     where id = $1
     """
 
-switchToPassword :: ∀ left. Mailer -> Pool -> Cookies -> SwitchToPassword.RequestContent
+switchToPassword :: ∀ left. ConfirmationLimits -> Mailer -> Pool -> Cookies -> SwitchToPassword.RequestContent
     -> Async left (Variant (NoContentRow_ + BadRequestRow SwitchToPassword.BadContent + NotAuthorizedRow_ + InternalRow_ + ()))
-switchToPassword mailer pool cookies { password, email } =
+switchToPassword confirmationLimits mailer pool cookies { password, email } =
     sendResponse "Error switching to a password" do
     { id, token } <- ensureSignedIn pool cookies
     password' <- validatePassword' password
@@ -95,5 +95,5 @@ switchToPassword mailer pool cookies { password, email } =
         deleteResets client playerId
         for taken \email' -> addConfirmation client playerId email' <#>
             { email: email', nickname: held.nickname, nonce: _ }
-    foreach confirmation $ sendConfirmation mailer
+    foreach confirmation $ sendConfirmation confirmationLimits mailer
     pure noContent_

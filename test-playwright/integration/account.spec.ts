@@ -260,6 +260,40 @@ test.describe("the account page", () => {
         await expect(page.getByText("None of these is sent")).toHaveCount(0);
     });
 
+    // Anyone can give any address, so an address gets three links an hour, however they're
+    // set off. Asking again is told to wait; changing the email still changes it, and only
+    // the link stays behind, or changing it away and back would mail the address at will.
+    test("holds back a confirmation link past three an hour", async ({ page }) => {
+        const nickname = await signUp(page, "E");
+        const address = `${nickname.toLowerCase()}@example.com`;
+        const other = `${nickname.toLowerCase()}.other@example.com`;
+        const tagged = `${nickname.toLowerCase()}+tag@example.com`;
+        const emailRow = page.locator("#email");
+
+        await openAccount(page);
+        for (let i = 0; i < 2; i++) {
+            await emailRow.getByRole("button", { name: "Send again" }).click();
+            await expect(page.locator(".toast-text")).toHaveText(`Sent again to ${address}.`);
+        }
+        await emailRow.getByRole("button", { name: "Send again" }).click();
+        await expect(page.locator(".toast-text"))
+            .toHaveText("Too many links have been sent to this address. Try again in 60 minutes.");
+
+        // A +tag reaches the same mailbox, so it counts as the same address.
+        for (const email of [other, address, tagged]) {
+            await emailRow.getByRole("button", { name: "Change" }).click();
+            await page.getByLabel("Email", { exact: true }).fill(email);
+            await emailRow.getByRole("button", { name: "Save", exact: true }).click();
+            await expect(page.locator(".toast-text")).toHaveText("Your email is changed.");
+            await expect(row(page, "Email")).toContainText(email);
+        }
+
+        await openMail(page, address);
+        await expect(emails(page, "Confirm your email")).toHaveCount(3);
+        await openMail(page, tagged);
+        await expect(emails(page, "Confirm your email")).toHaveCount(0);
+    });
+
     test("moves the sign-in to Discord and back to a password, each of which then signs in", async ({ page }) => {
         const nickname = await signUp(page, "M");
         const address = `${nickname.toLowerCase()}@example.com`;
