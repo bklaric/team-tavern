@@ -1,14 +1,15 @@
 module TeamTavern.Routes.Account.UpdateEmail where
 
 import Data.Variant (Variant)
-import Jarilo (type (!), type (/), type (==>), BadRequestJson, Internal_, Literal, NoContent, NotAuthorized_, PutJson_)
+import Jarilo (type (!), type (/), type (==>), BadRequestJson, Internal_, Literal, NoContent, NotAuthorized_, PutJson_, TooManyRequestsJson)
+import TeamTavern.Routes.Shared.Wait (Wait)
 
 -- | A new address waits for the link sent to it, and the site sends it
 -- | nothing else until then (brief 6, step 4). An address changed only in case
 -- | is left as it is.
 type UpdateEmail =
     PutJson_ (Literal "account" / Literal "email") RequestContent
-    ==> NoContent ! BadRequestJson BadContent ! NotAuthorized_ ! Internal_
+    ==> NoContent ! BadRequestJson BadContent ! NotAuthorized_ ! TooManyRequestsJson Wait ! Internal_
 
 type RequestContent = { email :: String }
 

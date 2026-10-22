@@ -294,6 +294,39 @@ test.describe("the account page", () => {
         await expect(emails(page, "Confirm your email")).toHaveCount(0);
     });
 
+    // Each change mails a link to the new address, so an account changes its email five times
+    // an hour. One the site turns down changes nothing, so it doesn't count.
+    test("holds back an email change past five an hour", async ({ page }) => {
+        const nickname = await signUp(page, "E");
+        const emailRow = page.locator("#email");
+
+        await openAccount(page);
+        await emailRow.getByRole("button", { name: "Change" }).click();
+        await page.getByLabel("Email", { exact: true }).fill("apex-legends@example.com");
+        await emailRow.getByRole("button", { name: "Save", exact: true }).click();
+        await expect(emailRow.getByText("Another account signs in with this email.")).toBeVisible();
+        await emailRow.getByRole("button", { name: "Cancel" }).click();
+
+        for (let i = 1; i <= 6; i++) {
+            const email = `${nickname.toLowerCase()}.${i}@example.com`;
+            await emailRow.getByRole("button", { name: "Change" }).click();
+            await page.getByLabel("Email", { exact: true }).fill(email);
+            await emailRow.getByRole("button", { name: "Save", exact: true }).click();
+            if (i <= 5) {
+                await expect(page.locator(".toast-text")).toHaveText("Your email is changed.");
+                await expect(row(page, "Email")).toContainText(email);
+            }
+        }
+        await expect(emailRow.getByText("You've changed your email too often. Try again in 60 minutes."))
+            .toBeVisible();
+        await expect(page.getByLabel("Email", { exact: true })).toBeFocused();
+
+        await openAccount(page);
+        await expect(row(page, "Email")).toContainText(`${nickname.toLowerCase()}.5@example.com`);
+        await openMail(page, `${nickname.toLowerCase()}.6@example.com`);
+        await expect(emails(page, "Confirm your email")).toHaveCount(0);
+    });
+
     test("moves the sign-in to Discord and back to a password, each of which then signs in", async ({ page }) => {
         const nickname = await signUp(page, "M");
         const address = `${nickname.toLowerCase()}@example.com`;

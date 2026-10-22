@@ -6,10 +6,12 @@ module TeamTavern.Server.Infrastructure.RateLimit
     , admit
     , admitAll
     , clientAddress
+    , countOne
     , createClientLimiter
     , createLimiter
     , ensureAdmission
     , ensureAdmitted
+    , ensureRoom
     ) where
 
 import Prelude
@@ -105,6 +107,21 @@ ensureAdmission admission line = fromEffect admission >>= case _ of
     Refused seconds -> left $ Terror
         (tooManyRequests (MultiMap.singleton' "Retry-After" $ show seconds) { seconds })
         [ line ]
+
+-- | Answers 429, as `ensureAdmitted` does, when `key` has had all it gets, but
+-- | counts nothing, for a request that counts only once it has done what is
+-- | limited, with `countOne`.
+ensureRoom :: ∀ errors.
+    Limiter -> String -> String -> Async (TerrorVar (TooManyRequestsRow Wait + errors)) Unit
+ensureRoom limiter key = ensureAdmission do
+    time <- nowMilliseconds
+    waitFor limiter key time >>= case _ of
+        Nothing -> pure Admitted
+        Just seconds -> countRefusal limiter $> Refused seconds
+
+-- | Counts one for `key`, whether or not it had room.
+countOne :: Limiter -> String -> Effect Unit
+countOne limiter key = nowMilliseconds >>= count limiter key
 
 -- | Lets one through for `key` and counts it, or refuses it.
 admit :: Limiter -> String -> Effect Admission

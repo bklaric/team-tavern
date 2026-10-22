@@ -481,7 +481,8 @@ component = Hooks.component \_ _ -> Hooks.do
                             Hooks.modify_ stateId _ { saving = false, errors = errors }
                             liftEffect focusFirstInvalid
                     Hooks.modify_ stateId _ { saving = true, errors = Object.empty }
-                    result <- H.lift $ Async.attempt $ fetchBody (expecting [ "badRequest" ] (Proxy :: _ UpdateEmail)) { email }
+                    result <- H.lift $ Async.attempt $
+                        fetchBody (expecting [ "badRequest", "tooManyRequests" ] (Proxy :: _ UpdateEmail)) { email }
                     case hush result of
                         Nothing -> failed $ Object.singleton "email" somethingWrong
                         Just response -> response # onMatch
@@ -495,6 +496,8 @@ component = Hooks.component \_ _ -> Hooks.do
                                 { email: \_ -> emailInvalid
                                 , emailTaken: \_ -> emailTaken
                                 }
+                            , tooManyRequests: \{ seconds } -> failed $ Object.singleton "email" $
+                                "You've changed your email too often. " <> tryAgainIn seconds
                             }
                             (\_ -> failed $ Object.singleton "email" somethingWrong)
                 _, _ -> pure unit

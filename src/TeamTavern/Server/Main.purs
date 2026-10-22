@@ -26,7 +26,7 @@ import TeamTavern.Server.Account.SwitchToDiscord (switchToDiscord)
 import TeamTavern.Server.Account.SwitchToGoogle (switchToGoogle)
 import TeamTavern.Server.Account.SwitchToPassword (switchToPassword)
 import TeamTavern.Server.Account.SwitchToSteam (switchToSteam)
-import TeamTavern.Server.Account.UpdateEmail (updateEmail)
+import TeamTavern.Server.Account.UpdateEmail (createUpdateEmailLimit, updateEmail)
 import TeamTavern.Server.Account.UpdateFacts (updateFacts)
 import TeamTavern.Server.Account.UpdateSwitches (updateSwitches)
 import TeamTavern.Server.Account.ViewAccount (viewAccount)
@@ -56,7 +56,7 @@ import TeamTavern.Server.Infrastructure.Environment as Environment
 import TeamTavern.Server.Infrastructure.GoogleSignIn (GoogleClient(..), googleEndpoint)
 import TeamTavern.Server.Infrastructure.Log (logStamped, print)
 import TeamTavern.Server.Infrastructure.Postgres (databaseErrorLines)
-import TeamTavern.Server.Infrastructure.RateLimit (ClientLimits(..))
+import TeamTavern.Server.Infrastructure.RateLimit (ClientLimits(..), Limiter)
 import TeamTavern.Server.Infrastructure.RequestOrigin (requestOrigin)
 import TeamTavern.Server.Infrastructure.ResolveSteamId (SteamApi(..))
 import TeamTavern.Server.Infrastructure.Ses (createClient)
@@ -236,6 +236,7 @@ type Limits =
     { clientErrors :: ClientErrorLimits
     , forgotPassword :: ForgotPasswordLimits
     , confirmation :: ConfirmationLimits
+    , updateEmail :: Limiter
     }
 
 createLimits :: ClientLimits -> Effect Limits
@@ -243,7 +244,8 @@ createLimits clientLimits = do
     clientErrors <- createClientErrorLimits clientLimits
     forgotPassword <- createForgotPasswordLimits clientLimits
     confirmation <- createConfirmationLimits
-    pure { clientErrors, forgotPassword, confirmation }
+    updateEmail <- createUpdateEmailLimit
+    pure { clientErrors, forgotPassword, confirmation, updateEmail }
 
 runServer :: Environment -> Mailer -> DiscordClient -> SteamApi -> SteamOpenIdUrl -> GoogleClient -> AdminEmail -> Limits -> Pool -> Effect Unit
 runServer environment mailer discordClient steamApi steamOpenIdUrl googleClient adminEmail limits pool = serve (Proxy :: _ AllRoutes) serveOptions
@@ -270,7 +272,7 @@ runServer environment mailer discordClient steamApi steamOpenIdUrl googleClient 
     , updateSwitches: \{ cookies, body } ->
         updateSwitches pool cookies body
     , updateEmail: \{ cookies, body } ->
-        updateEmail limits.confirmation mailer pool cookies body
+        updateEmail limits.updateEmail limits.confirmation mailer pool cookies body
     , switchToDiscord: \{ cookies, headers, body } ->
         switchToDiscord discordClient pool cookies (requestOrigin headers) body
     , switchToSteam: \{ cookies, headers, body } ->
