@@ -4,7 +4,7 @@ import Prelude
 
 import Async (Async)
 import Async.Validated as AsyncVal
-import Data.Array (all, any, elem, find, length, null)
+import Data.Array (all, any, elem, find, length, nub, null)
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty as Nea
 import Data.Bifunctor (lmap)
@@ -56,17 +56,20 @@ paragraphs text = Paragraph.create text
 
 -- A post keeps only what its type has (the schema's checks): a player post has
 -- none of a group's or a community's own facts, and a community no numbers.
+-- Each option, flag, region and language is kept once: an option is a row
+-- keyed by it, and a card shows the regions and languages as they are kept.
 normalized :: String -> RequestContent -> RequestContent
 normalized type_ { post, account } =
     { post: post
-        { options = Object.filter (not <<< null) post.options
+        { options = Object.filter (not <<< null) post.options <#> nub
+        , flags = nub post.flags
         , ranges = Object.filter (\{ from, to } -> isJust from || isJust to) post.ranges
         , name = if player then Nothing else blank post.name
         , groupSize = if group then post.groupSize else Nothing
         , groupWantedFrom = if group then post.groupWantedFrom else Nothing
         , groupWantedTo = if group then post.groupWantedTo else Nothing
-        , regions = if player then [] else post.regions
-        , languages = if player then [] else post.languages
+        , regions = if player then [] else nub post.regions
+        , languages = if player then [] else nub post.languages
         , ageFrom = if player then Nothing else post.ageFrom
         , ageTo = if player then Nothing else post.ageTo
         , discordServer = if player then Nothing else blank post.discordServer

@@ -3,7 +3,7 @@ module TeamTavern.Server.Account.Infrastructure.ValidateAccount
 
 import Prelude
 
-import Data.Array (all, any, elem)
+import Data.Array (all, any, elem, nub)
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty as Nea
 import Data.Date (Date, day, exactDate, month, year)
@@ -38,6 +38,7 @@ blank value = value <#> trim >>= \value' -> if value' == "" then Nothing else Ju
 normalizedAccount :: AccountContent -> AccountContent
 normalizedAccount account = account
     { country = blank account.country
+    , languages = nub account.languages
     , birthday = blank account.birthday
     , timezone = blank account.timezone
     , contacts = account.contacts <#> trim # Object.filter (_ /= "")
