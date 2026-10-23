@@ -63,6 +63,42 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe("the ads", () => {
+    // Ad scripts report the address a document was opened with, so a document opened with a
+    // secret in its address, a reset, confirmation or renewal nonce or what a provider sent
+    // back to the sign-in page, loads none, and the page the player goes on to is loaded
+    // afresh, with them. Each page still reads its secret, which the specs of those flows
+    // show.
+    test("load nowhere a link's secret came in the address", async ({ page }) => {
+        await page.route("https://hb.vntsm.com/**", route => route.fulfill({
+            contentType: "text/javascript",
+            body: `self.__adsSaw = location.href + " " + performance.getEntriesByType("navigation")[0].name;\n${fakeVenatus}`,
+        }));
+        let requested = 0;
+        page.on("request", request => { if (request.url().startsWith("https://hb.vntsm.com/")) requested++; });
+        const seen = () => page.evaluate(() => (window as unknown as { __adsSaw?: string }).__adsSaw);
+        for (const [path, secret] of [
+            ["/reset-password?nonce=resetsecret", "resetsecret"],
+            ["/confirm-email?nonce=confirmsecret", "confirmsecret"],
+            ["/renew?nonce=renewsecret", "renewsecret"],
+            ["/signin?code=codesecret&state=statesecret", "secret"],
+            ["/signin?error=access_denied&state=statesecret", "statesecret"],
+            ["/signin?steam=trip&openid.mode=id_res&openid.sig=sigsecret", "sigsecret"],
+        ]) {
+            const before = requested;
+            await page.goto(path);
+            await expectPage(page, path.split("?")[0]);
+            expect(requested, path).toBe(before);
+
+            await Promise.all([
+                page.waitForEvent("load"),
+                page.getByRole("link", { name: "TeamTavern" }).first().click(),
+            ]);
+            await expectPage(page, "/");
+            await expect.poll(seen).toBeTruthy();
+            expect(await seen(), path).not.toContain(secret);
+        }
+    });
+
     test("flank the feed's column on a desktop, with a takeover above it and a sticky below", async ({ page }) => {
         await page.setViewportSize({ width: 1280, height: 900 });
         await openFeed(page);

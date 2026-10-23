@@ -28,7 +28,7 @@ import TeamTavern.Client.Script.Discord as Discord
 import TeamTavern.Client.Script.Google (authorizeWithGoogle, takeGoogleReturn)
 import TeamTavern.Client.Script.Google as Google
 import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_, replaceState)
-import TeamTavern.Client.Script.QueryParams (getQueryParam, removeQueryParam)
+import TeamTavern.Client.Script.QueryParams (forgetLinkSecrets, getQueryParam, removeQueryParam)
 import TeamTavern.Client.Script.Steam (authorizeWithSteam, keepSwitchAssertion, takeSteamReturn)
 import TeamTavern.Client.Shared.AccountErrors (emailError, emailInvalid, inTime, nicknameInvalid, nicknameTaken, somethingWrong, tooManySignUps, tryAgainIn)
 import TeamTavern.Client.Shared.Fetch (expecting, fetchBody)
@@ -311,6 +311,7 @@ component = Hooks.component \_ _ -> Hooks.do
                 -- address, so a code nothing swapped doesn't linger in it.
                 returned <- (||) <$> (getQueryParam "code" <#> isJust) <*> (getQueryParam "error" <#> isJust)
                 when returned $ for_ [ "code", "state", "error", "error_description" ] removeQueryParam
+                liftEffect forgetLinkSecrets
                 readBack >>= showPassword
         pure Nothing
 

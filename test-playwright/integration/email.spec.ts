@@ -125,6 +125,10 @@ test.describe("email", () => {
         await openMail(page, address);
         await body(emails(page, "Password reset")).getByRole("link", { name: "Reset password" }).click();
         await expectPage(page, "/reset-password");
+        // The nonce leaves the address as the page opens, and a reload still finds it.
+        expect(page.url()).not.toContain("nonce");
+        await page.reload();
+        await expectPage(page, "/reset-password");
         await page.getByLabel("New password").fill("a-new-password");
         await page.getByRole("button", { name: "Change password" }).click();
         await expect(page.getByRole("heading", { name: "Your password is changed" })).toBeVisible();

@@ -18,7 +18,7 @@ import TeamTavern.Client.Components.Button (Size(..), Weight(..), buttonLink)
 import TeamTavern.Client.Components.Flow (flow, flowLead)
 import TeamTavern.Client.Pages.Feed.Description (storeDescription)
 import TeamTavern.Client.Script.Navigate (navigateReplace_)
-import TeamTavern.Client.Script.QueryParams (getQueryParam)
+import TeamTavern.Client.Script.QueryParams (forgetLinkSecrets, getQueryParam)
 import TeamTavern.Client.Shared.AccountErrors (somethingWrong)
 import TeamTavern.Client.Shared.Fetch (expecting, fetchBody)
 import TeamTavern.Client.Shared.Slot (Slot___)
@@ -44,9 +44,13 @@ component = Hooks.component \_ _ -> Hooks.do
                     case result of
                         Right response -> response # onMatch
                             { ok: \{ handle, id, type: type_, description } -> do
-                                liftEffect $ storeDescription handle type_ description
+                                liftEffect do
+                                    forgetLinkSecrets
+                                    storeDescription handle type_ description
                                 navigateReplace_ $ "/games/" <> handle <> "?renewed=" <> show id
-                            , notFound: const $ Hooks.put stateId Broken
+                            , notFound: const do
+                                liftEffect forgetLinkSecrets
+                                Hooks.put stateId Broken
                             }
                             (const $ Hooks.put stateId Failed)
                         Left _ -> Hooks.put stateId Failed

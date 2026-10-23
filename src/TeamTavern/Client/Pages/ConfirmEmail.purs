@@ -9,13 +9,14 @@ import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
 import Data.Variant (onMatch)
+import Effect.Class (liftEffect)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.Hooks as Hooks
 import JSURI (decodeURIComponent)
 import TeamTavern.Client.Components.Button (Size(..), Weight(..), buttonLink)
 import TeamTavern.Client.Components.Flow (flow, flowLead, flowLink)
-import TeamTavern.Client.Script.QueryParams (getQueryParam)
+import TeamTavern.Client.Script.QueryParams (forgetLinkSecrets, getQueryParam)
 import TeamTavern.Client.Shared.AccountErrors (somethingWrong)
 import TeamTavern.Client.Shared.Fetch (expecting, fetchBody)
 import TeamTavern.Client.Shared.Slot (Slot___)
@@ -36,13 +37,18 @@ component = Hooks.component \_ _ -> Hooks.do
             Nothing -> Hooks.put stateId Expired
             Just nonce' -> do
                 result <- H.lift $ Async.attempt $ fetchBody (expecting [ "notFound" ] (Proxy :: _ ConfirmEmail)) { nonce: nonce' }
-                Hooks.put stateId case result of
-                    Right response -> response # onMatch
-                        { noContent: const Confirmed
-                        , notFound: const Expired
-                        }
-                        (const Failed)
-                    Left _ -> Failed
+                let confirmed = case result of
+                        Right response -> response # onMatch
+                            { noContent: const Confirmed
+                            , notFound: const Expired
+                            }
+                            (const Failed)
+                        Left _ -> Failed
+                -- A link used or refused is done with; one that failed may work on a reload.
+                case confirmed of
+                    Failed -> pure unit
+                    _ -> liftEffect forgetLinkSecrets
+                Hooks.put stateId confirmed
         pure Nothing
 
     Hooks.pure case state of

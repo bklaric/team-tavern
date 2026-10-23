@@ -17,7 +17,7 @@ import Halogen.Hooks as Hooks
 import JSURI (decodeURIComponent)
 import TeamTavern.Client.Components.Button (Size(..), Weight(..), buttonLink)
 import TeamTavern.Client.Components.Flow (flow, flowError, flowLead, flowLink, formTight, submitButton, textField)
-import TeamTavern.Client.Script.QueryParams (getQueryParam)
+import TeamTavern.Client.Script.QueryParams (forgetLinkSecrets, getQueryParam)
 import TeamTavern.Client.Shared.AccountErrors (passwordShort, somethingWrong)
 import TeamTavern.Client.Shared.Fetch (expecting, fetchBody)
 import TeamTavern.Client.Shared.Slot (Slot___)
@@ -55,9 +55,13 @@ component = Hooks.component \_ _ -> Hooks.do
                     { password: state.password, nonce: state.nonce }
                 case result of
                     Right response -> response # onMatch
-                        { noContent: const $ set _ { sending = false, screen = Done }
+                        { noContent: const do
+                            H.liftEffect forgetLinkSecrets
+                            set _ { sending = false, screen = Done }
                         , badRequest: const $ fail (Just passwordShort) Nothing
-                        , notFound: const $ set _ { sending = false, screen = Expired }
+                        , notFound: const do
+                            H.liftEffect forgetLinkSecrets
+                            set _ { sending = false, screen = Expired }
                         }
                         (const $ fail Nothing $ Just somethingWrong)
                     Left _ -> fail Nothing $ Just somethingWrong

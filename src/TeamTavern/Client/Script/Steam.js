@@ -1,3 +1,2 @@
-export const openIdParams = () =>
-    Object.fromEntries([...new URLSearchParams(window.location.search)]
-        .filter(([key]) => key.startsWith("openid.")));
+export const openIdParamsOf = query =>
+    Object.fromEntries([...new URLSearchParams(query)].filter(([key]) => key.startsWith("openid.")));

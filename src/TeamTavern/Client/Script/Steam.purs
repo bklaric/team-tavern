@@ -9,21 +9,20 @@ module TeamTavern.Client.Script.Steam
 import Prelude
 
 import Data.Maybe (Maybe(..))
-import Effect (Effect)
 import Effect.Class (class MonadEffect, liftEffect)
 import Foreign.Object (Object)
 import Foreign.Object as Object
 import JSURI (decodeURIComponent)
 import JavaScript.Web.URL.URLSearchParams as URLSearchParams
 import TeamTavern.Client.Script.Navigate (hardNavigate)
-import TeamTavern.Client.Script.QueryParams (getQueryParam)
+import TeamTavern.Client.Script.QueryParams (getQueryParam, openedQuery)
 import TeamTavern.Client.Script.Trip (Trip, keepSwitch, setOut, takeReturn, takeSwitch)
 import Web.HTML (window)
 import Web.HTML.Location (origin)
 import Web.HTML.Window (location)
 
--- The `openid.` parameters of the page's address.
-foreign import openIdParams :: Effect (Object String)
+-- The `openid.` parameters of a query.
+foreign import openIdParamsOf :: String -> Object String
 
 -- Every trip to Steam comes back to the sign-in page, as every trip to Discord
 -- does, with the trip's state in the address it returns to.
@@ -73,7 +72,7 @@ takeSteamReturn = do
     liftEffect case returnedState of
         Nothing -> pure Nothing
         Just _ -> do
-            params <- openIdParams
+            params <- openedQuery <#> openIdParamsOf
             let assertion = if Object.lookup "openid.mode" params == Just "id_res" then Just params else Nothing
             takeReturn storageKey { ownMark: true, returnedState } <#> map { assertion, trip: _ }
 

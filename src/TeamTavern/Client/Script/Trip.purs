@@ -9,6 +9,7 @@ import Prelude
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import TeamTavern.Client.Script.Navigate (replaceState)
+import TeamTavern.Client.Script.QueryParams (forgetLinkSecrets)
 import Web.HTML (window)
 import Web.HTML.Location (pathname, search)
 import Web.HTML.Window (location, sessionStorage)
@@ -41,7 +42,8 @@ setOut key { back, switching } = do
 -- | claims it, and the trip is then given if `returnedState` is its own. An
 -- | error every provider sends alike is claimed only with the kept trip's
 -- | state. A claimed return leaves the page's address without its query and
--- | fragment, so a reload doesn't send it twice.
+-- | fragment, and the secrets `index.html` took out of it are dropped, so a
+-- | reload doesn't send it twice.
 takeReturn :: String -> { ownMark :: Boolean, returnedState :: Maybe String } -> Effect (Maybe Trip)
 takeReturn key { ownMark, returnedState } = do
     storage <- window >>= sessionStorage
@@ -52,6 +54,7 @@ takeReturn key { ownMark, returnedState } = do
     else do
         removeItem key storage
         window >>= location >>= pathname >>= replaceState {}
+        forgetLinkSecrets
         pure case kept of
             Just ({ state, back, from, switching } :: Kept) | Just state == returnedState ->
                 Just { back, from, switching }

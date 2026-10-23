@@ -37,9 +37,59 @@
   <link rel="preload" href="/style.min.css" as="style">
   <link rel="preload" href="/fonts/inter.css" as="style">
   <link rel="preload" href="/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- The ad script is added below only where it runs, so the browser can't
+       find it early; the connection to its host is made ahead of it. -->
+  <link rel="preconnect" href="https://hb.vntsm.com">
 
-  <!-- Venatus -->
-  <script src="https://hb.vntsm.com/v4/live/vms/sites/teamtavern.net/index.js" async></script>
+  <!-- Venatus, unless the page holds a secret. Some links carry one in their
+       address: a reset, confirmation or renewal nonce, or what Discord, Google
+       or Steam sent back to the sign-in page. Ad scripts report the address a
+       document was opened with, which stays in its navigation entry whatever
+       the page does. So on those four pages a secret leaves the address and
+       waits for the page in memory and, for a reload, in session storage until
+       the page has used it (Script/QueryParams.js), and a document holding one
+       loads no ads. The first link followed from it loads the next page
+       afresh, with ads; the router never draws that page in this document. -->
+  <script>
+    (function () {
+      var key = "tt-link-secrets";
+      var secret = function (pair) {
+        var name = pair.split("=")[0];
+        return name === "nonce" || name === "code" || name === "state" || name === "steam"
+          || name.indexOf("openid.") === 0;
+      };
+      var linked = ["/signin", "/reset-password", "/confirm-email", "/renew"].indexOf(location.pathname) >= 0;
+      var pairs = linked
+        ? location.search.substring(1).split("&").filter(function (pair) { return pair !== ""; })
+        : [];
+      var kept = pairs.filter(secret);
+      var held = kept.length > 0;
+      if (held) {
+        var left = pairs.filter(function (pair) { return !secret(pair); });
+        self.__linkSecrets = { path: location.pathname, pairs: kept };
+        try { sessionStorage.setItem(key, JSON.stringify(self.__linkSecrets)); } catch (error) {}
+        history.replaceState(history.state, "",
+          location.pathname + (left.length > 0 ? "?" + left.join("&") : "") + location.hash);
+      } else if (linked) {
+        try {
+          var stored = JSON.parse(sessionStorage.getItem(key));
+          held = !!stored && stored.path === location.pathname && stored.pairs.length > 0;
+        } catch (error) {}
+      }
+      if (held) {
+        // Registered before the app's router, which never hears of the page.
+        addEventListener("teamtavern:navigated", function (event) {
+          event.stopImmediatePropagation();
+          location.reload();
+        });
+        return;
+      }
+      var ads = document.createElement("script");
+      ads.src = "https://hb.vntsm.com/v4/live/vms/sites/teamtavern.net/index.js";
+      ads.async = true;
+      document.head.appendChild(ads);
+    })();
+  </script>
   <script>
     self.__VM = self.__VM || [];
     self.__VM.push(function (admanager, scope) {
