@@ -147,11 +147,13 @@ test.describe("blocking and reporting", () => {
     });
 
     // Ten reports a day, each of another game's tester, in games other specs publish few posts
-    // in or none, so the tester's card is on the feed's first page.
+    // in or none, so the tester's card is on the feed's first page. Opening a panel counts as
+    // showing its contacts, so this leaves out ApexLegendsTester, whose count `contact.spec.ts`
+    // checks.
     test("holds back a report past ten a day", async ({ page }) => {
         await signUp(page, "R");
-        for (const game of ["apex-legends", "counter-strike-2", "deadlock", "fortnite", "heroes-of-the-storm",
-            "marvel-rivals", "overwatch", "pubg-battlegrounds", "rocket-league", "the-finals"]) {
+        for (const game of ["counter-strike-2", "deadlock", "fortnite", "heroes-of-the-storm", "marvel-rivals",
+            "overwatch", "pubg-battlegrounds", "rocket-league", "the-finals", "valheim"]) {
             await report(page, game, tester(game));
             await expect(page.locator(".toast-text")).toHaveText("Report sent. Thanks for telling us.");
         }
