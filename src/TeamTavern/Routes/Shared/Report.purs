@@ -4,6 +4,10 @@ module TeamTavern.Routes.Shared.Report where
 -- | blocks the reported player as well.
 type Report = { reason :: String, detail :: String, block :: Boolean }
 
+-- | Whether the viewer had reported the player about the post before, when
+-- | nothing new is stored or mailed, though a block asked for is made.
+type ReportOutcome = { alreadyReported :: Boolean }
+
 -- | What a report can be about (brief 10), as the report form offers it.
 reasons :: Array { value :: String, label :: String }
 reasons =

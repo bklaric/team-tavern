@@ -4,7 +4,7 @@ import Prelude
 
 import Async (Async, left)
 import Data.Array (elem)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), isJust)
 import Data.Nullable (toNullable)
 import Data.String (trim)
 import Data.String.CodeUnits as CodeUnits
@@ -14,7 +14,7 @@ import JavaScript.Npm.Pg.Query (Query(..), (:), (:|))
 import TeamTavern.Routes.Shared.Report (Report, reasons)
 import TeamTavern.Server.Conversation.Infrastructure.PostMessage (maxLength)
 import TeamTavern.Server.Infrastructure.Error (Terror(..), TerrorVar)
-import TeamTavern.Server.Infrastructure.Postgres (queryNone)
+import TeamTavern.Server.Infrastructure.Postgres (queryFirstMaybe, queryNone)
 import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 import Type.Row (type (+))
 
@@ -49,6 +49,8 @@ insertQuery :: Query
 insertQuery = Query """
     insert into report (reporter_id, reported_id, post_id, reason, detail)
     values ($1, $2, $3, $4, $5)
+    on conflict (reporter_id, reported_id, post_id) do nothing
+    returning id
     """
 
 blockQuery :: Query
@@ -58,10 +60,12 @@ blockQuery = Query """
     on conflict do nothing
     """
 
--- | Stores the report from `reporter`, and their block where they asked for
--- | one, in the caller's transaction.
-addReport :: ∀ errors. Client -> Int -> Reported -> ValidReport -> Async (InternalTerror_ errors) Unit
+-- | Stores the report from `reporter`, unless they reported the player about
+-- | the post before, and their block where they asked for one, in the
+-- | caller's transaction. Answers whether the report was stored.
+addReport :: ∀ errors. Client -> Int -> Reported -> ValidReport -> Async (InternalTerror_ errors) Boolean
 addReport client reporter reported report = do
-    queryNone client insertQuery
+    stored :: Maybe { id :: Int } <- queryFirstMaybe client insertQuery
         (reporter : reported.reported_id : reported.post_id : report.reason :| toNullable report.detail)
     when report.block $ queryNone client blockQuery (reporter :| reported.reported_id)
+    pure $ isJust stored

@@ -32,6 +32,7 @@ import TeamTavern.Server.Account.UpdateFacts (updateFacts)
 import TeamTavern.Server.Account.UpdateSwitches (updateSwitches)
 import TeamTavern.Server.Account.ViewAccount (viewAccount)
 import TeamTavern.Server.Block.Block (block)
+import TeamTavern.Server.Block.Infrastructure.FileReport (createReportLimit)
 import TeamTavern.Server.Block.Infrastructure.SendReportEmail (AdminEmail(..))
 import TeamTavern.Server.Block.ReportConversation (reportConversation)
 import TeamTavern.Server.Block.ReportPost (reportPost)
@@ -247,6 +248,7 @@ type Limits =
     , register :: Limiter
     , conversations :: ConversationLimits
     , messages :: Limiter
+    , reports :: Limiter
     }
 
 createLimits :: ClientLimits -> Effect Limits
@@ -261,7 +263,8 @@ createLimits clientLimits = do
     register <- createRegisterLimit clientLimits
     conversations <- createConversationLimits
     messages <- createMessageLimit
-    pure { clientErrors, forgotPassword, confirmation, updateEmail, signIn, providerSignIn, switchSignIn, register, conversations, messages }
+    reports <- createReportLimit
+    pure { clientErrors, forgotPassword, confirmation, updateEmail, signIn, providerSignIn, switchSignIn, register, conversations, messages, reports }
 
 runServer :: Environment -> Mailer -> DiscordClient -> SteamApi -> SteamOpenIdUrl -> GoogleClient -> AdminEmail -> Limits -> Bcrypt -> Pool -> Effect Unit
 runServer environment mailer discordClient steamApi steamOpenIdUrl googleClient adminEmail limits bcrypt pool = serve (Proxy :: _ AllRoutes) serveOptions
@@ -341,9 +344,9 @@ runServer environment mailer discordClient steamApi steamOpenIdUrl googleClient 
     , viewBlocked: \{ cookies } ->
         viewBlocked pool cookies
     , reportPost: \{ path, cookies, body } ->
-        reportPost mailer adminEmail pool path.handle path.id cookies body
+        reportPost limits.reports mailer adminEmail pool path.handle path.id cookies body
     , reportConversation: \{ path: { id }, cookies, body } ->
-        reportConversation mailer adminEmail pool id cookies body
+        reportConversation limits.reports mailer adminEmail pool id cookies body
     , viewNotifications: \{ cookies } ->
         viewNotifications pool cookies
     , readNotifications: \{ cookies } ->

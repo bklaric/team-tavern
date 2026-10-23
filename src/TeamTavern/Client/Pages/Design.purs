@@ -609,7 +609,7 @@ component = Hooks.component \_ _ -> Hooks.do
                 <> sheetWith
                     (still false $ Reporting
                         { reason: "", detail: "Asked me to pay for a rank boost.", alsoBlock: true
-                        , missing: true, sending: false, failed: false
+                        , missing: true, sending: false, failed: Nothing
                         })
                     "report"
                     "Reporting a post: one reason, more if the player wants, and a block too. Sent without a reason, it asks for one"

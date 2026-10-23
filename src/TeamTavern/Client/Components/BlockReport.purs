@@ -13,7 +13,8 @@ module TeamTavern.Client.Components.BlockReport
 import Prelude
 
 import Async (Async)
-import Data.Maybe (Maybe(..))
+import Data.Either (Either(..))
+import Data.Maybe (Maybe(..), maybe)
 import Data.Tuple.Nested ((/\))
 import Effect.Class (liftEffect)
 import Halogen as H
@@ -38,7 +39,7 @@ import TeamTavern.Client.Script.Focus (focusSoon)
 import TeamTavern.Client.Script.Unread (announceUnread)
 import TeamTavern.Client.Shared.Block (block, unblock)
 import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Routes.Shared.Report (Report, reasons)
+import TeamTavern.Routes.Shared.Report (Report, ReportOutcome, reasons)
 import Web.Event.Event (Event, preventDefault)
 
 -- The ⋯ menu of the contact panel and of a conversation, with Report and
@@ -52,14 +53,15 @@ type ReportForm =
     , alsoBlock :: Boolean
     , missing :: Boolean
     , sending :: Boolean
-    , failed :: Boolean
+    , failed :: Maybe String
     }
 
 data View = Main | Blocking | Reporting ReportForm
 
 -- | Who a block or a report is against, and how the report goes: about the
--- | post from its panel, about the conversation from the inbox.
-type Subject left = { who :: String, report :: Report -> Async left Boolean }
+-- | post from its panel, about the conversation from the inbox. It answers
+-- | how the report went, or why it didn't.
+type Subject left = { who :: String, report :: Report -> Async left (Either String ReportOutcome) }
 
 type Actions i =
     { onMenu :: i
@@ -84,7 +86,7 @@ initial :: State
 initial = { menuOpen: false, view: Main }
 
 newForm :: ReportForm
-newForm = { reason: "", detail: "", alsoBlock: false, missing: false, sending: false, failed: false }
+newForm = { reason: "", detail: "", alsoBlock: false, missing: false, sending: false, failed: Nothing }
 
 menuPresentation :: Presentation
 menuPresentation = Dropdown { className: "menu", role: "group" }
@@ -144,7 +146,7 @@ blockReportBody { who, reportTitle } { view, actions } = case view of
             ]
         , check { id: "report-block", text: "Also block " <> who, checked: form.alsoBlock, onChange: actions.onAlsoBlock }
         ]
-        <> (if form.failed then [ flowError "The report couldn't be sent. Try again." ] else [])
+        <> (form.failed # maybe [] \why -> [ flowError why ])
         <>
         [ HH.div [ HS.class_ "confirm-actions" ]
             [ submitButton form.sending "Send report"
@@ -238,14 +240,17 @@ useBlockReport { ref, scope, subject, close, changed, showToast } = Hooks.wrap H
                         setForm _ { missing = true }
                         focus "[name=report-reason]"
                     else do
-                        setForm _ { sending = true, failed = false }
+                        setForm _ { sending = true, failed = Nothing }
                         sent <- H.lift $ report { reason: form.reason, detail: form.detail, block: form.alsoBlock }
-                        case sent, form.alsoBlock of
-                            true, true -> blocked who $ "Report sent. " <> who <> " is blocked."
-                            true, false -> do
-                                toMain
-                                showToast { text: "Report sent. Thanks for telling us.", action: Nothing }
-                            false, _ -> setForm _ { sending = false, failed = true }
+                        case sent of
+                            Right { alreadyReported } -> do
+                                let done = if alreadyReported then "You've already reported this." else "Report sent."
+                                if form.alsoBlock
+                                then blocked who $ done <> " " <> who <> " is blocked."
+                                else do
+                                    toMain
+                                    showToast { text: done <> " Thanks for telling us.", action: Nothing }
+                            Left why -> setForm _ { sending = false, failed = Just why }
                 _, _ -> pure unit
 
         blockReport =

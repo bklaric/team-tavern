@@ -1,5 +1,6 @@
 import { expect, Locator, Page, test } from "@playwright/test";
 import { signIn, signUp } from "../accounts";
+import { emails, openMail } from "../mail";
 import { expectPage } from "../pages";
 
 // Players new to the run block and report Dota2Tester (`stacks/test-seed/players.sql`), whom
@@ -28,6 +29,25 @@ async function write(page: Page) {
     await panel.getByRole("textbox", { name: "Message" }).fill("Selling a boost, cheap.");
     await panel.getByRole("button", { name: "Send" }).click();
     await expect(panel.locator(".message-own")).toHaveCount(1);
+    return panel;
+}
+
+// The seeded tester of a game other than Dota 2: the handle title-cased without its hyphens.
+const tester = (game: string) =>
+    game.split("-").map(word => word[0].toUpperCase() + word.slice(1)).join("") + "Tester";
+
+// Opens a post's panel from its game's feed and reports it as spam, blocking its owner too if
+// asked. Answers the panel, for what it shows after.
+async function report(page: Page, game: string, name: string, { block = false } = {}) {
+    await page.goto(`/games/${game}`);
+    await expect(page.locator(".feed")).toHaveAttribute("aria-busy", "false");
+    await card(page, name).locator(".card-contact").click();
+    const panel = page.getByRole("dialog", { name });
+    await panel.getByRole("button", { name: "More" }).click();
+    await more(panel).getByRole("button", { name: "Report this post" }).click();
+    await panel.getByRole("radio", { name: "Spam or advertising" }).check();
+    if (block) await panel.getByLabel(`Also block ${name}`).check();
+    await panel.getByRole("button", { name: "Send report" }).click();
     return panel;
 }
 
@@ -105,6 +125,40 @@ test.describe("blocking and reporting", () => {
         await page.keyboard.press("Escape");
         await expect(panel).toHaveCount(0);
         await expect(card(page, owner)).toHaveCount(1);
+    });
+
+    // Each report is mailed to the admin, so a player reports a player about a post once.
+    test("a second report of the same post is taken as already sent, and mails nothing", async ({ page }) => {
+        const nickname = await signUp(page, "R");
+        await report(page, handle, owner);
+        await expect(page.locator(".toast-text")).toHaveText("Report sent. Thanks for telling us.");
+
+        const panel = await report(page, handle, owner);
+        await expect(page.locator(".toast-text")).toHaveText("You've already reported this. Thanks for telling us.");
+        await expect(panel.getByRole("textbox", { name: "Message" })).toBeVisible();
+
+        // Also block still blocks.
+        await report(page, handle, owner, { block: true });
+        await expect(page.locator(".toast-text")).toHaveText(`You've already reported this. ${owner} is blocked.`);
+        await expect(card(page, owner)).toHaveCount(0);
+
+        await openMail(page, "admin@example.com");
+        await expect(emails(page, `${nickname} reported ${owner} on TeamTavern`)).toHaveCount(1);
+    });
+
+    // Ten reports a day, each of another game's tester, in games other specs publish few posts
+    // in or none, so the tester's card is on the feed's first page.
+    test("holds back a report past ten a day", async ({ page }) => {
+        await signUp(page, "R");
+        for (const game of ["apex-legends", "counter-strike-2", "deadlock", "fortnite", "heroes-of-the-storm",
+            "marvel-rivals", "overwatch", "pubg-battlegrounds", "rocket-league", "the-finals"]) {
+            await report(page, game, tester(game));
+            await expect(page.locator(".toast-text")).toHaveText("Report sent. Thanks for telling us.");
+        }
+
+        const panel = await report(page, handle, owner);
+        await expect(panel.getByRole("alert")).toHaveText("You've sent too many reports today. Try again in 24 hours.");
+        await expect(panel.getByRole("button", { name: "Send report" })).toBeVisible();
     });
 
     test("the owner reports a writer from the conversation and blocks them with it", async ({ browser }) => {

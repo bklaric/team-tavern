@@ -6,18 +6,21 @@ import Async (Async)
 import Data.Bifunctor (lmap)
 import Data.Newtype (unwrap)
 import Data.Variant (Variant)
-import Jarilo (BadRequestRow_, InternalRow_, NoContentRow_, NotAuthorizedRow_, NotFoundRow_, noContent_)
+import Jarilo (BadRequestRow_, InternalRow_, NotAuthorizedRow_, NotFoundRow_, OkRow, TooManyRequestsRow, ok_)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..), (:|))
-import TeamTavern.Routes.Shared.Report (Report)
-import TeamTavern.Server.Block.Infrastructure.AddReport (Reported, addReport, validateReport)
+import TeamTavern.Routes.Shared.Report (Report, ReportOutcome)
+import TeamTavern.Routes.Shared.Wait (Wait)
+import TeamTavern.Server.Block.Infrastructure.AddReport (validateReport)
 import TeamTavern.Server.Block.Infrastructure.Blocked (blockedBetween)
-import TeamTavern.Server.Block.Infrastructure.SendReportEmail (AdminEmail, sendReportEmail)
+import TeamTavern.Server.Block.Infrastructure.FileReport (fileReport)
+import TeamTavern.Server.Block.Infrastructure.SendReportEmail (AdminEmail)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.Email (Mailer)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Error (elaborate)
-import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotFound, transaction)
+import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotFound)
+import TeamTavern.Server.Infrastructure.RateLimit (Limiter)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import Type.Row (type (+))
 
@@ -47,17 +50,14 @@ reportedQuery = Query $ """
         and not """ <> blockedBetween "post.player_id" "conversation.messager_id" <> """
     """
 
-reportConversation :: ∀ left. Mailer -> AdminEmail -> Pool -> Int -> Cookies -> Report
-    -> Async left (Variant (NoContentRow_ + BadRequestRow_ + NotAuthorizedRow_ + NotFoundRow_ + InternalRow_ + ()))
-reportConversation mailer adminEmail pool conversationId cookies body =
+reportConversation :: ∀ left. Limiter -> Mailer -> AdminEmail -> Pool -> Int -> Cookies -> Report
+    -> Async left (Variant (OkRow ReportOutcome + BadRequestRow_ + NotAuthorizedRow_ + NotFoundRow_ + TooManyRequestsRow Wait + InternalRow_ + ()))
+reportConversation limit mailer adminEmail pool conversationId cookies body =
     sendResponse "Error reporting conversation" do
     { id } <- ensureSignedIn pool cookies
     report <- validateReport body
     let viewer = unwrap id
-    reported <- pool # transaction \client -> do
-        reported :: Reported <- queryFirstNotFound client reportedQuery (conversationId :| viewer)
+    outcome <- fileReport limit mailer adminEmail pool viewer report \client ->
+        queryFirstNotFound client reportedQuery (conversationId :| viewer)
             # lmap (elaborate ("Can't find conversation " <> show conversationId <> " to report"))
-        addReport client viewer reported report
-        pure reported
-    sendReportEmail mailer adminEmail reported report
-    pure noContent_
+    pure $ ok_ outcome

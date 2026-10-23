@@ -493,7 +493,8 @@ create index message_sender_id_idx on message (sender_id);
 -- A stored copy of what was mailed to the admin (brief 10). A report comes from
 -- a post's contact panel or from a conversation, which is about a post itself,
 -- so a post is what every report is against, and deleting one takes its reports
--- with it as it takes its conversations.
+-- with it as it takes its conversations. A player reports a player about a post
+-- once, so each report mails the admin something new.
 
 create table report
     ( id serial not null primary key
@@ -505,10 +506,11 @@ create table report
     , created timestamptz not null default current_timestamp
     , constraint report_reason_check check
         (reason in ('spam', 'harassment', 'selling', 'other'))
+    , constraint report_reporter_id_reported_id_post_id_key
+        unique (reporter_id, reported_id, post_id)
     );
 
 create index report_reported_id_idx on report (reported_id);
-create index report_reporter_id_idx on report (reporter_id);
 create index report_post_id_idx on report (post_id);
 
 -- Notifications
