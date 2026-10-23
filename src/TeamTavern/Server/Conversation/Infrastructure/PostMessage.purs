@@ -1,4 +1,4 @@
-module TeamTavern.Server.Conversation.Infrastructure.PostMessage (maxLength, validateMessage, postMessage) where
+module TeamTavern.Server.Conversation.Infrastructure.PostMessage (createMessageLimit, maxLength, validateMessage, postMessage) where
 
 import Prelude
 
@@ -11,6 +11,7 @@ import Data.String.CodeUnits as CodeUnits
 import Data.String.Regex (Regex, replace)
 import Data.String.Regex.Flags (noFlags)
 import Data.String.Regex.Unsafe (unsafeRegex)
+import Effect (Effect)
 import Jarilo (BadRequestRow_, badRequest__, internal__)
 import JavaScript.Npm.Pg.Client (Client)
 import JavaScript.Npm.Pg.Query (Query(..), (:), (:|))
@@ -21,7 +22,13 @@ import TeamTavern.Server.Conversation.Infrastructure.SendMessageEmail (MessageEm
 import TeamTavern.Server.Conversation.Infrastructure.Unread (unreadFor)
 import TeamTavern.Server.Infrastructure.Error (Terror(..), TerrorVar, elaborate)
 import TeamTavern.Server.Infrastructure.Postgres (LoadSingleError, queryFirstInternal, queryFirstNotFound, queryNone)
+import TeamTavern.Server.Infrastructure.RateLimit (Limiter, createLimiter)
 import Type.Row (type (+))
+
+-- | An account sends 30 messages a minute, wherever it writes them. Each one
+-- | that isn't blank or too long counts, sent or not.
+createMessageLimit :: Effect Limiter
+createMessageLimit = createLimiter "Messages sent by one account" { count: 30, seconds: 60 }
 
 trailingSpace :: Regex
 trailingSpace = unsafeRegex """\s+$""" noFlags

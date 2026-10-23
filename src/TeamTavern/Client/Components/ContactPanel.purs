@@ -28,7 +28,7 @@ import Data.Int (fromString)
 import Data.Maybe (Maybe(..), isJust, isNothing, maybe)
 import Data.String (Pattern(..), split, stripPrefix)
 import Data.Tuple.Nested ((/\))
-import Data.Variant (onMatch)
+import Data.Variant (match, onMatch)
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Timer (setTimeout)
 import Halogen as H
@@ -41,7 +41,7 @@ import Halogen.Hooks as Hooks
 import Halogen.Hooks.Hook (class HookNewtype)
 import TeamTavern.Client.Components.BlockReport (BlockReport, UseBlockReport, blockReportBody, moreMenu, useBlockReport)
 import TeamTavern.Client.Components.Card (postName)
-import TeamTavern.Client.Components.Composer (ComposerActions, ComposerState, UseComposer, composer, couldntSend, useComposer)
+import TeamTavern.Client.Components.Composer (ComposerActions, ComposerState, UseComposer, composer, couldntSend, tooQuickly, useComposer)
 import TeamTavern.Client.Components.Divider (rule)
 import TeamTavern.Client.Components.Overlay (Panel, Presentation(..), UseOverlay, panelHeader, sidePanel, useOverlay)
 import TeamTavern.Client.Components.Thread (newFrom, olderPostNote, thread)
@@ -357,11 +357,14 @@ useContactPanel { onMessaged, onBlockChange, showToast } = Hooks.wrap Hooks.do
                 case result of
                     Right response -> response # onMatch
                         { ok: sent post
-                        , tooManyRequests: \{ seconds, confirmed } -> pure $ Left
-                            if confirmed
-                            then "You've started too many conversations today. " <> tryAgainIn seconds
-                            else "Confirm an email address on your account page to start more conversations today, "
-                                <> "or try again " <> inTime seconds <> "."
+                        , tooManyRequests: pure <<< Left <<< match
+                            { messages: \{ seconds } -> tooQuickly seconds
+                            , conversations: \{ seconds, confirmed } ->
+                                if confirmed
+                                then "You've started too many conversations today. " <> tryAgainIn seconds
+                                else "Confirm an email address on your account page to start more conversations today, "
+                                    <> "or try again " <> inTime seconds <> "."
+                            }
                         }
                         (const $ pure $ Left couldntSend)
                     Left _ -> pure $ Left couldntSend

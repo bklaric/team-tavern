@@ -7,7 +7,7 @@ import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..), isJust)
 import Data.Newtype (unwrap)
-import Data.Variant (Variant)
+import Data.Variant (Variant, inj)
 import Effect (Effect)
 import Jarilo (BadRequestRow_, InternalRow_, NotAuthorizedRow_, NotFoundRow_, OkRow, TooManyRequestsRow, ok_)
 import JavaScript.Npm.Pg.Pool (Pool)
@@ -22,8 +22,9 @@ import TeamTavern.Server.Infrastructure.Email (Mailer)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Error (elaborate)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstInternal, queryFirstMaybe, queryFirstNotFound, transaction)
-import TeamTavern.Server.Infrastructure.RateLimit (Limiter, admit, createLimiter, ensureAdmissionWith, release)
+import TeamTavern.Server.Infrastructure.RateLimit (Admission(..), Limiter, admit, createLimiter, ensureAdmissionWith, release)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
+import Type.Proxy (Proxy(..))
 import Type.Row (type (+))
 
 -- | Each owner is emailed what's written to them, and a new account costs
@@ -80,9 +81,9 @@ conversationQuery = Query """
     select id from conversation where post_id = $1 and messager_id = $2
     """
 
-sendMessage :: ∀ left. ConversationLimits -> Mailer -> Pool -> String -> Int -> Cookies -> MessageContent
+sendMessage :: ∀ left. Limiter -> ConversationLimits -> Mailer -> Pool -> String -> Int -> Cookies -> MessageContent
     -> Async left (Variant (OkRow Conversation + BadRequestRow_ + NotAuthorizedRow_ + NotFoundRow_ + TooManyRequestsRow TooManyContent + InternalRow_ + ()))
-sendMessage limits mailer pool handle postId cookies { content } =
+sendMessage messageLimit limits mailer pool handle postId cookies { content } =
     sendResponse "Error sending message" do
     { id } <- ensureSignedIn pool cookies
     lines <- validateMessage content
@@ -98,9 +99,18 @@ sendMessage limits mailer pool handle postId cookies { content } =
         if not starting then pure Nothing
         else do
             let limiter = if confirmed then limits.confirmed else limits.unconfirmed
-            ensureAdmissionWith { seconds: _, confirmed } (admit limiter account)
+            ensureAdmissionWith (\seconds -> inj (Proxy :: _ "conversations") { seconds, confirmed }) (admit limiter account)
                 "Too many conversations started by one account."
             pure $ Just limiter
+
+    -- The message is counted after the conversation, so a conversation refused
+    -- uses up no messages, and a message refused gives its conversation back.
+    admission <- fromEffect $ admit messageLimit account
+    case admission of
+        Admitted -> pure unit
+        Refused _ -> foreach counted \limiter -> fromEffect $ release limiter account
+    ensureAdmissionWith (\seconds -> inj (Proxy :: _ "messages") { seconds }) (pure admission)
+        "Too many messages sent by one account."
 
     result <- attempt $ pool # transaction \client -> do
         (_ :: { id :: Int }) <- queryFirstNotFound client postQuery (handle : postId :| viewer)

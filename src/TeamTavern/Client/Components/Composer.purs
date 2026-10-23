@@ -5,6 +5,7 @@ module TeamTavern.Client.Components.Composer
     , composer
     , couldntSend
     , idleComposer
+    , tooQuickly
     , useComposer
     ) where
 
@@ -27,6 +28,7 @@ import Halogen.Hooks.Hook (class HookNewtype)
 import TeamTavern.Client.Components.UsePhone (UsePhone, usePhone)
 import TeamTavern.Client.Icons as Icons
 import TeamTavern.Client.Script.Thread (autosize)
+import TeamTavern.Client.Shared.AccountErrors (tryAgainIn)
 import TeamTavern.Client.Snippets.Class as HS
 import Web.Event.Event (Event, preventDefault)
 import Web.UIEvent.KeyboardEvent (KeyboardEvent, isComposing, key, shiftKey)
@@ -47,6 +49,11 @@ idleComposer = { draft: "", sending: false, unsent: Nothing }
 -- | Why a message didn't go, when nothing more is known.
 couldntSend :: String
 couldntSend = "Your message couldn't be sent. Try again."
+
+-- | Why a message didn't go when it was one too many, `seconds` before the
+-- | next would.
+tooQuickly :: Int -> String
+tooQuickly seconds = "You're sending messages too quickly. " <> tryAgainIn seconds
 
 -- | The box and Send, filled when the message box is the way the post asks to
 -- | be reached and outlined when it comes second, and under them what went

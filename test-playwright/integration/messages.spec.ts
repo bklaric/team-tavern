@@ -146,6 +146,39 @@ test.describe("messaging", () => {
         await expect((await write("rocket-league", "RocketLeagueTester")).locator(".message-own")).toHaveCount(1);
     });
 
+    // An account sends 30 messages a minute, from the contact panel and the inbox together.
+    test("holds back a message past thirty a minute", async ({ page }) => {
+        await signUp(page, "W");
+        await openFeed(page);
+        await card(page, owner).locator(".card-contact").click();
+        const panel = page.getByRole("dialog", { name: owner });
+        const box = panel.getByRole("textbox", { name: "Message" });
+        for (let sent = 1; sent <= 30; sent++) {
+            await box.fill(`Message ${sent}`);
+            await box.press("Enter");
+            await expect(panel.locator(".message-own")).toHaveCount(sent);
+        }
+
+        const tooMany = "You're sending messages too quickly. Try again in a minute.";
+        await box.fill("One too many");
+        await box.press("Enter");
+        await expect(panel.locator(".field-error")).toHaveText(tooMany);
+        await expect(panel.locator(".message-own")).toHaveCount(30);
+        await expect(box).toHaveValue("One too many");
+        await page.keyboard.press("Escape");
+
+        await page.getByRole("link", { name: "Messages", exact: true }).click();
+        await expectPage(page, "/messages");
+        await page.locator(".inbox-row").filter({ hasText: owner }).click();
+        await expectPage(page, /^\/messages\/\d+$/);
+        const conversation = page.getByRole("region", { name: owner });
+        await expect(conversation.locator(".message-own")).toHaveCount(30);
+        await conversation.getByRole("textbox", { name: "Message" }).fill("Still one too many");
+        await conversation.getByRole("button", { name: "Send" }).click();
+        await expect(conversation.locator(".field-error")).toHaveText(tooMany);
+        await expect(conversation.locator(".message-own")).toHaveCount(30);
+    });
+
     test("sends nothing that is only blank", async ({ page }) => {
         await signUp(page, "W");
         await openFeed(page);

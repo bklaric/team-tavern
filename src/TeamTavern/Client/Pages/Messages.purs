@@ -27,7 +27,7 @@ import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.BlockReport (blockReportBody, moreMenu, useBlockReport)
 import TeamTavern.Client.Components.Button (Size(..), Weight(..), button, buttonLink)
 import TeamTavern.Client.Components.Card (Viewer, postFacts, postName)
-import TeamTavern.Client.Components.Composer (composer, couldntSend, useComposer)
+import TeamTavern.Client.Components.Composer (composer, couldntSend, tooQuickly, useComposer)
 import TeamTavern.Client.Components.ContactPanel (Revealed(..), contactRows)
 import TeamTavern.Client.Components.EmptyState (emptyState)
 import TeamTavern.Client.Components.InboxRow (inboxCover, inboxPostName, inboxRow)
@@ -181,21 +181,28 @@ component = Hooks.component \_ { conversation: openId, visit } -> Hooks.do
         send draft = Hooks.get stateId <#> _.open >>= case _ of
             Open opened -> do
                 result <- H.lift $ Async.attempt $
-                    fetchPathBody (Proxy :: _ SendReply) { id: opened.conversation.id } { content: draft }
-                case hush result >>= onMatch { ok: Just } (const Nothing) of
-                    Just conversation -> do
-                        set \state' -> case state'.open of
-                            Open opened' | opened'.conversation.id == conversation.id ->
-                                state' { open = Open opened' { conversation = conversation, new = Nothing } }
-                            _ -> state'
-                        liftEffect do
-                            announceUnread
-                            scrollThreadsToEnd
-                        visit' <- Hooks.get stateId <#> _.visit
-                        void $ Hooks.fork $ loadInbox visit'
-                        pure $ Right unit
-                    Nothing -> pure $ Left couldntSend
+                    fetchPathBody (expecting [ "tooManyRequests" ] (Proxy :: _ SendReply))
+                    { id: opened.conversation.id } { content: draft }
+                case result of
+                    Right response -> response # onMatch
+                        { ok: sent
+                        , tooManyRequests: \{ seconds } -> pure $ Left $ tooQuickly seconds
+                        }
+                        (const $ pure $ Left couldntSend)
+                    Left _ -> pure $ Left couldntSend
             _ -> pure $ Left couldntSend
+
+        sent conversation = do
+            set \state' -> case state'.open of
+                Open opened' | opened'.conversation.id == conversation.id ->
+                    state' { open = Open opened' { conversation = conversation, new = Nothing } }
+                _ -> state'
+            liftEffect do
+                announceUnread
+                scrollThreadsToEnd
+            visit' <- Hooks.get stateId <#> _.visit
+            void $ Hooks.fork $ loadInbox visit'
+            pure $ Right unit
 
     message <- useComposer messageRef send
 
