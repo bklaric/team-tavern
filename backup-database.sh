@@ -73,8 +73,11 @@ for name in POSTGRES_USER POSTGRES_DB AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY; d
 done
 
 # The timeout runs in the container, since docker exec passes no signal on to
-# what it runs.
-docker exec tt-postgres timeout 1h pg_dump --username "$POSTGRES_USER" "$POSTGRES_DB" \
+# what it runs. What docker exec runs takes the container's OOM score, which
+# spares the postmaster (server.docker-compose.yml), so the dump puts its own
+# back to the usual one first.
+docker exec tt-postgres sh -c 'echo 0 > /proc/self/oom_score_adj && exec timeout 1h pg_dump --username "$1" "$2"' \
+    sh "$POSTGRES_USER" "$POSTGRES_DB" \
     | gzip -c > "$WORK/dump.sql.gz"
 # pg_dump writes this line near the end of a dump it finished.
 gunzip -c "$WORK/dump.sql.gz" | tail -n 20 \

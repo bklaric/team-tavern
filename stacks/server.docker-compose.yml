@@ -30,10 +30,19 @@ services:
     image: postgres:18.6
     container_name: tt-postgres
     restart: unless-stopped
+    # Under memory pressure the kernel kills the postmaster last, which would
+    # take every connection with it. The processes it starts go back to the
+    # usual score, as Postgres's documentation advises, so a backend whose
+    # query runs away is killed rather than shielded, though that too sends
+    # Postgres through crash recovery. backup-database.sh drops the score for
+    # its pg_dump, which docker exec would otherwise start at -900.
+    oom_score_adj: -900
     environment:
       POSTGRES_USER: ${POSTGRES_USER:?}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
       POSTGRES_DB: ${POSTGRES_DB:?}
+      PG_OOM_ADJUST_FILE: /proc/self/oom_score_adj
+      PG_OOM_ADJUST_VALUE: 0
     volumes:
       # The data lives in <major>/docker below this, so the next major version
       # initializes beside it rather than over it.
@@ -88,6 +97,14 @@ services:
       TIMEOUT_STATUS_CODE: "503"
       # Matches subdomains too, so www and staging render.
       ALLOWED_DOMAINS: tt-caddy,teamtavern.net
+    # base.Caddyfile lets four renders run at once: on one core each of the four
+    # took about 3 s, and together they peaked at 300 MB. These keep a render
+    # that runs away from taking the memory, swap included, and every core the
+    # site needs. Past the memory, the kernel kills a Chromium process here, its
+    # renders fail and renderready relaunches the browser.
+    mem_limit: 1g
+    memswap_limit: 1g
+    cpus: "1.0"
     logging: *logging
     depends_on:
       - tt-node

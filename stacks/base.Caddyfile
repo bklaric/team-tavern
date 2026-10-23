@@ -83,6 +83,11 @@ handle @prerender_header {
 # most do, so one nobody has heard of is rendered for too. The names after
 # those are the bots that use none of the three words. Cubot is a phone maker
 # whose browsers carry its name.
+#
+# Anyone can call themselves a bot, and each render is a Chromium page, so at
+# most four render at once and the rest wait their turn here, which costs Caddy
+# next to nothing. The prerenderer limits none itself, and the server's compose
+# file sizes its memory and CPU for four.
 
 @bot_page {
     header_regexp User-Agent (?i)(bot|crawl|spider|ahrefssiteaudit|amzn-user|cardyb|chatgpt-user|claude-user|cohere-ai|embedly|facebookexternalhit|gemini-deep-research|google-inspectiontool|googleagent-urlcontext|googleother|iframely|kagi-fetcher|kimi-user|mastodon|meta-external|meta-webindexer|mistralai|notebooklm|outbrain|perplexity-user|pinterest|quora\slink\spreview|skypeuripreview|steamchaturllookup|vkshare|W3C_Validator|whatsapp|yandex)
@@ -96,6 +101,9 @@ handle @bot_page {
         rewrite /render?url={args[0]}{uri}
         header_down -ETag
         header_down -Last-Modified
+        transport http {
+            max_conns_per_host 4
+        }
     }
 }
 
