@@ -141,7 +141,7 @@
     width: min(400px, calc(100vw - var(--space-8)));
 }
 
-/* The icon of the page the viewer is already on. */
+/* The link or icon of the page the viewer is already on. */
 .site-header [aria-current="page"] {
     color: var(--text);
 }

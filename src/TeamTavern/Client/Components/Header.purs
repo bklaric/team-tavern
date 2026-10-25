@@ -51,7 +51,7 @@ import Web.Event.Event (preventDefault)
 import Web.UIEvent.MouseEvent as MouseEvent
 
 -- One menu is open at a time: Games, notifications, the account menu, or, on
--- a phone signed out, the menu holding Sign in and Sign up.
+-- a phone signed out, the menu holding Guides, Sign in and Sign up.
 data Menu = Games | Notifications | AccountMenu | SignedOutMenu
 
 derive instance Eq Menu
@@ -233,13 +233,17 @@ component = Hooks.component \_ { path, visit } -> Hooks.do
             SignedIn me -> me.games # find (_.handle >>> eq handle) # maybe 0 _.posts
             _ -> 0
 
-        items AccountMenu =
+        -- A phone's bar has no room for Guides, so its menus lead with it.
+        items menu = (if phone then [ menuLink "/guides" [ HH.text "Guides" ], menuDivider ] else [])
+            <> accountItems menu
+
+        accountItems AccountMenu =
             [ menuLink "/" [ HH.text "Your posts" ]
             , menuLink "/account" [ HH.text "Account" ]
             , menuDivider
             , menuItem signOut [ HH.text "Sign out" ]
             ]
-        items _ =
+        accountItems _ =
             [ menuLink (authPath "/signin" state.back) [ HH.text "Sign in" ]
             , menuLink (authPath "/signup" state.back) [ HH.text "Sign up" ]
             ]
@@ -296,6 +300,19 @@ component = Hooks.component \_ { path, visit } -> Hooks.do
 
         counted label word n = label <> if n > 0 then ", " <> show n <> " " <> word else ""
 
+        current prefix = if isJust (stripPrefix (Pattern prefix) path)
+            then [ HP.attr (HH.AttrName "aria-current") "page" ] else []
+
+        guides =
+            HH.a
+            ( [ HS.class_ "button button-text hide-phone"
+              , HP.href "/guides"
+              , HE.onClick $ navigateWithEvent_ "/guides"
+              ]
+              <> current "/guides"
+            )
+            [ HH.text "Guides" ]
+
         -- On a game's pages, New post knows the game (brief 6).
         newPostPath = case Array.take 3 $ split (Pattern "/") path of
             [ "", "games", handle ] -> "/post?game=" <> handle
@@ -320,8 +337,7 @@ component = Hooks.component \_ { path, visit } -> Hooks.do
                   , HPA.label $ counted "Messages" "unread" me.unreadConversations
                   , HE.onClick $ navigateWithEvent_ "/messages"
                   ]
-                  <> if isJust (stripPrefix (Pattern "/messages") path)
-                    then [ HP.attr (HH.AttrName "aria-current") "page" ] else []
+                  <> current "/messages"
                 )
                 ([ Icons.mail ] <> if me.unreadConversations > 0 then [ badge me.unreadConversations ] else [])
             , opener Notifications "header-wrap"
@@ -348,6 +364,7 @@ component = Hooks.component \_ { path, visit } -> Hooks.do
                     , HH.span [ HS.class_ "logo-word" ] [ HH.text "TeamTavern" ]
                     ]
                 , opener Games "header-wrap header-wrap-games" Nothing [ HH.text "Games", Icons.chevronDown ]
+                , guides
                 , HH.div [ HS.class_ "site-header-actions" ] case state.viewer of
                     Unknown -> []
                     SignedOut -> signedOutActions

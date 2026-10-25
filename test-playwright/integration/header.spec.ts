@@ -16,6 +16,19 @@ test.describe("signed out, the header", () => {
     });
 });
 
+test("Guides leads to the guides and marks them while one is open", async ({ page }) => {
+    await page.goto("/");
+    const guides = page.getByRole("banner").getByRole("link", { name: "Guides" });
+    await expect(guides).not.toHaveAttribute("aria-current");
+
+    await guides.click();
+    await expectPage(page, "/guides");
+    await expect(guides).toHaveAttribute("aria-current", "page");
+
+    await page.goto("/guides/join-an-esports-team");
+    await expect(guides).toHaveAttribute("aria-current", "page");
+});
+
 test("New post on a game's pages knows the game", async ({ page }) => {
     await page.goto("/games/apex-legends");
 
@@ -105,13 +118,15 @@ test.describe("the header's menus", () => {
 test.describe("on a phone, the header", () => {
     test.use({ viewport: { width: 375, height: 740 } });
 
-    test("holds Sign in and Sign up in a menu", async ({ page }) => {
+    test("holds Guides, Sign in and Sign up in a menu", async ({ page }) => {
         await page.goto("/");
         await expect(page.getByRole("link", { name: "Sign in" })).toBeHidden();
+        await expect(page.getByRole("banner").getByRole("link", { name: "Guides" })).toBeHidden();
 
         await page.getByRole("button", { name: "Menu" }).click();
 
         const menu = page.getByRole("dialog", { name: "Menu" });
+        await expect(menu.getByRole("link").first()).toHaveText("Guides");
         await expect(menu.getByRole("link", { name: "Sign in" })).toBeVisible();
         await menu.getByRole("link", { name: "Sign up" }).click();
         await expectPage(page, "/signup");
@@ -127,6 +142,18 @@ test.describe("on a phone, the header", () => {
         await expect(sheet).toHaveClass(/overlay-bottom/);
         await expect(sheet.getByRole("button", { name: "Sign out" })).toBeVisible();
         await sheet.getByRole("button", { name: "Close" }).click();
+        await expect(sheet).toHaveCount(0);
+    });
+
+    test("leads the account menu with Guides", async ({ page }) => {
+        await signIn(page, "NewTester");
+
+        await page.getByRole("button", { name: "Account menu" }).click();
+
+        const sheet = page.getByRole("dialog", { name: "NewTester" });
+        await expect(sheet.getByRole("link").first()).toHaveText("Guides");
+        await sheet.getByRole("link", { name: "Guides" }).click();
+        await expectPage(page, "/guides");
         await expect(sheet).toHaveCount(0);
     });
 });
