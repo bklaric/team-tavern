@@ -35,9 +35,9 @@ const hide = shown => {
 };
 
 // Shows the placement into the element while the media query matches. Without
-// an element it goes on the window's floor, and steps aside while a modal
-// overlay is open, since it would cover the bottom of the overlay, where a
-// phone's sheet keeps its Send.
+// an element Venatus draws it over the bottom of the window, and it steps
+// aside while a modal overlay is open, since it would cover the bottom of the
+// overlay, where a phone's sheet keeps its Send.
 export const mount = name => query => element => () => {
     const media = matchMedia(query);
     let shown = null;

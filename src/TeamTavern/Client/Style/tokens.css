@@ -46,5 +46,7 @@
     --radius-control: 6px;
     --radius-card: 8px;
 
-    --feed-width: 720px;
+    /* Inside 16 px of padding on either side, a page's column holds a 728 px
+       billboard or leaderboard. */
+    --feed-width: 760px;
 }

@@ -22,6 +22,7 @@ import Halogen.HTML.Properties as HP
 import Halogen.HTML.Properties.ARIA as HPA
 import Halogen.Hooks (HookM)
 import Halogen.Hooks as Hooks
+import TeamTavern.Client.Components.Ads as Ads
 import TeamTavern.Client.Components.Button (Size(..), Weight(..), buttonLink)
 import TeamTavern.Client.Components.Card (Viewer, ownCard, postName, postPath)
 import TeamTavern.Client.Components.CoverGrid (coverGrid, feedPath)
@@ -166,7 +167,7 @@ component = Hooks.component \_ _ -> Hooks.do
                     else []
             ]
 
-    Hooks.pure case page of
+    Hooks.pure $ Ads.around case page of
         Loading -> HH.div [ HS.class_ "home" ] []
         Failed message -> HH.div [ HS.class_ "home" ] [ HH.p_ [ HH.text message ] ]
         Start games ->
@@ -176,7 +177,9 @@ component = Hooks.component \_ _ -> Hooks.do
                 , HH.p [ HS.class_ "home-lead" ] [ HH.text lead ]
                 , typeCards { href: \type_ -> "/post/" <> type_, note: const Nothing }
                 ]
+            , Ads.spot Ads.First
             , gamesSection "Or browse a game" games
+            , Ads.spot Ads.Second
             , toasts toast dismissToast
             ]
         -- Games keep the catalogue's order, so renewing a post doesn't move it.
@@ -187,7 +190,13 @@ component = Hooks.component \_ _ -> Hooks.do
             HK.div [ HS.class_ "home" ] $
             [ Tuple "title" $ HH.h1_ [ HH.text "Your posts" ] ]
             <> (gameSection viewer <$> own)
-            <> (if length others == 0 then [] else [ Tuple "others" $ gamesSection "Other games" others ])
+            <> ( if length others == 0 then []
+                else
+                    [ Tuple "ad-first" $ Ads.spot Ads.First
+                    , Tuple "others" $ gamesSection "Other games" others
+                    , Tuple "ad-second" $ Ads.spot Ads.Second
+                    ]
+               )
             <> [ Tuple "toasts" $ toasts toast dismissToast ]
 
 home :: ∀ action slots left. Int -> H.ComponentHTML action (home :: Slot__I Int | slots) (Async left)

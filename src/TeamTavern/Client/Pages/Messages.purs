@@ -24,6 +24,7 @@ import Halogen.HTML.Properties as HP
 import Halogen.HTML.Properties.ARIA as HPA
 import Halogen.Hooks (HookM)
 import Halogen.Hooks as Hooks
+import TeamTavern.Client.Components.Ads as Ads
 import TeamTavern.Client.Components.BlockReport (blockReportBody, moreMenu, useBlockReport)
 import TeamTavern.Client.Components.Button (Size(..), Weight(..), button, buttonLink)
 import TeamTavern.Client.Components.Card (Viewer, postFacts, postName)
@@ -430,7 +431,7 @@ component = Hooks.component \_ { conversation: openId, visit } -> Hooks.do
                     , text: "Message someone from a game's feed, or publish a post: players who fit it can message you, and the conversation shows up here."
                     , action: buttonLink Primary Regular "/post" [ HH.text "Publish a post" ]
                     }
-            | otherwise ->
+            | otherwise -> Ads.beside $
                 HH.div
                     ( [ HS.class_ "messages-page" ]
                       <> if isJust openId then [ HP.attr (HH.AttrName "data-open") "" ] else []

@@ -207,8 +207,9 @@ Fortress 2 in its last week, and message and renewal emails switched off, for
 the email spec. For the worker's email, `FitsTester` (`fits@example.com`) has an
 expired Apex Legends post that fits ApexLegendsTester's once renewed, and
 `ExpiringTester` (`expiring@example.com`) a player post and the community Night
-Shift in Team Fortress 2, both in their last week. All share the password, and
-all are confirmed. `Seed/Games/` carries every production game, so every
+Shift in Team Fortress 2, both in their last week. `AdsTester`
+(`ads@example.com`) has a sixth post there, so that feed is long enough for the
+ad after its sixth card. All share the password, and all are confirmed. `Seed/Games/` carries every production game, so every
 game handle the site serves has a page with content. A cold boot answers on the
 API within a few seconds.
 
@@ -599,9 +600,14 @@ says `X-Robots-Tag: noindex, nofollow`, so staging stays out of search.
   elements by position, and a click aimed at one item lands on whichever took
   its place.
 - Ads are Venatus units. `Ads.around` in `Client/Components/Ads.purs` places
-  a page's units around its content, on the feed, a post's page, the guides and each guide. Every unit
-  goes through the `self.__VM` queue, which `Ads.js` creates when no ad
-  script has, since the prerender shell loads none.
+  a page's units around its content, on home, the feed, a post's page, the
+  guides and each guide; `Ads.spot` puts one among the content, after the
+  feed's third and sixth cards, around home's games and in a guide's text;
+  and `Ads.beside` gives the inbox rails alone. Each placement is asked for
+  only where Venatus fills it, in a window wider than 1024 px or in one no
+  wider, and `Ads.scss` keeps room by the same widths. Every unit goes
+  through the `self.__VM` queue, which `Ads.js` creates when no ad script
+  has, since the prerender shell loads none.
 - A list that refetches while the page is open carries `aria-busy`, true from
   a request until the latest one answers, and specs wait for it to settle
   before acting on the list, as `feed.spec.ts` does.

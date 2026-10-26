@@ -81,7 +81,10 @@ test.describe("the feed", () => {
         ]);
     });
 
+    // In a 720 px window, two rows hold all of Valorant's player chips but not all of its
+    // group chips.
     test("shows every chip where they fit in two rows, and keeps those that don't behind More", async ({ page }) => {
+        await page.setViewportSize({ width: 720, height: 720 });
         await page.goto(feedPath);
         await expect(page.getByRole("button", { name: "Microphone", exact: true })).toBeVisible();
         await expect(page.getByRole("button", { name: "More", exact: true })).toHaveCount(0);

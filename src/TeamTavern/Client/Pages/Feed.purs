@@ -516,13 +516,22 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
                         , tier = Just tier
                         }
                     else acc'
+                cards = acc''.cards + 1
                 in
-                -- Keyed, so a card's element stays with its post as the order changes.
-                acc'' { stack = snoc acc''.stack (Tuple (show post.id) (cardOf game viewer post)) }
+                -- Keyed, so a card's element stays with its post as the order
+                -- changes, and a unit with its place in the list.
+                acc''
+                    { stack = snoc acc''.stack (Tuple (show post.id) (cardOf game viewer post)) <> spotAfter cards
+                    , cards = cards
+                    }
+            spotAfter cards
+                | cards == 3 = [ Tuple "ad-first" $ Ads.spot Ads.First ]
+                | cards == 6 = [ Tuple "ad-second" $ Ads.spot Ads.Second ]
+                | otherwise = []
             headingAt tier = index headings tier
             countAt tier = index counts tier
             in
-            (flush $ foldl step { html: [], stack: [], tier: Nothing, expired: false } rows).html
+            (flush $ foldl step { html: [], stack: [], tier: Nothing, expired: false, cards: 0 } rows).html
 
     Hooks.pure $ Ads.around case state.game of
         Missing -> placeholder "Page could not be found."
@@ -572,6 +581,7 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
                         change $ setCurrent (emptyDescription description.type) state.stored
                         liftEffect $ focusSoon ".field-chips .field-chip"
                     }
+            , Ads.banner
             , case state.renewed of
                 Just text -> prompt Icons.refreshCw true { text, action: Nothing }
                 Nothing -> publishPrompt game
@@ -604,6 +614,7 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
                 Just panel', Just viewer -> contactPanel viewer.now panel'
                 _, _ -> HH.text ""
             , toasts toast dismissToast
+            , Ads.video
             ]
 
 feed :: ∀ action slots left.

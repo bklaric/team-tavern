@@ -1,6 +1,7 @@
-/* Ads around a page: a takeover above it and a skyscraper on either side of
-   its column on a desktop. The stickies on the window's floor are Venatus's
-   own. */
+/* Ads around a page: a takeover above it and a rail on either side of its
+   column on a desktop, and units among its content. The stickies on the
+   window's floor and the video are Venatus's own. The desktop and mobile
+   queries are Venatus's breakpoints, as Ads.purs has them. */
 
 /* Google sets a creative's frame inline-block inside inline spans, so a line
    height would add room for descenders under it and the unit would outgrow
@@ -22,22 +23,43 @@
     margin: var(--space-6) var(--space-4) 0;
 }
 
+/* A unit among the content is an item of the content's column, centred in
+   it and as wide as it comes, which on the narrowest phones is wider than
+   the column inside its padding. */
+.ad-spot,
+.ad-banner {
+    display: contents;
+}
+
+.ad-spot > .ad,
+.ad-banner > .ad {
+    align-self: center;
+}
+
 .ad-rail {
     display: none;
 }
 
-/* The takeover shows from here, and its billboard's room is kept from the
-   start, empty or not, so the page stays put when one arrives or when Venatus
-   swaps it for the next. */
-@media (min-width: 1024px) {
+/* The takeover's billboard and a phone's banner keep their room from the
+   start, empty or not, so the page stays put when one arrives or when
+   Venatus swaps it for the next. */
+@media (width > 1024px) {
     .ad-takeover .ad {
         display: block;
         min-height: 250px;
     }
 }
 
-/* A 160 px skyscraper fits on either side of the column from here. */
-@media (min-width: 1100px) {
+@media (width <= 1024px) {
+    .ad-banner > .ad {
+        display: block;
+        min-height: 50px;
+    }
+}
+
+/* A 160 px skyscraper fits on either side of the column from here, and a
+   300 px double MPU further on. */
+@media (width >= 1140px) {
     .page-frame {
         display: grid;
         grid-template-columns: 1fr minmax(0, var(--feed-width)) 1fr;
@@ -54,7 +76,7 @@
         min-width: 0;
     }
 
-    .ad-rail {
+    .page-frame > .ad-rail {
         display: block;
         position: sticky;
         top: calc(56px + var(--space-6));
@@ -71,5 +93,49 @@
 
     .ad-rail-right {
         grid-column: 3;
+    }
+}
+
+@media (width >= 1420px) {
+    .page-frame > .ad-rail {
+        width: 300px;
+    }
+}
+
+/* The inbox gives the rails their room, a rail and a gap on either side of
+   it, and narrows down to what a conversation's messages need. It fills the
+   window, so a rail taller than the room beside it is cut off rather than
+   making the page scroll. */
+@media (width >= 1336px) {
+    .inbox-frame {
+        display: grid;
+        grid-template-columns: minmax(192px, 1fr) minmax(0, 1080px) minmax(192px, 1fr);
+    }
+
+    .inbox-frame-main {
+        grid-column: 2;
+        grid-row: 1;
+        min-width: 0;
+    }
+
+    .inbox-frame > .ad-rail {
+        display: block;
+        grid-row: 1;
+        align-self: start;
+        justify-self: center;
+        width: 160px;
+        max-height: calc(100dvh - 57px - var(--space-6));
+        margin-top: var(--space-6);
+        overflow: hidden;
+    }
+}
+
+@media (width >= 1616px) {
+    .inbox-frame {
+        grid-template-columns: minmax(332px, 1fr) minmax(0, 1080px) minmax(332px, 1fr);
+    }
+
+    .inbox-frame > .ad-rail {
+        width: 300px;
     }
 }

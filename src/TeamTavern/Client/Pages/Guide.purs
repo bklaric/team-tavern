@@ -7,6 +7,8 @@ import Async as Async
 import Data.Either (Either(..))
 import Data.Foldable (for_)
 import Data.Maybe (Maybe(..))
+import Data.String (Pattern(..))
+import Data.String.CodeUnits (indexOf, indexOf', length, splitAt)
 import Data.Traversable (traverse)
 import Data.Tuple.Nested ((/\))
 import Data.Variant (onMatch)
@@ -47,6 +49,25 @@ followLink event = do
         Just element -> closest (QuerySelector "a[href^='/']:not([href^='//'])") element
             >>= traverse (getAttribute "href") <#> join
     for_ path \path' -> navigateWithEvent_ path' event
+
+-- The guide's text, split where its units go: after the summary it opens
+-- with, and two sections further on. Its elements are the document column's
+-- own, so the parts and the units between them read as one column.
+parts :: String -> Array String
+parts html = case indexOf (Pattern summaryEnd) html of
+    Nothing -> [ html ]
+    Just at -> let
+        { before: opening, after: rest } = splitAt (at + length summaryEnd) html
+        in
+        case thirdSection rest of
+            Nothing -> [ opening, rest ]
+            Just at' -> let { before: middle, after: closing } = splitAt at' rest in [ opening, middle, closing ]
+    where
+    summaryEnd = "</blockquote>"
+    heading = Pattern "<h2"
+    thirdSection rest = indexOf heading rest
+        >>= \first -> indexOf' heading (first + 1) rest
+        >>= \second -> indexOf' heading (second + 1) rest
 
 component :: ∀ query output left. H.Component query String output (Async left)
 component = Hooks.component \_ slug -> Hooks.do
@@ -93,9 +114,15 @@ component = Hooks.component \_ slug -> Hooks.do
         Loading -> HH.div_ []
         Missing -> placeholder "Page could not be found."
         Failed -> placeholder "There has been an error loading the guide."
-        Shown { heading, updated, html } -> Ads.around $
-            document { title: heading, updated: Just $ longDate updated }
-            [ HH.div [ HS.class_ "guide", HP.prop (HH.PropName "innerHTML") html, HE.onClick followLink ] [] ]
+        Shown { heading, updated, html } -> let
+            text part = HH.div [ HS.class_ "guide", HP.prop (HH.PropName "innerHTML") part, HE.onClick followLink ] []
+            in
+            Ads.around $ document { title: heading, updated: Just $ longDate updated }
+            case parts html of
+                [ opening, middle, closing ] ->
+                    [ text opening, Ads.spot Ads.First, text middle, Ads.spot Ads.Second, text closing ]
+                [ opening, rest ] -> [ text opening, Ads.spot Ads.First, text rest ]
+                _ -> [ text html ]
 
 guide :: ∀ action slots left. Int -> String -> H.ComponentHTML action (guide :: Slot__I Int | slots) (Async left)
 guide visit slug = HH.slot_ (Proxy :: _ "guide") visit component slug

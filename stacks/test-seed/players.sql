@@ -536,6 +536,28 @@ select
 from player, game
 where player.nickname = 'ExpiringTester' and game.handle = 'team-fortress-2';
 
+-- A sixth post in Team Fortress 2, whose feed is then the one long enough for
+-- the ad after its sixth card.
+
+select seed_player('AdsTester', 'ads@example.com');
+
+insert into post
+    ( player_id, game_id, ilk, renewal_nonce, summary
+    , microphone, online_from, online_to, contact_preference
+    )
+select
+    player.id,
+    game.id,
+    'player',
+    left(md5('AdsTester-player'), 20),
+    array['Seeded player post of AdsTester''s.'],
+    true,
+    time '20:00',
+    time '23:00',
+    'either'
+from player, game
+where player.nickname = 'AdsTester' and game.handle = 'team-fortress-2';
+
 drop function seed_post_range(text, text, text, text, text);
 drop function seed_post_option(text, text, text, text[]);
 drop function seed_player(text, text);

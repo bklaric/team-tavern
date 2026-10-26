@@ -5,7 +5,7 @@
 .messages-page {
     display: grid;
     grid-template-columns: 360px minmax(0, 1fr);
-    max-width: 1200px;
+    max-width: 1080px;
     height: calc(100dvh - 57px);
     margin: 0 auto;
     border-inline: 1px solid var(--border);
