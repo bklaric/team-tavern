@@ -11,6 +11,13 @@
 -- so a rank range spans divisions and rank closeness counts in steps of one
 -- (brief 7.2). Unreal is the one rank without them.
 --
+-- Unreal Legends, which Epic's tournament rules list as a 23rd division above
+-- Unreal, is not an option. A player holds it only while in the top 500 of the
+-- Unreal leaderboard with a Skill Rating of at least 2,500, and loses it the
+-- moment either slips, so a post naming it goes stale within days, while every
+-- other rank holds until the season's reset. Everyone who holds it is Unreal,
+-- which their posts say.
+--
 -- Building is whether a post plays with building or Zero Build. Ranked mixes
 -- the two on one ladder, but a match is one or the other, so it is a fact two
 -- posts share, and LFG posts and servers lead with it ("[ZB]", ranked-zb-na

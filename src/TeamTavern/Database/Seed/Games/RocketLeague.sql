@@ -14,6 +14,12 @@
 -- so the options stop at the rank, a range reads "Diamond II – Champion I", and
 -- rank closeness counts in steps of one rank (brief 7.2).
 --
+-- Tournament rank, the ladder the game's own brackets enter a party by, is not
+-- a field, though it drifts well away from the playlist ranks over a season.
+-- Players almost never post it: 4 of 1,200 posts did. A player whose
+-- tournament rank is far from their 2s or 3s says so in the description, as the
+-- tournaments guide asks.
+--
 -- There is no role field: the three players of a team rotate through the same
 -- positions, and posts ask for someone who rotates, never for a slot. Nobody
 -- names a shotcaller either.
