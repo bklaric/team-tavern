@@ -50,20 +50,20 @@ const fakeVenatus = `(() => {
 })();`;
 
 // Valorant's feed holds four posts, three active and one expired (`stacks/test-seed/players.sql`),
-// so it has a unit after its third card and too few cards for one after a sixth.
+// too few for a unit among them.
 const feedPath = "/games/valorant";
 
-// Team Fortress 2's holds six active posts, so it has a unit after its sixth card too.
+// Team Fortress 2's holds ten active posts, so it has a unit after its fifth card and its tenth.
 const longFeedPath = "/games/team-fortress-2";
 
-// A unit after the given card of six, and so before the next card if there is one.
+// A unit after the given card of ten, and so before the next card if there is one.
 async function expectAfterCard(page: Page, name: string, card: number) {
     const cards = page.locator(".card");
-    await expect(cards).toHaveCount(6);
+    await expect(cards).toHaveCount(10);
     const before = await boxOf(cards.nth(card - 1));
     const found = await box(page, `[data-fake-ad=${name}]`);
     expect(found.y).toBeGreaterThanOrEqual(before.y + before.height);
-    if (card < 6) {
+    if (card < 10) {
         expect(found.y + found.height).toBeLessThanOrEqual((await boxOf(cards.nth(card))).y);
     }
 }
@@ -149,7 +149,7 @@ test.describe("the ads", () => {
         }
     });
 
-    test("flank the feed's column on a desktop, with a takeover above it, a billboard after its third card and a sticky below", async ({ page }) => {
+    test("flank the feed's column on a desktop, with a takeover above it and a sticky below", async ({ page }) => {
         await page.setViewportSize({ width: 1280, height: 900 });
         await openFeed(page);
 
@@ -157,37 +157,27 @@ test.describe("the ads", () => {
         await expect(unit(page, "double_mpu")).toHaveCount(0);
         await expect(unit(page, "desktop_takeover")).toBeVisible();
         await expect(unit(page, "horizontal_sticky")).toBeVisible();
-        await expect(unit(page, "billboard")).toBeVisible();
-        await expect(unit(page, "leaderboard")).toHaveCount(0);
+        await expect(units(page, ["billboard", "leaderboard"])).toHaveCount(0);
         await expect(units(page, mobileUnits)).toHaveCount(0);
         await expectRailsBeside(page, ".feed-page");
 
         const takeover = await box(page, "[data-fake-ad=desktop_takeover]");
         const header = await box(page, ".feed-header");
         expect(takeover.y + takeover.height).toBeLessThanOrEqual(header.y);
-
-        // The billboard is as wide as the cards and sits between the third and the fourth.
-        const cards = page.locator(".card");
-        await expect(cards).toHaveCount(4);
-        const third = await boxOf(cards.nth(2));
-        const fourth = await boxOf(cards.nth(3));
-        const billboard = await box(page, "[data-fake-ad=billboard]");
-        expect(billboard.x).toBeCloseTo(third.x, 0);
-        expect(billboard.width).toBeCloseTo(third.width, 0);
-        expect(billboard.y).toBeGreaterThanOrEqual(third.y + third.height);
-        expect(billboard.y + billboard.height).toBeLessThanOrEqual(fourth.y);
     });
 
-    test("put a billboard after a feed's third card and a leaderboard after its sixth", async ({ page }) => {
+    test("put a billboard after a feed's fifth card and a leaderboard after its tenth, as wide as the cards", async ({ page }) => {
         await page.setViewportSize({ width: 1280, height: 900 });
         await openFeed(page, longFeedPath);
 
-        await expectAfterCard(page, "billboard", 3);
-        await expectAfterCard(page, "leaderboard", 6);
+        await expectAfterCard(page, "billboard", 5);
+        await expectAfterCard(page, "leaderboard", 10);
         const card = await boxOf(page.locator(".card").first());
-        const leaderboard = await box(page, "[data-fake-ad=leaderboard]");
-        expect(leaderboard.x).toBeCloseTo(card.x, 0);
-        expect(leaderboard.width).toBeCloseTo(card.width, 0);
+        for (const name of ["billboard", "leaderboard"]) {
+            const found = await box(page, `[data-fake-ad=${name}]`);
+            expect(found.x).toBeCloseTo(card.x, 0);
+            expect(found.width).toBeCloseTo(card.width, 0);
+        }
     });
 
     test("take double MPUs on either side where they fit", async ({ page }) => {
@@ -240,7 +230,7 @@ test.describe("the ads", () => {
     // placement fills on one of the two.
     test("follow Venatus's breakpoints as the window changes", async ({ page }) => {
         await page.setViewportSize({ width: 1280, height: 900 });
-        await openFeed(page);
+        await openFeed(page, longFeedPath);
         await expect(unit(page, "skyscraper")).toHaveCount(2);
 
         await page.setViewportSize({ width: 1600, height: 900 });
@@ -391,23 +381,17 @@ test.describe("the ads", () => {
 test.describe("the ads on a phone", () => {
     test.use({ viewport: { width: 375, height: 740 } });
 
-    test("are a banner, a unit after the third card and a sticky, which steps aside while an overlay is open", async ({ page }) => {
+    test("are a banner and a sticky on a short feed, and the sticky steps aside while an overlay is open", async ({ page }) => {
         await openFeed(page);
 
         await expect(unit(page, "mobile_horizontal_sticky")).toBeVisible();
         await expect(unit(page, "mobile_banner")).toBeVisible();
-        await expect(unit(page, "mobile_takeover")).toBeVisible();
-        await expect(page.locator("[data-fake-ad]")).toHaveCount(3);
+        await expect(page.locator("[data-fake-ad]")).toHaveCount(2);
 
         const summary = await box(page, ".description-summary");
         const banner = await box(page, "[data-fake-ad=mobile_banner]");
-        const cards = page.locator(".card");
         expect(banner.y).toBeGreaterThanOrEqual(summary.y + summary.height);
-        expect(banner.y + banner.height).toBeLessThanOrEqual((await boxOf(cards.first())).y);
-        const third = await boxOf(cards.nth(2));
-        const takeover = await box(page, "[data-fake-ad=mobile_takeover]");
-        expect(takeover.y).toBeGreaterThanOrEqual(third.y + third.height);
-        expect(takeover.y + takeover.height).toBeLessThanOrEqual((await boxOf(cards.nth(3))).y);
+        expect(banner.y + banner.height).toBeLessThanOrEqual((await boxOf(page.locator(".card").first())).y);
 
         await page.locator(".description-summary").click();
         await expect(page.getByRole("dialog", { name: "Tell us about you" })).toBeVisible();
@@ -418,11 +402,11 @@ test.describe("the ads on a phone", () => {
         await expect(unit(page, "mobile_horizontal_sticky")).toBeVisible();
     });
 
-    test("put a takeover after a feed's third card and an MPU after its sixth", async ({ page }) => {
+    test("put a takeover after a feed's fifth card and an MPU after its tenth", async ({ page }) => {
         await openFeed(page, longFeedPath);
 
-        await expectAfterCard(page, "mobile_takeover", 3);
-        await expectAfterCard(page, "mobile_mpu", 6);
+        await expectAfterCard(page, "mobile_takeover", 5);
+        await expectAfterCard(page, "mobile_mpu", 10);
     });
 
     test("keep the banner's room before it fills, so the posts stay put when it does", async ({ page }) => {
@@ -449,7 +433,7 @@ test.describe("the ads on a phone", () => {
 
     test("are the phone's on a tablet, which Venatus counts as one", async ({ page }) => {
         await page.setViewportSize({ width: 800, height: 1000 });
-        await openFeed(page);
+        await openFeed(page, longFeedPath);
 
         await expect(unit(page, "mobile_horizontal_sticky")).toBeVisible();
         await expect(unit(page, "mobile_banner")).toBeVisible();

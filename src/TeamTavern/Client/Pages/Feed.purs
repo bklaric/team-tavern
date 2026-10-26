@@ -525,8 +525,8 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
                     , cards = cards
                     }
             spotAfter cards
-                | cards == 3 = [ Tuple "ad-first" $ Ads.spot Ads.First ]
-                | cards == 6 = [ Tuple "ad-second" $ Ads.spot Ads.Second ]
+                | cards == 5 = [ Tuple "ad-first" $ Ads.spot Ads.First ]
+                | cards == 10 = [ Tuple "ad-second" $ Ads.spot Ads.Second ]
                 | otherwise = []
             headingAt tier = index headings tier
             countAt tier = index counts tier

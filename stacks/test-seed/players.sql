@@ -536,10 +536,11 @@ select
 from player, game
 where player.nickname = 'ExpiringTester' and game.handle = 'team-fortress-2';
 
--- A sixth post in Team Fortress 2, whose feed is then the one long enough for
--- the ad after its sixth card.
+-- Five more posts in Team Fortress 2, whose feed is then the one long enough
+-- for the ads after its fifth and tenth cards.
 
-select seed_player('AdsTester', 'ads@example.com');
+select seed_player('Ads' || n || 'Tester', 'ads' || n || '@example.com')
+from generate_series(1, 5) as n;
 
 insert into post
     ( player_id, game_id, ilk, renewal_nonce, summary
@@ -549,14 +550,14 @@ select
     player.id,
     game.id,
     'player',
-    left(md5('AdsTester-player'), 20),
-    array['Seeded player post of AdsTester''s.'],
+    left(md5(player.nickname || '-player'), 20),
+    array['Seeded player post of ' || player.nickname || '''s.'],
     true,
     time '20:00',
     time '23:00',
     'either'
 from player, game
-where player.nickname = 'AdsTester' and game.handle = 'team-fortress-2';
+where player.nickname ~ '^Ads[1-5]Tester$' and game.handle = 'team-fortress-2';
 
 drop function seed_post_range(text, text, text, text, text);
 drop function seed_post_option(text, text, text, text[]);
