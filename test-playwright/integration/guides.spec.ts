@@ -250,6 +250,23 @@ test("the Valorant ranked guide leads to the Premier section of the guide to joi
     await expect(page.getByRole("heading", { name: "Valorant: Premier", level: 3 })).toBeInViewport();
 });
 
+test("the guide to joining a team leads to the FNCS guide, and that to its game's feed", async ({ page }) => {
+    const fncsHeading = "FNCS 2027 is Trios: how to find a trio and qualify";
+    await page.goto(guidePath);
+    await expect(page.getByRole("heading", { name: guideHeading, level: 1 })).toBeVisible();
+
+    await page.getByRole("link", { name: fncsHeading }).click();
+
+    await expectPage(page, "/guides/fncs-team");
+    await expect(page.getByRole("heading", { name: fncsHeading, level: 1 })).toBeVisible();
+    await expect(page.getByRole("table")).toContainText("350 or above");
+
+    await page.getByRole("link", { name: "Fortnite players and groups on TeamTavern" }).last().click();
+
+    await expectPage(page, "/games/fortnite");
+    await expect(page.getByRole("heading", { name: "Fortnite", level: 1 })).toBeVisible();
+});
+
 test("the Marvel Rivals guides lead to each other", async ({ page }) => {
     await page.goto("/guides/marvel-rivals-championship-team");
     await expect(page.getByRole("heading", { name: "How to build a Marvel Rivals Championship team", level: 1 })).toBeVisible();

@@ -26,6 +26,7 @@ const guidePaths = [
     "/guides/marvel-rivals-ranked-with-friends",
     "/guides/overwatch-ranked-with-friends",
     "/guides/valorant-ranked-with-friends",
+    "/guides/fncs-team",
 ];
 
 // Neither robots nor the sitemap is a page, so Caddy answers a bot with the file itself

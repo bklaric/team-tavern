@@ -11,7 +11,7 @@ Most guides to this are careers pieces. They tell you to practise, stream and ne
 
 ## What an esports team is below pro level
 
-An amateur esports team is a group of five players (three in Apex Legends and The Finals, two or three in Rocket League, six in Marvel Rivals and Deadlock, six or nine in Team Fortress 2) that plays together on a fixed schedule, in its game's team tournament, in a league, or in scrims. Scrims are practice matches against another team, arranged between the two teams.
+An amateur esports team is a group of five players (three in Apex Legends, The Finals and Fortnite's FNCS, two or three in Rocket League, six in Marvel Rivals and Deadlock, six or nine in Team Fortress 2) that plays together on a fixed schedule, in its game's team tournament, in a league, or in scrims. Scrims are practice matches against another team, arranged between the two teams.
 
 Teams come in three kinds:
 
@@ -107,6 +107,7 @@ Most team formats set a bar for your account, and some cost money. Check yours b
 | **Apex Legends: ALGS Challenger Circuit**, 3 players | – | Open tournaments in each split |
 | **The Finals: the Online Series**, 3 players and a sub | Nothing: anyone can enter | Four cycles a year, May to September in 2026 |
 | **Rocket League: in-game tournaments**, 2 or 3 players | Nothing: they're free and open to everyone | Several every day in each region |
+| **Fortnite: FNCS**, 3 players in 2027 | Account level 350, two-factor authentication, 14 Epic tournaments in the last 180 days, and Gold in ranked to enter the Divisional Cups | Weekly Divisional Cups, then Majors. 2027's dates aren't out yet |
 | **Rainbow Six Siege: Siege Cup**, 5 players | The paid game, not free access | – |
 | **Rainbow Six Siege: Challenger Series**, 5 players | – | Open qualifiers, February to March in 2026 |
 | **Team Fortress 2: ETF2L**, 6 or 9 players | For the Fresh division, no more than 10 ETF2L Open matches, among other limits | Seasons |
@@ -180,6 +181,12 @@ Clash doesn't lead to pro play. Teams that want more than Clash play scrims and 
 <img class="guide-cover" src="/images/games/400/rocket-league.webp" alt="" width="400" height="600" loading="lazy"> Rocket League runs its own Competitive Tournaments, free brackets of 32 teams in 2v2 and 3v3, several times a day in every region. [Epic's tournament rules](https://www.epicgames.com/help/rocket-league-c-37599050/gameplay-c-32343914/what-are-competitive-auto-tournaments-in-rocket-league-a12090278) let you register alone and have the game fill your team, but a party enters at its best player's tournament rank, and a duo in 3v3 must be within three ranks of each other, so a regular partner near your rank pays off. Above them is the RLCS, whose 2027 season opens with a Club Championship that gives four places to an open qualifier starting in November. [Rocket League tournament times, rules and finding a partner](/guides/rocket-league-tournaments) covers the schedule, the entry rules and how to find a partner.
 
 [Rocket League players and groups on TeamTavern](/games/rocket-league)
+
+### Fortnite: FNCS
+
+<img class="guide-cover" src="/images/games/400/fortnite.webp" alt="" width="400" height="600" loading="lazy"> The Fortnite Championship Series is Epic's own, entered from the game's Compete tab, and it's played in trios in 2027. Players climb five FNCS Divisions in weekly Divisional Cups, which open at Gold in ranked. Under [Epic's 2026 FNCS rules](https://www.fortnite.com/competitive/rules-guidelines/rules-library/fortnite-championship-series-fncs-2026-official-rules), every player on a team needed Division 1 for a Major's Play-In, stayed on one team from there to the Finals, and had no subs. [FNCS 2027 is Trios: how to find a trio and qualify](/guides/fncs-team) covers who's eligible, how the Divisions work and how to find a trio.
+
+[Fortnite players and groups on TeamTavern](/games/fortnite)
 
 ### Rainbow Six Siege
 

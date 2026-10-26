@@ -86,6 +86,7 @@ Every format has its own way to create a team and its own roster rules, and some
 | **Apex Legends: ALGS Challenger Circuit** | Whoever creates the team on Battlefy is its captain. 3–4 players and a coach, registered for each event | Points belong to the players, and a team is seeded by its top three |
 | **The Finals: Ranked Cashout** | Nobody: a party of 2 or 3 queues together, and the game fills empty places | A duo must be within 10,000 RS, and a party is matched by its highest-ranked player |
 | **Rocket League: in-game tournaments** | Nobody: each player registers alone or in a party of 2 or 3, and the game fills empty places | A party enters at its highest player's tournament rank, and a duo in 3v3 must be within three ranks |
+| **Fortnite: FNCS** | Nobody registers a team: three players party up and queue each session together, in 2027's Trios | In 2026: every player needed the Division the cup asked for, and from a Major's Play-In to its Finals, one team, changed only at the Last Chance Qualifier, with no subs |
 | **Deadlock: Ranked** | Nobody: a duo queues together, and the game fills the rest | Duos only, at most one rank apart, after each has played their calibration games alone |
 | **Rainbow Six Siege: Ranked** | Nobody: a squad of up to 5 queues together, and the game fills empty places | Squadmates must be within three full ranks, or two with a Diamond or Champion, except in placements |
 | **Rainbow Six Siege: Siege Cup** | The squad leader registers a squad of five | The team can't be edited once registered |
@@ -150,7 +151,7 @@ Climb your format's own divisions first. The join guide names [the ladder from a
 
 ### How many players do you need to start an esports team?
 
-Five to play in most games, three in Apex Legends and The Finals, two or three in Rocket League, six in Marvel Rivals and Deadlock, and six or nine in Team Fortress 2. Keep one or two more as subs: Premier allows up to seven players, and RGL Sixes up to twelve. You don't need them all to start: a group post says how many players you have and how many you want.
+Five to play in most games, three in Apex Legends, The Finals and Fortnite's FNCS, two or three in Rocket League, six in Marvel Rivals and Deadlock, and six or nine in Team Fortress 2. Keep one or two more as subs: Premier allows up to seven players, and RGL Sixes up to twelve. You don't need them all to start: a group post says how many players you have and how many you want.
 
 ### How much does it cost to run an amateur team?
 
