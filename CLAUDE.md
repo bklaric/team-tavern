@@ -416,6 +416,45 @@ None of it is a bug to fix:
   each line a native tool writes to stderr in an error record. The scripts
   check exit codes, not stderr.
 
+### Debugging on the local stack
+
+- **A race or an exhausted pool** is reproduced by holding the row `for
+  update` in psql (`docker exec -it tt-postgres psql`) while curl requests
+  queue behind it. `pg_terminate_backend` on a waiting backend drops its
+  transaction midway. Pass a bcrypt hash to psql through a quoted heredoc on
+  stdin, never inside `sh -c "..."`, which expands its `$`.
+- **Query timing.** The cluster's `team_tavern` is a production copy in the
+  current schema, short only the newest columns, so it times `Feed.sql` and
+  `Fits.sql` with `prepare` and `execute` on real volumes.
+- **Production facts** come from the nightly backup the user hands over:
+  restore it into a scratch database in `tt-postgres`, compare, drop it.
+  Ask the user rather than reading production over ssh.
+- **Schema dumps.** pg_dump 18 writes random `\restrict` lines, so filter them
+  out before diffing two `pg_dump --schema-only` outputs.
+- **Configuration.** To unset a variable in `dist/local/.env`, comment its
+  line out: `env_file` passes a blank one as an empty string. A container
+  that keeps restarting gives its exit codes in
+  `docker events --filter event=die`.
+- **Limits per client** are off locally. Check one by hand by setting
+  `RATE_LIMIT_CLIENTS=on` in `dist/local/.env`, `.\up.ps1`, curling through
+  localhost:8020, then setting it back to `off` and `.\up.ps1` again. Limiter
+  counts live in node's memory for a whole `npm test` run.
+- **A Google code for curl** is the JSON of its claims with `redirect_uri`
+  `http://localhost:8020/signin`, sent through Caddy so the origin matches.
+  Sent straight to node it is `googleRefused`.
+- **Caddy.** `caddy adapt` in a `caddy:2.11.4` container shows the order of a
+  Caddyfile's handles. A server's Caddyfile is checked in a throwaway caddy
+  container with `local_certs`, curled with `--resolve`.
+- **Specs.** A page fulfilled by `page.route` counts as public to Chrome's
+  Local Network Access, which blocks it from reaching localhost unless the
+  context grants `local-network-access`. A `|` in `npm test -- -g` goes
+  through cmd.exe, so name whole spec files instead. The full suite outlasts a
+  ten-minute command limit, so run it there as two halves of spec files.
+- **Shared working tree.** Several sessions may work in one checkout, and two
+  `npm test` runs restart the one stack under each other, so check that no
+  other `playwright test` is running first. Commit only your own hunks: write
+  a patch and `git apply --cached` it.
+
 ## Dependencies
 
 `spago.yaml` pins the package set (`registry: 77.10.0`) and three extra
