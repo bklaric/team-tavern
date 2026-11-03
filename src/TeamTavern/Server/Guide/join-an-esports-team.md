@@ -132,6 +132,8 @@ Most players start in Competitive, where a duo or trio queues within Riot's rank
 
 Clash doesn't lead to pro play. Teams that want more than Clash play scrims and third-party leagues.
 
+Most players start in ranked, where a duo queues Solo/Duo within Riot's rank limits and a party of three or five queues Flex. [What ranks can duo in League of Legends, and playing ranked with friends](/guides/league-of-legends-ranked-with-friends) covers who can duo, what Flex and Ranked 5s allow and how to find players in range.
+
 [League of Legends players and groups on TeamTavern](/games/league-of-legends)
 
 ### Dota 2: Battle Cup

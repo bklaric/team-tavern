@@ -4,6 +4,7 @@ import { marked } from "marked";
 import deadlockRankedWithFriends from "../../src/TeamTavern/Server/Guide/deadlock-ranked-with-friends.md";
 import fncsTeam from "../../src/TeamTavern/Server/Guide/fncs-team.md";
 import joinAnEsportsTeam from "../../src/TeamTavern/Server/Guide/join-an-esports-team.md";
+import leagueOfLegendsRankedWithFriends from "../../src/TeamTavern/Server/Guide/league-of-legends-ranked-with-friends.md";
 import makeAnEsportsTeam from "../../src/TeamTavern/Server/Guide/make-an-esports-team.md";
 import marvelRivalsChampionshipTeam from "../../src/TeamTavern/Server/Guide/marvel-rivals-championship-team.md";
 import marvelRivalsRankedWithFriends from "../../src/TeamTavern/Server/Guide/marvel-rivals-ranked-with-friends.md";
@@ -18,6 +19,8 @@ export const deadlockRankedWithFriendsText = deadlockRankedWithFriends;
 export const fncsTeamText = fncsTeam;
 
 export const joinAnEsportsTeamText = joinAnEsportsTeam;
+
+export const leagueOfLegendsRankedWithFriendsText = leagueOfLegendsRankedWithFriends;
 
 export const makeAnEsportsTeamText = makeAnEsportsTeam;
 

@@ -250,6 +250,33 @@ test("the Valorant ranked guide leads to the Premier section of the guide to joi
     await expect(page.getByRole("heading", { name: "Valorant: Premier", level: 3 })).toBeInViewport();
 });
 
+test("the guide to joining a team leads to the League ranked guide, and that to its game's feed", async ({ page }) => {
+    const leagueHeading = "What ranks can duo in League of Legends, and playing ranked with friends";
+    await page.goto(guidePath);
+    await expect(page.getByRole("heading", { name: guideHeading, level: 1 })).toBeVisible();
+
+    await page.getByRole("link", { name: leagueHeading }).click();
+
+    await expectPage(page, "/guides/league-of-legends-ranked-with-friends");
+    await expect(page.getByRole("heading", { name: leagueHeading, level: 1 })).toBeVisible();
+    await expect(page.getByRole("table")).toContainText("Gold I with Emerald IV: no");
+
+    await page.getByRole("link", { name: "League of Legends players and groups on TeamTavern" }).last().click();
+
+    await expectPage(page, "/games/league-of-legends");
+    await expect(page.getByRole("heading", { name: "League of Legends", level: 1 })).toBeVisible();
+});
+
+test("the League ranked guide leads to the Clash section of the guide to joining a team", async ({ page }) => {
+    await page.goto("/guides/league-of-legends-ranked-with-friends");
+    await expect(page.getByRole("heading", { name: "What ranks can duo in League of Legends, and playing ranked with friends", level: 1 })).toBeVisible();
+
+    await page.getByRole("link", { name: "League of Legends: Clash", exact: true }).click();
+
+    await expectPage(page, "/guides/join-an-esports-team");
+    await expect(page.getByRole("heading", { name: "League of Legends: Clash", level: 3 })).toBeInViewport();
+});
+
 test("the guide to joining a team leads to the FNCS guide, and that to its game's feed", async ({ page }) => {
     const fncsHeading = "FNCS 2027 is Trios: how to find a trio and qualify";
     await page.goto(guidePath);

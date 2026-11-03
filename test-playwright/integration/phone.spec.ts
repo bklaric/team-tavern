@@ -127,6 +127,7 @@ test.describe("on a phone", () => {
             "overwatch-ranked-with-friends",
             "valorant-ranked-with-friends",
             "fncs-team",
+            "league-of-legends-ranked-with-friends",
         ]) {
             await page.goto(`/guides/${guide}`);
             await expect(page.getByRole("table")).toBeVisible();

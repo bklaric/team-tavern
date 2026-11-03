@@ -81,6 +81,7 @@ Every format has its own way to create a team and its own roster rules, and some
 |---|---|---|
 | **Valorant: Competitive** | Nobody: a party of 1, 2, 3 or 5 queues together, and the game fills empty places | A duo or trio within Riot's rank limits; no parties of 4; from Immortal 1, duos at most; a five-stack of any ranks loses some RR |
 | **Valorant: Premier** | The owner creates the team and picks a captain; both invite and remove. 5–7 players, each on one team only | After the Stage's first match, nobody can join whose MMR would move the team's division. Name and tag are fixed at creation |
+| **League of Legends: ranked** | Nobody: a duo queues Solo/Duo, and a party of 1, 2, 3 or 5 queues Flex | A duo within Riot's rank limits, with no duo for Grandmaster and Challenger; Flex has no rank limits up to Diamond and no parties of 4 |
 | **League of Legends: Clash** | The captain adds and removes players and picks the name, logo and tag. 5 players, each with a ticket | Invites open the Monday before a cup. Teams lock in during a window set by their tier |
 | **Counter-Strike 2: ESEA** | The team is ready once 5 players hold an ESEA League Pass | After registration closes, at most 3 players join per 7 days. Rosters lock 2 weeks before the regular season ends |
 | **Apex Legends: ALGS Challenger Circuit** | Whoever creates the team on Battlefy is its captain. 3–4 players and a coach, registered for each event | Points belong to the players, and a team is seeded by its top three |

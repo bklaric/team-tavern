@@ -11,6 +11,8 @@ foreign import fncsTeamText :: String
 
 foreign import joinAnEsportsTeamText :: String
 
+foreign import leagueOfLegendsRankedWithFriendsText :: String
+
 foreign import makeAnEsportsTeamText :: String
 
 foreign import marvelRivalsChampionshipTeamText :: String
@@ -54,7 +56,7 @@ guides = sortBy (flip $ comparing _.updated)
       , description: "Most esports teams are amateur five-stacks playing Premier, Clash, ESEA or Siege Cup. "
             <> "Here's what each game asks of your account, what teams look for, and where to find one."
       , published: "2026-09-29"
-      , updated: "2026-10-26"
+      , updated: "2026-11-03"
       , games: []
       , html: markdownToHtml joinAnEsportsTeamText
       }
@@ -64,7 +66,7 @@ guides = sortBy (flip $ comparing _.updated)
       , description: "Starting an amateur team? How to pick your format, recruit for the roles you're missing, "
             <> "run tryouts, find scrims, and the roster rules each game's tournament enforces."
       , published: "2026-09-29"
-      , updated: "2026-10-26"
+      , updated: "2026-11-03"
       , games: []
       , html: markdownToHtml makeAnEsportsTeamText
       }
@@ -158,5 +160,15 @@ guides = sortBy (flip $ comparing _.updated)
       , updated: "2026-10-26"
       , games: [ { handle: "fortnite", title: "Fortnite" } ]
       , html: markdownToHtml fncsTeamText
+      }
+    , { slug: "league-of-legends-ranked-with-friends"
+      , heading: "What ranks can duo in League of Legends, and playing ranked with friends"
+      , title: "LoL duo restrictions: what ranks can duo in League, plus Flex and Ranked 5s"
+      , description: "Who can duo in League's Solo/Duo, tier by tier, what Flex allows and why four can't queue it, "
+            <> "and Ranked 5s for a five of any ranks."
+      , published: "2026-11-03"
+      , updated: "2026-11-03"
+      , games: [ { handle: "league-of-legends", title: "League of Legends" } ]
+      , html: markdownToHtml leagueOfLegendsRankedWithFriendsText
       }
     ]
