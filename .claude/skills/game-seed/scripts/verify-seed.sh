@@ -80,14 +80,17 @@ group by g.handle, f.id, f.key
 order by f.key, g.handle;"
 
 # The intents every game shares, in order, and the words that give one away
-# when it turns up under another key.
+# when it turns up under another key. Competitive gives Ranked away only in a
+# game that has Ranked: one with no ranked play, as Rust has none, names its
+# competitive play Competitive.
 shared="(values
     ('casual', 'Casual', 1),
     ('ranked', 'Ranked', 2),
     ('scrims-tournaments', 'Scrims and tournaments', 3),
     ('learning-the-game', 'Learning the game', 4)
 ) as shared (key, label, ordinal)"
-shared_words='casual|rank|competitive|tournament|scrim|league|learn|new|beginner|returning'
+shared_words='casual|rank|tournament|scrim|league|learn|new|beginner|returning'
+ranked_words='competitive'
 
 problems=$(psql_db -tA -c "
 select 'shared Looking for option under another label: ' || g.handle || '.' || o.key
@@ -99,7 +102,9 @@ select 'Looking for option that reads as a shared intent: ' || g.handle || '.' |
 from game g join field f on f.game_id = g.id join field_option o on o.field_id = f.id
 where f.key = 'looking-for'
   and not exists (select 1 from $shared where shared.key = o.key)
-  and (o.key ~* '$shared_words' or o.label ~* '$shared_words')
+  and (o.key ~* '$shared_words' or o.label ~* '$shared_words'
+    or ((o.key ~* '$ranked_words' or o.label ~* '$ranked_words')
+        and exists (select 1 from field_option ranked where ranked.field_id = f.id and ranked.key = 'ranked')))
 union all
 select 'Looking for options not shared first, in the shared order: ' || g.handle
 from game g join field f on f.game_id = g.id join field_option o on o.field_id = f.id

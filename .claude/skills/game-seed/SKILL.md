@@ -148,7 +148,9 @@ no evidence behind it is a guess, and says so.
   team for Premier"). Valorant's Premier, League's Clash, Dota's Battle Cup
   and TF2's Mann vs. Machine are; a rotating mode or event never is, since a
   post outlives it. A game without queues (Valheim) has playstyles in their
-  place, PvE, Building, PvP, Roleplay, held to the same evidence.
+  place, PvE, Building, PvP, Roleplay, held to the same evidence. A game
+  with no ranked play whose players still want competitive play, as Rust's
+  do, names it Competitive; in a game with Ranked that is Ranked's job.
 - **Platform**: key `platform`, `multi`, `applies_to` all three, `on_card`
   true — only when the game runs on **more than one platform family**. The
   families are PC, PlayStation, Xbox and Switch; every PC store is PC, and
