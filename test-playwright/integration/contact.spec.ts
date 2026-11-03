@@ -132,6 +132,16 @@ test.describe("the contact panel", () => {
             "href", "https://rnkd.gg/deltaforce/player/search/?q=DeltaForceTester");
     });
 
+    // Rust's tracker takes the SteamID64 in its query string rather than its path.
+    test("links the Steam account to Rust's tracker", async ({ page }) => {
+        await signIn(page, "rust@example.com");
+        await page.locator(".own-post").getByRole("link", { name: "RustTester", exact: true }).click();
+        await expectPage(page, /^\/games\/rust\/posts\/\d+$/);
+
+        await expect(page.locator(".card .detail a")).toHaveAttribute(
+            "href", /^https:\/\/www\.bamboogaming\.net\/rust\/stats\?steamid=7656119\d{10}$/);
+    });
+
     test("makes a community's invite or website the one filled button", async ({ page }) => {
         await signIn(page, "new@example.com");
         await openFeed(page, "valorant");
