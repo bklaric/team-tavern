@@ -27,6 +27,7 @@ queryString = Query """
         epic_id = coalesce($6::jsonb->>'epic', epic_id),
         embark_id = coalesce($6::jsonb->>'embark', embark_id),
         pubg_nickname = coalesce($6::jsonb->>'pubg', pubg_nickname),
+        delta_force_id = coalesce($6::jsonb->>'delta_force', delta_force_id),
         ubisoft_username = coalesce($6::jsonb->>'ubisoft', ubisoft_username),
         marvel_rivals_username = coalesce($6::jsonb->>'marvel_rivals', marvel_rivals_username),
         psn_id = coalesce($6::jsonb->>'psn', psn_id),

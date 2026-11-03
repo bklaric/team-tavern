@@ -86,6 +86,7 @@ create table player
 
     -- A contact like those above, last for the same reason.
     , pubg_nickname text
+    , delta_force_id text
 
     , constraint player_identity_check
         check (num_nonnulls(password_hash, discord_id, steam_sign_in_id, google_id) = 1)
@@ -183,7 +184,7 @@ create table game_contact
     , kind text not null
     , primary key (game_id, kind)
     , constraint game_contact_kind_check check (kind in
-        ('discord', 'steam', 'riot', 'battle_tag', 'ea', 'epic', 'embark', 'pubg'
+        ('discord', 'steam', 'riot', 'battle_tag', 'ea', 'epic', 'embark', 'pubg', 'delta_force'
         , 'ubisoft', 'marvel_rivals', 'psn', 'gamer_tag', 'friend_code'))
     );
 

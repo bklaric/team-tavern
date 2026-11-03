@@ -6,8 +6,8 @@ import { localStack, rethrowComposeError, waitForApi } from "../stack";
 const googlebot = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)";
 
 // The home page loads its cover grid from `/api/games`, so it is the page that shows whether
-// the site and the API both answer. `Database/Seed/Games/` seeds sixteen games.
-const home = { path: "/", title: "TeamTavern: LFG for players, groups and communities", gameCount: 16 };
+// the site and the API both answer. `Database/Seed/Games/` seeds seventeen games.
+const home = { path: "/", title: "TeamTavern: LFG for players, groups and communities", gameCount: 17 };
 
 // Valorant's seeded posts (`stacks/test-seed/players.sql`) include GroupTester's group Night
 // Owls, active, and ExpiredTester's player post, past its 30 days. Their paths are read off

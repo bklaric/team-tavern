@@ -2,7 +2,7 @@ import { expect, test, type Locator } from "@playwright/test";
 import { expectPage } from "../pages";
 
 // `Database/Seed/Games/` seeds one file per game, and the catalogue lists them by title.
-const gameCount = 16;
+const gameCount = 17;
 const game = { handle: "valorant", title: "Valorant" };
 const feedPath = `/games/${game.handle}`;
 

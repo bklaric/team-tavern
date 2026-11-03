@@ -53,6 +53,7 @@ queryString = Query """
         epic_id = $7::jsonb->>'epic',
         embark_id = $7::jsonb->>'embark',
         pubg_nickname = $7::jsonb->>'pubg',
+        delta_force_id = $7::jsonb->>'delta_force',
         ubisoft_username = $7::jsonb->>'ubisoft',
         marvel_rivals_username = $7::jsonb->>'marvel_rivals',
         psn_id = $7::jsonb->>'psn',
@@ -62,7 +63,7 @@ queryString = Query """
     """
 
 allContactKinds :: Array String
-allContactKinds = [ "discord", "steam", "riot", "battle_tag", "ea", "epic", "embark", "pubg", "ubisoft", "marvel_rivals", "psn", "gamer_tag", "friend_code" ]
+allContactKinds = [ "discord", "steam", "riot", "battle_tag", "ea", "epic", "embark", "pubg", "delta_force", "ubisoft", "marvel_rivals", "psn", "gamer_tag", "friend_code" ]
 
 updateFacts :: ∀ left. SteamApi -> Pool -> Cookies -> UpdateFacts.RequestContent
     -> Async left (Variant (NoContentRow_ + BadRequestRow UpdateFacts.BadContent + NotAuthorizedRow_ + InternalRow_ + ()))

@@ -15,6 +15,7 @@ contactAccount player kind = """
         when 'epic' then """ <> player <> """.epic_id
         when 'embark' then """ <> player <> """.embark_id
         when 'pubg' then """ <> player <> """.pubg_nickname
+        when 'delta_force' then """ <> player <> """.delta_force_id
         when 'ubisoft' then """ <> player <> """.ubisoft_username
         when 'marvel_rivals' then """ <> player <> """.marvel_rivals_username
         when 'psn' then """ <> player <> """.psn_id
@@ -28,5 +29,5 @@ contactAccount player kind = """
 contactOrder :: String -> String
 contactOrder kind = """
     array_position(
-        array['discord', 'riot', 'battle_tag', 'ea', 'epic', 'embark', 'pubg', 'ubisoft', 'marvel_rivals', 'steam', 'psn', 'gamer_tag', 'friend_code'],
+        array['discord', 'riot', 'battle_tag', 'ea', 'epic', 'embark', 'pubg', 'delta_force', 'ubisoft', 'marvel_rivals', 'steam', 'psn', 'gamer_tag', 'friend_code'],
         """ <> kind <> """)"""

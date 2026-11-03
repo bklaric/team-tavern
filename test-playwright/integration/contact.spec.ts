@@ -112,6 +112,26 @@ test.describe("the contact panel", () => {
             ["Discord", "PUBG nickname", "PSN ID", "Xbox gamertag"]);
     });
 
+    // Delta Force offers the ID its players add each other by on every platform.
+    test("lists the Delta Force ID before the platforms' accounts", async ({ page }) => {
+        await signIn(page, "new@example.com");
+        await openFeed(page, "delta-force");
+        const dialog = await openPanel(page, "DeltaForceTester");
+
+        await expect(dialog.locator(".contact-label")).toHaveText(
+            ["Discord", "Delta Force ID", "PSN ID", "Xbox gamertag"]);
+    });
+
+    // The one tracker takes that ID through its search, the player's own post showing it unfolded.
+    test("links the Delta Force ID to its tracker's search", async ({ page }) => {
+        await signIn(page, "delta-force@example.com");
+        await page.locator(".own-post").getByRole("link", { name: "DeltaForceTester", exact: true }).click();
+        await expectPage(page, /^\/games\/delta-force\/posts\/\d+$/);
+
+        await expect(page.locator(".card .detail a")).toHaveAttribute(
+            "href", "https://rnkd.gg/deltaforce/player/search/?q=DeltaForceTester");
+    });
+
     test("makes a community's invite or website the one filled button", async ({ page }) => {
         await signIn(page, "new@example.com");
         await openFeed(page, "valorant");

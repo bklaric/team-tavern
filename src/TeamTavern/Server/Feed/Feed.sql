@@ -529,6 +529,7 @@ select
                 when 'epic' then owner.epic_id
                 when 'embark' then owner.embark_id
                 when 'pubg' then owner.pubg_nickname
+                when 'delta_force' then owner.delta_force_id
                 when 'ubisoft' then owner.ubisoft_username
                 when 'marvel_rivals' then owner.marvel_rivals_username
                 when 'psn' then owner.psn_id
@@ -553,6 +554,7 @@ select
             when 'epic' then owner.epic_id
             when 'embark' then owner.embark_id
             when 'pubg' then owner.pubg_nickname
+            when 'delta_force' then owner.delta_force_id
             when 'ubisoft' then owner.ubisoft_username
             when 'marvel_rivals' then owner.marvel_rivals_username
             when 'psn' then owner.psn_id

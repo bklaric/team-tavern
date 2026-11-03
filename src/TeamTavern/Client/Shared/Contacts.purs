@@ -17,6 +17,7 @@ contactLabel = case _ of
     "epic" -> "Epic ID"
     "embark" -> "Embark ID"
     "pubg" -> "PUBG nickname"
+    "delta_force" -> "Delta Force ID"
     "ubisoft" -> "Ubisoft username"
     "marvel_rivals" -> "Marvel Rivals username"
     "psn" -> "PSN ID"
@@ -34,6 +35,7 @@ contactPlaceholder = case _ of
     "epic" -> "Your Epic ID"
     "embark" -> "Name#1234"
     "pubg" -> "Your PUBG nickname"
+    "delta_force" -> "Your Delta Force ID"
     "ubisoft" -> "Your Ubisoft username"
     "marvel_rivals" -> "Your Marvel Rivals username"
     "psn" -> "Your PSN ID"
@@ -45,6 +47,7 @@ contactPlaceholder = case _ of
 contactFormat :: String -> Maybe String
 contactFormat = case _ of
     "steam" -> Just "Paste your Steam profile's link, or your 17-digit SteamID."
+    "delta_force" -> Just "The number on your Delta Force profile."
     _ -> Nothing
 
 -- | Why the server turned a contact away, where it's more than its length.
