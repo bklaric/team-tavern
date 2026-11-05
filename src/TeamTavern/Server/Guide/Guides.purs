@@ -15,6 +15,8 @@ foreign import fncsTeamText :: String
 
 foreign import joinAnEsportsTeamText :: String
 
+foreign import leagueOfLegendsClashText :: String
+
 foreign import leagueOfLegendsRankedWithFriendsText :: String
 
 foreign import makeAnEsportsTeamText :: String
@@ -206,5 +208,16 @@ guides = sortBy (flip $ comparing _.updated)
       , updated: "2026-11-05"
       , games: [ { handle: "counter-strike-2", title: "Counter-Strike 2" } ]
       , html: markdownToHtml counterStrike2RankedWithFriendsText
+      }
+    , { slug: "league-of-legends-clash"
+      , heading: "How League of Legends Clash works, and how to find a team for it"
+      , title: "LoL Clash: schedule, tiers, tickets and how to find a team"
+      , description: "A monthly weekend bracket for teams of five, at a tier set mostly by your best player, "
+            <> "with a ticket and SMS verification for every player: how League of Legends Clash works, "
+            <> "and how to find a five for it."
+      , published: "2026-11-05"
+      , updated: "2026-11-05"
+      , games: [ { handle: "league-of-legends", title: "League of Legends" } ]
+      , html: markdownToHtml leagueOfLegendsClashText
       }
     ]

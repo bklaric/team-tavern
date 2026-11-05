@@ -139,6 +139,35 @@ test("the guide to joining a team leads to the Dota 2 Battle Cup guide, and that
     await expect(page.getByRole("heading", { name: "Dota 2", level: 1 })).toBeVisible();
 });
 
+test("the guide to joining a team leads to the League of Legends Clash guide, and that to its game's feed", async ({ page }) => {
+    const clashHeading = "How League of Legends Clash works, and how to find a team for it";
+    await page.goto(guidePath);
+    await expect(page.getByRole("heading", { name: guideHeading, level: 1 })).toBeVisible();
+
+    await page.getByRole("link", { name: clashHeading }).click();
+
+    await expectPage(page, "/guides/league-of-legends-clash");
+    await expect(page.getByRole("heading", { name: clashHeading, level: 1 })).toBeVisible();
+    await expect(page.getByRole("row").filter({ hasText: "Worlds Clash" })).toContainText("21–22 November");
+    await expect(page.getByRole("figure", { name: /^Groups asking for each role, against players offering it/ })).toBeVisible();
+
+    await page.getByRole("link", { name: "League of Legends players and groups on TeamTavern" }).last().click();
+
+    await expectPage(page, "/games/league-of-legends");
+    await expect(page.getByRole("heading", { name: "League of Legends", level: 1 })).toBeVisible();
+});
+
+test("the League of Legends ranked guide leads to the Clash guide", async ({ page }) => {
+    await page.goto("/guides/league-of-legends-ranked-with-friends");
+    await expect(page.getByRole("heading", { name: "What ranks can duo in League of Legends, and playing ranked with friends", level: 1 })).toBeVisible();
+
+    const clashHeading = "How League of Legends Clash works, and how to find a team for it";
+    await page.getByRole("link", { name: clashHeading }).click();
+
+    await expectPage(page, "/guides/league-of-legends-clash");
+    await expect(page.getByRole("heading", { name: clashHeading, level: 1 })).toBeVisible();
+});
+
 test("the Rocket League tournaments guide leads to the clubs guide", async ({ page }) => {
     await page.goto("/guides/rocket-league-tournaments");
     await expect(page.getByRole("heading", { name: "Rocket League tournament times, rules and finding a partner", level: 1 })).toBeVisible();
@@ -320,16 +349,6 @@ test("the guide to joining a team leads to the League ranked guide, and that to 
 
     await expectPage(page, "/games/league-of-legends");
     await expect(page.getByRole("heading", { name: "League of Legends", level: 1 })).toBeVisible();
-});
-
-test("the League ranked guide leads to the Clash section of the guide to joining a team", async ({ page }) => {
-    await page.goto("/guides/league-of-legends-ranked-with-friends");
-    await expect(page.getByRole("heading", { name: "What ranks can duo in League of Legends, and playing ranked with friends", level: 1 })).toBeVisible();
-
-    await page.getByRole("link", { name: "League of Legends: Clash", exact: true }).click();
-
-    await expectPage(page, "/guides/join-an-esports-team");
-    await expect(page.getByRole("heading", { name: "League of Legends: Clash", level: 3 })).toBeInViewport();
 });
 
 test("the guide to joining a team leads to the CS2 ranked guide, and that to its game's feed", async ({ page }) => {

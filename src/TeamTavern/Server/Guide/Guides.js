@@ -6,6 +6,7 @@ import deadlockRankedWithFriends from "../../src/TeamTavern/Server/Guide/deadloc
 import dota2BattleCup from "../../src/TeamTavern/Server/Guide/dota-2-battle-cup.md";
 import fncsTeam from "../../src/TeamTavern/Server/Guide/fncs-team.md";
 import joinAnEsportsTeam from "../../src/TeamTavern/Server/Guide/join-an-esports-team.md";
+import leagueOfLegendsClash from "../../src/TeamTavern/Server/Guide/league-of-legends-clash.md";
 import leagueOfLegendsRankedWithFriends from "../../src/TeamTavern/Server/Guide/league-of-legends-ranked-with-friends.md";
 import makeAnEsportsTeam from "../../src/TeamTavern/Server/Guide/make-an-esports-team.md";
 import marvelRivalsChampionshipTeam from "../../src/TeamTavern/Server/Guide/marvel-rivals-championship-team.md";
@@ -26,6 +27,8 @@ export const dota2BattleCupText = dota2BattleCup;
 export const fncsTeamText = fncsTeam;
 
 export const joinAnEsportsTeamText = joinAnEsportsTeam;
+
+export const leagueOfLegendsClashText = leagueOfLegendsClash;
 
 export const leagueOfLegendsRankedWithFriendsText = leagueOfLegendsRankedWithFriends;
 
