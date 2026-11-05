@@ -5,6 +5,8 @@ import Prelude
 import Data.Array (sortBy)
 import TeamTavern.Routes.Guide.ViewGuide (GuideGame)
 
+foreign import counterStrike2RankedWithFriendsText :: String
+
 foreign import deadlockRankedWithFriendsText :: String
 
 foreign import dota2BattleCupText :: String
@@ -194,5 +196,15 @@ guides = sortBy (flip $ comparing _.updated)
       , updated: "2026-11-05"
       , games: [ { handle: "dota-2", title: "Dota 2" } ]
       , html: markdownToHtml dota2BattleCupText
+      }
+    , { slug: "counter-strike-2-ranked-with-friends"
+      , heading: "Counter-Strike 2 team size, party size and playing Premier with friends"
+      , title: "CS2 Premier with friends: rating difference, party size and unranked friends"
+      , description: "Counter-Strike 2 team size is five. Premier with friends: how far apart CS Ratings can be, "
+            <> "what a five-stack allows, why an unranked friend can't join, and Prime."
+      , published: "2026-11-05"
+      , updated: "2026-11-05"
+      , games: [ { handle: "counter-strike-2", title: "Counter-Strike 2" } ]
+      , html: markdownToHtml counterStrike2RankedWithFriendsText
       }
     ]

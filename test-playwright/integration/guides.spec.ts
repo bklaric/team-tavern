@@ -332,6 +332,33 @@ test("the League ranked guide leads to the Clash section of the guide to joining
     await expect(page.getByRole("heading", { name: "League of Legends: Clash", level: 3 })).toBeInViewport();
 });
 
+test("the guide to joining a team leads to the CS2 ranked guide, and that to its game's feed", async ({ page }) => {
+    const counterStrikeHeading = "Counter-Strike 2 team size, party size and playing Premier with friends";
+    await page.goto(guidePath);
+    await expect(page.getByRole("heading", { name: guideHeading, level: 1 })).toBeVisible();
+
+    await page.getByRole("link", { name: counterStrikeHeading }).click();
+
+    await expectPage(page, "/guides/counter-strike-2-ranked-with-friends");
+    await expect(page.getByRole("heading", { name: counterStrikeHeading, level: 1 })).toBeVisible();
+    await expect(page.getByRole("table")).toContainText("unless you play with a full team of five players");
+
+    await page.getByRole("link", { name: "Counter-Strike 2 players and groups on TeamTavern" }).last().click();
+
+    await expectPage(page, "/games/counter-strike-2");
+    await expect(page.getByRole("heading", { name: "Counter-Strike 2", level: 1 })).toBeVisible();
+});
+
+test("the CS2 ranked guide leads to the Counter-Strike 2 section of the guide to joining a team", async ({ page }) => {
+    await page.goto("/guides/counter-strike-2-ranked-with-friends");
+    await expect(page.getByRole("heading", { name: "Counter-Strike 2 team size, party size and playing Premier with friends", level: 1 })).toBeVisible();
+
+    await page.getByRole("link", { name: "joining a CS2 team", exact: true }).click();
+
+    await expectPage(page, "/guides/join-an-esports-team");
+    await expect(page.getByRole("heading", { name: "Counter-Strike 2", level: 3 })).toBeInViewport();
+});
+
 test("the guide to joining a team leads to the FNCS guide, and that to its game's feed", async ({ page }) => {
     const fncsHeading = "FNCS 2027 is Trios: how to find a trio and qualify";
     await page.goto(guidePath);

@@ -1,6 +1,7 @@
 // purs copies only this file into output/, so each guide is imported from where
 // it sits in src/; bundle.ps1 has esbuild load .md files as text.
 import { marked } from "marked";
+import counterStrike2RankedWithFriends from "../../src/TeamTavern/Server/Guide/counter-strike-2-ranked-with-friends.md";
 import deadlockRankedWithFriends from "../../src/TeamTavern/Server/Guide/deadlock-ranked-with-friends.md";
 import dota2BattleCup from "../../src/TeamTavern/Server/Guide/dota-2-battle-cup.md";
 import fncsTeam from "../../src/TeamTavern/Server/Guide/fncs-team.md";
@@ -15,6 +16,8 @@ import rocketLeagueClubs from "../../src/TeamTavern/Server/Guide/rocket-league-c
 import rocketLeagueTournaments from "../../src/TeamTavern/Server/Guide/rocket-league-tournaments.md";
 import theFinalsRankedWithFriends from "../../src/TeamTavern/Server/Guide/the-finals-ranked-with-friends.md";
 import valorantRankedWithFriends from "../../src/TeamTavern/Server/Guide/valorant-ranked-with-friends.md";
+
+export const counterStrike2RankedWithFriendsText = counterStrike2RankedWithFriends;
 
 export const deadlockRankedWithFriendsText = deadlockRankedWithFriends;
 
