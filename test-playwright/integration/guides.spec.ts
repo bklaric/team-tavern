@@ -121,6 +121,24 @@ test("the guide to joining a team leads to the Rocket League clubs guide, and th
     await expect(page.getByRole("heading", { name: "Rocket League", level: 1 })).toBeVisible();
 });
 
+test("the guide to joining a team leads to the Dota 2 Battle Cup guide, and that to its game's feed", async ({ page }) => {
+    const battleCupHeading = "How the Dota 2 Battle Cup works, and how to find a team for it";
+    await page.goto(guidePath);
+    await expect(page.getByRole("heading", { name: guideHeading, level: 1 })).toBeVisible();
+
+    await page.getByRole("link", { name: battleCupHeading }).click();
+
+    await expectPage(page, "/guides/dota-2-battle-cup");
+    await expect(page.getByRole("heading", { name: battleCupHeading, level: 1 })).toBeVisible();
+    await expect(page.getByRole("row").filter({ hasText: "South America" })).toContainText("Brazil, Chile, Peru and Argentina");
+    await expect(page.getByRole("figure", { name: /^Dota 2 player posts on TeamTavern by Battle Cup tier/ })).toBeVisible();
+
+    await page.getByRole("link", { name: "Dota 2 players and groups on TeamTavern" }).last().click();
+
+    await expectPage(page, "/games/dota-2");
+    await expect(page.getByRole("heading", { name: "Dota 2", level: 1 })).toBeVisible();
+});
+
 test("the Rocket League tournaments guide leads to the clubs guide", async ({ page }) => {
     await page.goto("/guides/rocket-league-tournaments");
     await expect(page.getByRole("heading", { name: "Rocket League tournament times, rules and finding a partner", level: 1 })).toBeVisible();
@@ -142,6 +160,15 @@ test.describe("in Tokyo, which keeps one time all year", () => {
         await expect(northAmerica.getByRole("cell").nth(1)).toHaveText("7am, 11am");
         await expect(page.getByText(
             "Times on this page are converted from Epic's UTC to your time zone, Japan Standard Time.")).toBeVisible();
+    });
+
+    test("the Battle Cup guide gives each division's start in the reader's time", async ({ page }) => {
+        await page.goto("/guides/dota-2-battle-cup");
+
+        const northAmerica = page.getByRole("row").filter({ hasText: "North America" });
+        await expect(northAmerica.getByRole("cell").nth(1)).toHaveText("10am");
+        await expect(page.getByText(
+            "Times on this page are converted from UTC to your time zone, Japan Standard Time.", { exact: false })).toBeVisible();
     });
 });
 

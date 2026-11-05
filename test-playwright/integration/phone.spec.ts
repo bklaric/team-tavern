@@ -129,6 +129,7 @@ test.describe("on a phone", () => {
             "fncs-team",
             "league-of-legends-ranked-with-friends",
             "rocket-league-clubs",
+            "dota-2-battle-cup",
         ]) {
             await page.goto(`/guides/${guide}`);
             await expect(page.getByRole("table")).toBeVisible();

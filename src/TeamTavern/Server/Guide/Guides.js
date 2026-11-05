@@ -2,6 +2,7 @@
 // it sits in src/; bundle.ps1 has esbuild load .md files as text.
 import { marked } from "marked";
 import deadlockRankedWithFriends from "../../src/TeamTavern/Server/Guide/deadlock-ranked-with-friends.md";
+import dota2BattleCup from "../../src/TeamTavern/Server/Guide/dota-2-battle-cup.md";
 import fncsTeam from "../../src/TeamTavern/Server/Guide/fncs-team.md";
 import joinAnEsportsTeam from "../../src/TeamTavern/Server/Guide/join-an-esports-team.md";
 import leagueOfLegendsRankedWithFriends from "../../src/TeamTavern/Server/Guide/league-of-legends-ranked-with-friends.md";
@@ -16,6 +17,8 @@ import theFinalsRankedWithFriends from "../../src/TeamTavern/Server/Guide/the-fi
 import valorantRankedWithFriends from "../../src/TeamTavern/Server/Guide/valorant-ranked-with-friends.md";
 
 export const deadlockRankedWithFriendsText = deadlockRankedWithFriends;
+
+export const dota2BattleCupText = dota2BattleCup;
 
 export const fncsTeamText = fncsTeam;
 

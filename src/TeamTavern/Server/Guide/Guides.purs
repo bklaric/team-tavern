@@ -7,6 +7,8 @@ import TeamTavern.Routes.Guide.ViewGuide (GuideGame)
 
 foreign import deadlockRankedWithFriendsText :: String
 
+foreign import dota2BattleCupText :: String
+
 foreign import fncsTeamText :: String
 
 foreign import joinAnEsportsTeamText :: String
@@ -182,5 +184,15 @@ guides = sortBy (flip $ comparing _.updated)
       , updated: "2026-11-05"
       , games: [ { handle: "rocket-league", title: "Rocket League" } ]
       , html: markdownToHtml rocketLeagueClubsText
+      }
+    , { slug: "dota-2-battle-cup"
+      , heading: "How the Dota 2 Battle Cup works, and how to find a team for it"
+      , title: "Dota 2 Battle Cup: times, tiers and how to find a team"
+      , description: "Every Saturday in five divisions, eight-team brackets at your team's highest tier, "
+            <> "and a ticket for every player without Dota Plus: how the Battle Cup works, and how to find a five for it."
+      , published: "2026-11-05"
+      , updated: "2026-11-05"
+      , games: [ { handle: "dota-2", title: "Dota 2" } ]
+      , html: markdownToHtml dota2BattleCupText
       }
     ]

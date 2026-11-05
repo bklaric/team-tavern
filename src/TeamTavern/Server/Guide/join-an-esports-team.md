@@ -99,7 +99,7 @@ Most team formats set a bar for your account, and some cost money. Check yours b
 |---|---|---|
 | **Valorant: Premier**, 5–7 players | SMS verification, one ranked placement ever, and no current bans or restrictions | Stages of 7 weeks, up to 2 matches a week, then playoffs |
 | **League of Legends: Clash**, 5 players | Level 30, ranked placements this year or last, SMS on a mobile number, and a ticket each, for Blue Essence or RP or from the Clash mission | 12 weekends in 2026 |
-| **Dota 2: Battle Cup**, 5 players | Dota Plus, or a $0.99 ticket | Weekly |
+| **Dota 2: Battle Cup**, 5 players | Calibrated for Ranked, and Dota Plus or a $0.99 ticket each | Every Saturday evening, in each of five divisions |
 | **Deadlock: the Death Slam League**, 6 players and up to 2 subs | Nothing stated: new teams start in the lowest division | Seasons, with matches on Saturdays, in North America |
 | **Overwatch: FACEIT open qualifier**, 5 players | – | At the start of each OWCS season, in NA and EMEA |
 | **Marvel Rivals: the Championship**, 6–12 players | Platinum 3 in the season's Competitive, and every member on one platform | Once a season |
@@ -139,7 +139,7 @@ Most players start in ranked, where a duo queues Solo/Duo within Riot's rank lim
 
 ### Dota 2: Battle Cup
 
-<img class="guide-cover" src="/images/games/400/dota-2.webp" alt="" width="400" height="600" loading="lazy"> The Battle Cup is Dota 2's weekly tournament for teams of five. It's [free for Dota Plus members](https://www.dota2.com/plus), and anyone else can buy a ticket for $0.99. Dota 2 posts on TeamTavern have "Battle Cup" as an answer to "Looking for", so a group that wants a Battle Cup fifth can say so.
+<img class="guide-cover" src="/images/games/400/dota-2.webp" alt="" width="400" height="600" loading="lazy"> The Battle Cup is Dota 2's weekly tournament for teams of five: eight-team brackets, each at one tier, every Saturday evening in each of five divisions. It's [free for Dota Plus members](https://www.dota2.com/plus), and every other player needs a $0.99 ticket of their own. A team plays at its highest player's tier, and its roster can't change once it has entered. [How the Dota 2 Battle Cup works, and how to find a team for it](/guides/dota-2-battle-cup) gives each division's start time, the tiers and how to fill a five. Dota 2 posts on TeamTavern have "Battle Cup" as an answer to "Looking for", so a group that wants a Battle Cup fifth can say so.
 
 [Dota 2 players and groups on TeamTavern](/games/dota-2)
 

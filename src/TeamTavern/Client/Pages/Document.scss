@@ -213,13 +213,18 @@
     background: var(--swatch);
 }
 
-/* Every chart sets group posts against player posts, in the same two colours. */
+/* Group posts and player posts keep the same two colours in every chart. */
 .guide-chart .groups {
     --swatch: var(--groups);
 }
 
 .guide-chart .players {
     --swatch: var(--players);
+}
+
+/* A chart of one kind of post has a single bar to each label. */
+.guide-chart-single dt {
+    grid-row: auto;
 }
 
 /* A chart of gains and losses in one colour, its bars either side of a zero

@@ -83,6 +83,7 @@ Every format has its own way to create a team and its own roster rules, and some
 | **Valorant: Premier** | The owner creates the team and picks a captain; both invite and remove. 5–7 players, each on one team only | After the Stage's first match, nobody can join whose MMR would move the team's division. Name and tag are fixed at creation |
 | **League of Legends: ranked** | Nobody: a duo queues Solo/Duo, and a party of 1, 2, 3 or 5 queues Flex | A duo within Riot's rank limits, with no duo for Grandmaster and Challenger; Flex has no rank limits up to Diamond and no parties of 4 |
 | **League of Legends: Clash** | The captain adds and removes players and picks the name, logo and tag. 5 players, each with a ticket | Invites open the Monday before a cup. Teams lock in during a window set by their tier |
+| **Dota 2: Battle Cup** | The party leader registers the team and picks its name and logo. 5 players, each with Dota Plus or a ticket | The team plays at its highest player's tier or above, and its roster is set once it has entered |
 | **Counter-Strike 2: ESEA** | The team is ready once 5 players hold an ESEA League Pass | After registration closes, at most 3 players join per 7 days. Rosters lock 2 weeks before the regular season ends |
 | **Apex Legends: ALGS Challenger Circuit** | Whoever creates the team on Battlefy is its captain. 3–4 players and a coach, registered for each event | Points belong to the players, and a team is seeded by its top three |
 | **The Finals: Ranked Cashout** | Nobody: a party of 2 or 3 queues together, and the game fills empty places | A duo must be within 10,000 RS, and a party is matched by its highest-ranked player |
@@ -161,7 +162,7 @@ It depends on the format:
 
 - **Clash** needs a ticket from every player, which can be bought with Blue Essence, the currency the game gives for playing.
 - **ESEA** needs an ESEA League Pass for each player.
-- **The Battle Cup** is free with Dota Plus; anyone else buys a ticket.
+- **The Battle Cup** is free for each player with Dota Plus; every other player needs a $0.99 ticket, which a teammate can buy for them.
 - **Siege Cup** needs a paid edition of Siege, not free access.
 - **ETF2L** is free, and so are RGL's Newcomer and Amateur divisions. RGL charges from Intermediate up.
 
