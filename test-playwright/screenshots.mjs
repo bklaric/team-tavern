@@ -259,6 +259,7 @@ const scenes = [
         "valorant-ranked-with-friends",
         "fncs-team",
         "league-of-legends-ranked-with-friends",
+        "rocket-league-clubs",
     ].map(slug => ({
         name: `guide-${slug}`, run: async (page, shot) => {
             // The covers are lazy, and those below the window never load on their own, so

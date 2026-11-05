@@ -104,6 +104,34 @@ test("the guide to joining a team leads to the Rocket League guide, and that to 
     await expect(page.getByRole("heading", { name: "Rocket League", level: 1 })).toBeVisible();
 });
 
+test("the guide to joining a team leads to the Rocket League clubs guide, and that to its game's feed", async ({ page }) => {
+    const clubsHeading = "How to join a Rocket League club, run one, and get a team into the RLCS";
+    await page.goto(guidePath);
+    await expect(page.getByRole("heading", { name: guideHeading, level: 1 })).toBeVisible();
+
+    await page.getByRole("link", { name: clubsHeading, exact: true }).click();
+
+    await expectPage(page, "/guides/rocket-league-clubs");
+    await expect(page.getByRole("heading", { name: clubsHeading, level: 1 })).toBeVisible();
+    await expect(page.getByRole("table")).toContainText("9–13 December 2026, in London");
+
+    await page.getByRole("link", { name: "Rocket League players and groups on TeamTavern" }).last().click();
+
+    await expectPage(page, "/games/rocket-league");
+    await expect(page.getByRole("heading", { name: "Rocket League", level: 1 })).toBeVisible();
+});
+
+test("the Rocket League tournaments guide leads to the clubs guide", async ({ page }) => {
+    await page.goto("/guides/rocket-league-tournaments");
+    await expect(page.getByRole("heading", { name: "Rocket League tournament times, rules and finding a partner", level: 1 })).toBeVisible();
+
+    const clubsHeading = "How to join a Rocket League club, run one, and get a team into the RLCS";
+    await page.getByRole("link", { name: clubsHeading }).click();
+
+    await expectPage(page, "/guides/rocket-league-clubs");
+    await expect(page.getByRole("heading", { name: clubsHeading, level: 1 })).toBeVisible();
+});
+
 test.describe("in Tokyo, which keeps one time all year", () => {
     test.use({ timezoneId: "Asia/Tokyo", locale: "en-US" });
 

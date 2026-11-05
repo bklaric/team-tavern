@@ -128,6 +128,7 @@ test.describe("on a phone", () => {
             "valorant-ranked-with-friends",
             "fncs-team",
             "league-of-legends-ranked-with-friends",
+            "rocket-league-clubs",
         ]) {
             await page.goto(`/guides/${guide}`);
             await expect(page.getByRole("table")).toBeVisible();

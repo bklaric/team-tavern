@@ -23,6 +23,8 @@ foreign import overwatchRankedWithFriendsText :: String
 
 foreign import rainbowSixSiegeRankedWithFriendsText :: String
 
+foreign import rocketLeagueClubsText :: String
+
 foreign import rocketLeagueTournamentsText :: String
 
 foreign import theFinalsRankedWithFriendsText :: String
@@ -56,7 +58,7 @@ guides = sortBy (flip $ comparing _.updated)
       , description: "Most esports teams are amateur five-stacks playing Premier, Clash, ESEA or Siege Cup. "
             <> "Here's what each game asks of your account, what teams look for, and where to find one."
       , published: "2026-09-29"
-      , updated: "2026-11-03"
+      , updated: "2026-11-05"
       , games: []
       , html: markdownToHtml joinAnEsportsTeamText
       }
@@ -66,7 +68,7 @@ guides = sortBy (flip $ comparing _.updated)
       , description: "Starting an amateur team? How to pick your format, recruit for the roles you're missing, "
             <> "run tryouts, find scrims, and the roster rules each game's tournament enforces."
       , published: "2026-09-29"
-      , updated: "2026-11-03"
+      , updated: "2026-11-05"
       , games: []
       , html: markdownToHtml makeAnEsportsTeamText
       }
@@ -97,7 +99,7 @@ guides = sortBy (flip $ comparing _.updated)
             <> "enter, and why a party plays at its best player's rank: Rocket League's tournaments, and how to "
             <> "find a partner for them."
       , published: "2026-10-04"
-      , updated: "2026-10-15"
+      , updated: "2026-11-05"
       , games: [ { handle: "rocket-league", title: "Rocket League" } ]
       , html: markdownToHtml rocketLeagueTournamentsText
       }
@@ -170,5 +172,15 @@ guides = sortBy (flip $ comparing _.updated)
       , updated: "2026-11-03"
       , games: [ { handle: "league-of-legends", title: "League of Legends" } ]
       , html: markdownToHtml leagueOfLegendsRankedWithFriendsText
+      }
+    , { slug: "rocket-league-clubs"
+      , heading: "How to join a Rocket League club, run one, and get a team into the RLCS"
+      , title: "Rocket League clubs: how to join, make or leave one, and how to get into the RLCS"
+      , description: "How Rocket League's in-game clubs work since the 2025 update, from invites to leaving as owner, "
+            <> "and how a team of three gets into the RLCS's 2027 Club Championship."
+      , published: "2026-11-05"
+      , updated: "2026-11-05"
+      , games: [ { handle: "rocket-league", title: "Rocket League" } ]
+      , html: markdownToHtml rocketLeagueClubsText
       }
     ]

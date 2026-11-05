@@ -107,6 +107,7 @@ Most team formats set a bar for your account, and some cost money. Check yours b
 | **Apex Legends: ALGS Challenger Circuit**, 3 players | – | Open tournaments in each split |
 | **The Finals: the Online Series**, 3 players and a sub | Nothing: anyone can enter | Four cycles a year, May to September in 2026 |
 | **Rocket League: in-game tournaments**, 2 or 3 players | Nothing: they're free and open to everyone | Several every day in each region |
+| **Rocket League: RLCS Opens**, 3 players and a reserve | Age 13, two-factor authentication, no Cabined Account, and two of three players citizens or residents of the region, or studying or working there | Club League Opens in each region, for a Club League from January 2027. Dates aren't out yet |
 | **Fortnite: FNCS**, 3 players in 2027 | Account level 350, two-factor authentication, 14 Epic tournaments in the last 180 days, and Gold in ranked to enter the Divisional Cups | Weekly Divisional Cups, then Majors. 2027's dates aren't out yet |
 | **Rainbow Six Siege: Siege Cup**, 5 players | The paid game, not free access | – |
 | **Rainbow Six Siege: Challenger Series**, 5 players | – | Open qualifiers, February to March in 2026 |
@@ -180,7 +181,7 @@ Most players start in ranked, where a duo queues Solo/Duo within Riot's rank lim
 
 ### Rocket League: tournaments
 
-<img class="guide-cover" src="/images/games/400/rocket-league.webp" alt="" width="400" height="600" loading="lazy"> Rocket League runs its own Competitive Tournaments, free brackets of 32 teams in 2v2 and 3v3, several times a day in every region. [Epic's tournament rules](https://www.epicgames.com/help/rocket-league-c-37599050/gameplay-c-32343914/what-are-competitive-auto-tournaments-in-rocket-league-a12090278) let you register alone and have the game fill your team, but a party enters at its best player's tournament rank, and a duo in 3v3 must be within three ranks of each other, so a regular partner near your rank pays off. Above them is the RLCS, whose 2027 season opens with a Club Championship that gives four places to an open qualifier starting in November. [Rocket League tournament times, rules and finding a partner](/guides/rocket-league-tournaments) covers the schedule, the entry rules and how to find a partner.
+<img class="guide-cover" src="/images/games/400/rocket-league.webp" alt="" width="400" height="600" loading="lazy"> Rocket League runs its own Competitive Tournaments, free brackets of 32 teams in 2v2 and 3v3, several times a day in every region. [Epic's tournament rules](https://www.epicgames.com/help/rocket-league-c-37599050/gameplay-c-32343914/what-are-competitive-auto-tournaments-in-rocket-league-a12090278) let you register alone and have the game fill your team, but a party enters at its best player's tournament rank, and a duo in 3v3 must be within three ranks of each other, so a regular partner near your rank pays off. [Rocket League tournament times, rules and finding a partner](/guides/rocket-league-tournaments) covers the schedule, the entry rules and how to find a partner. Above them is the RLCS, whose 2027 season, the Club Championship, lets teams of three and a reserve in through open qualifiers in every region, beside 20 invited clubs. [How to join a Rocket League club, run one, and get a team into the RLCS](/guides/rocket-league-clubs) covers who can enter and how, and the game's own clubs, which hold up to 20 players.
 
 [Rocket League players and groups on TeamTavern](/games/rocket-league)
 
@@ -235,7 +236,7 @@ Pro teams recruit from the top of the same ladders amateur teams play on, and ea
 - **Marvel Rivals:** the Championship on PC, then the Annual Qualifier for Ignite's Pro Circuit, for the top Factions and the Champion Points leaders.
 - **Apex Legends:** the Challenger Circuit, then the Pro League Qualifier, then the Pro League.
 - **The Finals:** the Online Series, whose leaderboard leaders are invited to the Grand Major, with open qualifiers for the places left.
-- **Rocket League:** for 2027, an open online qualifier for four places in the RLCS Club Championship, beside 20 invited clubs.
+- **Rocket League:** the RLCS Club Championship's Opens, then its regional Club League, where 40 of the 64 places go through the Opens, then the 16-team Club Finale.
 - **Rainbow Six Siege:** the Challenger Series, then the regional league.
 
 For most teams the ladder is the goal in itself: a season of matches that count, with a fixed lineup.
