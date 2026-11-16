@@ -16,6 +16,7 @@ import rainbowSixSiegeRankedWithFriends from "../../src/TeamTavern/Server/Guide/
 import rocketLeagueClubs from "../../src/TeamTavern/Server/Guide/rocket-league-clubs.md";
 import rocketLeagueTournaments from "../../src/TeamTavern/Server/Guide/rocket-league-tournaments.md";
 import theFinalsRankedWithFriends from "../../src/TeamTavern/Server/Guide/the-finals-ranked-with-friends.md";
+import valorantPremier from "../../src/TeamTavern/Server/Guide/valorant-premier.md";
 import valorantRankedWithFriends from "../../src/TeamTavern/Server/Guide/valorant-ranked-with-friends.md";
 
 export const counterStrike2RankedWithFriendsText = counterStrike2RankedWithFriends;
@@ -47,6 +48,8 @@ export const rocketLeagueClubsText = rocketLeagueClubs;
 export const rocketLeagueTournamentsText = rocketLeagueTournaments;
 
 export const theFinalsRankedWithFriendsText = theFinalsRankedWithFriends;
+
+export const valorantPremierText = valorantPremier;
 
 export const valorantRankedWithFriendsText = valorantRankedWithFriends;
 

@@ -16,7 +16,7 @@ This guide is for a player who wants to play Competitive, the game's ranked mode
 
 Competitive opens at account level 20, by the same FAQ, and every player in the party needs it.
 
-Premier, Valorant's team mode, works differently. A Premier team has five to seven players of any rank, and the team is placed in one of Premier's divisions by its top five players' MMR, so no party limit applies. [Joining a Premier team](/guides/join-an-esports-team#valorant-premier) covers it.
+Premier, Valorant's team mode, works differently. A Premier team has five to seven players of any rank, and the team is placed in one of Premier's divisions by its top five players' MMR, so no party limit applies. [How Valorant Premier works, and how to find a team for it](/guides/valorant-premier) covers it.
 
 ## Which ranks can queue together
 
@@ -81,7 +81,7 @@ Recruit players whose rank fits everyone already in the party, by the table, in 
 
 **Keep a good teammate.** After a good match with a stranger, add them by their Riot ID.
 
-**From ranked to a team.** A five that plays every week and wants more can make a Premier team, which [joining a Premier team](/guides/join-an-esports-team#valorant-premier) covers, and [How to make an esports team](/guides/make-an-esports-team) covers keeping a team together.
+**From ranked to a team.** A five that plays every week and wants more can make a Premier team, which [How Valorant Premier works, and how to find a team for it](/guides/valorant-premier) covers, and [How to make an esports team](/guides/make-an-esports-team) covers keeping a team together.
 
 **Post on TeamTavern.** Ranked is what most Valorant players on TeamTavern have been after since 2021: 11,355 of the 13,435 player posts tick it. Put up a player post with your rank, your roles and your platform, and tick "Ranked" under "Looking for". A group looking for players puts up a group post with a rank range a duo or trio could queue across, by the table, or for a five-stack, one it can play at full RR. That's narrower than many Valorant group posts so far: 310 of the 975 that tick Ranked and give a rank range ask for one whose lowest and highest ends couldn't queue together as a duo or trio, such as Bronze 1 to Gold 3, or Platinum 1 to Diamond 3 (TeamTavern's posts, 2021–2026, counted 21 October 2026). A group like that can only bring both ends into one party as a five-stack.
 

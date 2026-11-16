@@ -35,6 +35,8 @@ foreign import rocketLeagueTournamentsText :: String
 
 foreign import theFinalsRankedWithFriendsText :: String
 
+foreign import valorantPremierText :: String
+
 foreign import valorantRankedWithFriendsText :: String
 
 foreign import markdownToHtml :: String -> String
@@ -64,7 +66,7 @@ guides = sortBy (flip $ comparing _.updated)
       , description: "Most esports teams are amateur five-stacks playing Premier, Clash, ESEA or Siege Cup. "
             <> "Here's what each game asks of your account, what teams look for, and where to find one."
       , published: "2026-09-29"
-      , updated: "2026-11-05"
+      , updated: "2026-11-16"
       , games: []
       , html: markdownToHtml joinAnEsportsTeamText
       }
@@ -74,7 +76,7 @@ guides = sortBy (flip $ comparing _.updated)
       , description: "Starting an amateur team? How to pick your format, recruit for the roles you're missing, "
             <> "run tryouts, find scrims, and the roster rules each game's tournament enforces."
       , published: "2026-09-29"
-      , updated: "2026-11-05"
+      , updated: "2026-11-16"
       , games: []
       , html: markdownToHtml makeAnEsportsTeamText
       }
@@ -155,7 +157,7 @@ guides = sortBy (flip $ comparing _.updated)
       , description: "Valorant team size is five. Ranked with friends: what ranks can duo or trio, why four can't "
             <> "queue, and what a five-stack of any ranks costs."
       , published: "2026-10-21"
-      , updated: "2026-10-21"
+      , updated: "2026-11-16"
       , games: [ { handle: "valorant", title: "Valorant" } ]
       , html: markdownToHtml valorantRankedWithFriendsText
       }
@@ -219,5 +221,16 @@ guides = sortBy (flip $ comparing _.updated)
       , updated: "2026-11-05"
       , games: [ { handle: "league-of-legends", title: "League of Legends" } ]
       , html: markdownToHtml leagueOfLegendsClashText
+      }
+    , { slug: "valorant-premier"
+      , heading: "How Valorant Premier works, and how to find a team for it"
+      , title: "Valorant Premier: times, divisions, points and how to find a team"
+      , description: "A weekly league for a team of five to seven, up to two matches a week in your zone's evening "
+            <> "and a playoff for the teams that reach 600 points: how Valorant Premier works, when to be online, "
+            <> "and how to find a team for it."
+      , published: "2026-11-16"
+      , updated: "2026-11-16"
+      , games: [ { handle: "valorant", title: "Valorant" } ]
+      , html: markdownToHtml valorantPremierText
       }
     ]

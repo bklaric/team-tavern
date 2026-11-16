@@ -97,7 +97,7 @@ Most team formats set a bar for your account, and some cost money. Check yours b
 
 | Format | What it asks of you | When it runs |
 |---|---|---|
-| **Valorant: Premier**, 5–7 players | SMS verification, one ranked placement ever, and no current bans or restrictions | Stages of 7 weeks, up to 2 matches a week, then playoffs |
+| **Valorant: Premier**, 5–7 players | SMS verification, one ranked placement ever, and no current bans or restrictions | Stages of about 7 weeks, up to 2 matches a week, then a playoff evening |
 | **League of Legends: Clash**, 5 players | Level 30, ranked placements this year or last, SMS on a mobile number, and a ticket each, for Blue Essence or RP or from the Clash mission | 12 weekends in 2026 |
 | **Dota 2: Battle Cup**, 5 players | Calibrated for Ranked, and Dota Plus or a $0.99 ticket each | Every Saturday evening, in each of five divisions |
 | **Deadlock: the Death Slam League**, 6 players and up to 2 subs | Nothing stated: new teams start in the lowest division | Seasons, with matches on Saturdays, in North America |
@@ -122,6 +122,8 @@ A dash means the organiser's own page doesn't say, so check its rules before you
 <img class="guide-cover" src="/images/games/400/valorant.webp" alt="" width="400" height="600" loading="lazy"> Premier is Valorant's own team mode. You create or join a team in the Premier tab of the client, and [Riot's team rules](https://support.riotgames.com/en-us/valorant/gameplay/premier-team-creation-management) allow five to seven players. There's nothing to sign up for in advance: a team can start at any point in a Stage. By [Riot's rules for joining a team](https://support.riotgames.com/en-us/valorant/gameplay/premier-joining-leaving-teams), a Stage runs seven weeks of up to two matches a week, plus a playoff week for the teams that make it, and once a team has played its first match, nobody can join whose MMR would move the team up or down a division. So join before the team's first match, or pick a team whose rank is close to yours.
 
 [Premier's divisions](https://support.riotgames.com/en-us/valorant/gameplay/premier-divisions) run Open, Intermediate, Advanced and Elite, each in five steps, then Contender and Invite, and a team moves up by winning its division's playoff bracket. The top teams of each [Invite division](https://support.riotgames.com/en-us/valorant/gameplay/premier-contender-invite-divisions) can earn a place in a Challengers league.
+
+In Stage V26A6, weekly matches are played on Thursday and the weekend, in one-hour evening windows on the zone's own clock, mostly at 19:00. From Open to Elite, a win is worth 100 points and a loss 25, and 600 reach the playoffs, so a team that plays every week needs only four wins. [How Valorant Premier works, and how to find a team for it](/guides/valorant-premier) gives each zone's times, how a team's division is set, the playoff rules and how to fill a roster.
 
 Most players start in Competitive, where a duo or trio queues within Riot's rank limits, a party of four can't queue, and a five-stack can be any ranks. [Valorant team size, party size and playing ranked with friends](/guides/valorant-ranked-with-friends) covers who can queue together, what a five-stack costs and how to find players in range.
 

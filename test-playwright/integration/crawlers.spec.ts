@@ -33,6 +33,7 @@ const guidePaths = [
     "/guides/dota-2-battle-cup",
     "/guides/counter-strike-2-ranked-with-friends",
     "/guides/league-of-legends-clash",
+    "/guides/valorant-premier",
 ];
 
 // Neither robots nor the sitemap is a page, so Caddy answers a bot with the file itself

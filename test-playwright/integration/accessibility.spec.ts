@@ -69,6 +69,7 @@ for (const [device, viewport] of [["desktop", { width: 1280, height: 800 }], ["p
                 "/guides/dota-2-battle-cup",
                 "/guides/counter-strike-2-ranked-with-friends",
                 "/guides/league-of-legends-clash",
+                "/guides/valorant-premier",
             ]) {
                 await page.goto(guide);
                 await expect(page.getByRole("table")).toBeVisible();

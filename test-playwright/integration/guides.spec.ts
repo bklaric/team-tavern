@@ -324,14 +324,32 @@ test("the guide to joining a team leads to the Valorant ranked guide, and that t
     await expect(page.getByRole("heading", { name: "Valorant", level: 1 })).toBeVisible();
 });
 
-test("the Valorant ranked guide leads to the Premier section of the guide to joining a team", async ({ page }) => {
+test("the guide to joining a team leads to the Valorant Premier guide, and that to its game's feed", async ({ page }) => {
+    const premierHeading = "How Valorant Premier works, and how to find a team for it";
+    await page.goto(guidePath);
+    await expect(page.getByRole("heading", { name: guideHeading, level: 1 })).toBeVisible();
+
+    await page.getByRole("link", { name: premierHeading }).click();
+
+    await expectPage(page, "/guides/valorant-premier");
+    await expect(page.getByRole("heading", { name: premierHeading, level: 1 })).toBeVisible();
+    await expect(page.getByRole("row").filter({ hasText: "Japan" })).toContainText("Thursday, Saturday and Sunday 21:00");
+
+    await page.getByRole("link", { name: "Valorant players and groups on TeamTavern" }).last().click();
+
+    await expectPage(page, "/games/valorant");
+    await expect(page.getByRole("heading", { name: "Valorant", level: 1 })).toBeVisible();
+});
+
+test("the Valorant ranked guide leads to the Premier guide", async ({ page }) => {
     await page.goto("/guides/valorant-ranked-with-friends");
     await expect(page.getByRole("heading", { name: "Valorant team size, party size and playing ranked with friends", level: 1 })).toBeVisible();
 
-    await page.getByRole("link", { name: "Joining a Premier team", exact: true }).click();
+    const premierHeading = "How Valorant Premier works, and how to find a team for it";
+    await page.getByRole("link", { name: premierHeading }).first().click();
 
-    await expectPage(page, "/guides/join-an-esports-team");
-    await expect(page.getByRole("heading", { name: "Valorant: Premier", level: 3 })).toBeInViewport();
+    await expectPage(page, "/guides/valorant-premier");
+    await expect(page.getByRole("heading", { name: premierHeading, level: 1 })).toBeVisible();
 });
 
 test("the guide to joining a team leads to the League ranked guide, and that to its game's feed", async ({ page }) => {
