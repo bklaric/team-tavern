@@ -1,5 +1,5 @@
 import { expect, Page, test } from "@playwright/test";
-import { signIn, submitPasswordSignIn } from "../accounts";
+import { signIn, signUp, submitPasswordSignIn } from "../accounts";
 import { expectPage } from "../pages";
 
 // The server logs only its own failures, so a page reports to it the ones it didn't expect.
@@ -56,6 +56,22 @@ test("a failure the page handles is not reported", async ({ page }) => {
 
     // A report goes out as its failure comes in, so once the network is quiet there is none
     // still to come.
+    await page.waitForLoadState("networkidle");
+    expect(reports).toEqual([]);
+});
+
+// A link to a conversation outlives it, since deleting a post takes its conversations, and a
+// block hides one from both sides. The page then shows the inbox without it.
+test("a conversation the player can't open is not reported", async ({ page }) => {
+    await signUp(page, "W");
+    const reports = collectReports(page);
+    const conversation = page.waitForResponse(response =>
+        new URL(response.url()).pathname === "/api/messages/2147483647");
+
+    await page.goto("/messages/2147483647");
+
+    expect((await conversation).status()).toBe(404);
+    await expect(page.getByRole("heading", { name: "No messages yet" })).toBeVisible();
     await page.waitForLoadState("networkidle");
     expect(reports).toEqual([]);
 });
