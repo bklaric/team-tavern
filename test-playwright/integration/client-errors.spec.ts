@@ -1,5 +1,6 @@
 import { expect, Page, test } from "@playwright/test";
 import { signIn, submitPasswordSignIn } from "../accounts";
+import { expectPage } from "../pages";
 
 // The server logs only its own failures, so a page reports to it the ones it didn't expect.
 // What a report carries is what reaches the log, so each test reads the reports the page sent.
@@ -55,6 +56,19 @@ test("a failure the page handles is not reported", async ({ page }) => {
 
     // A report goes out as its failure comes in, so once the network is quiet there is none
     // still to come.
+    await page.waitForLoadState("networkidle");
+    expect(reports).toEqual([]);
+});
+
+// The page a new post goes live on is visited signed out too: an ad network's crawler goes
+// back to where its ad was shown, without the player's cookie. Signed out, nobody has a
+// post there, and the form takes the visitor in.
+test("a new post's page sends a visitor signed out to the form, and reports nothing", async ({ page }) => {
+    const reports = collectReports(page);
+
+    await page.goto("/games/valorant/post/player/live");
+
+    await expectPage(page, "/games/valorant/post/player");
     await page.waitForLoadState("networkidle");
     expect(reports).toEqual([]);
 });

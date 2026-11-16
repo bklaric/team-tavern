@@ -30,7 +30,7 @@ import TeamTavern.Client.Script.Expand (toggleCard)
 import TeamTavern.Client.Script.Navigate (navigateReplace_, navigateWithEvent_)
 import TeamTavern.Client.Script.QueryParams (getQueryParam)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
-import TeamTavern.Client.Shared.Fetch (fetchPath, fetchPathBody)
+import TeamTavern.Client.Shared.Fetch (expecting, fetchPath, fetchPathBody)
 import TeamTavern.Client.Shared.Share (sharePage)
 import TeamTavern.Client.Shared.Slot (Slot__I)
 import TeamTavern.Client.Snippets.Class as HS
@@ -109,8 +109,11 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
         load = do
             game <- H.lift $ Async.attempt (fetchPath (Proxy :: _ ViewGame) { handle })
                 <#> (hush >=> onMatch { ok: Just } (const Nothing))
-            own <- H.lift $ Async.attempt (fetchPath (Proxy :: _ ViewOwnDescriptions) { handle })
-                <#> (hush >=> onMatch { ok: Just } (const Nothing))
+            -- A visitor signed out has no post here and is sent to the form,
+            -- as an ad network's crawler is, revisiting the page without the
+            -- player's cookie.
+            own <- H.lift $ Async.attempt (fetchPath (expecting [ "notAuthorized" ] (Proxy :: _ ViewOwnDescriptions)) { handle })
+                <#> (hush >=> onMatch { ok: Just, notAuthorized: const (Just []) } (const Nothing))
             case game, own <#> find (_.type >>> eq type_) of
                 Just game', Just (Just { id, name, description }) -> do
                     host' <- liftEffect $ window >>= location >>= host
