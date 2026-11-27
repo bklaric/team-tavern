@@ -75,20 +75,29 @@ $distDir = "dist/$environment"
 $clientDir = "$distDir/client"
 
 # The tools come from devDependencies, called by path, so every machine builds with the same
-# versions and nothing has to be installed globally. node_modules/.bin stays off PATH: spago would
-# find the purs.cmd shim there, which Node refuses to spawn.
+# versions and nothing has to be installed globally. npm writes them a .cmd shim on Windows and a
+# plain one elsewhere. On Windows node_modules/.bin stays off PATH: spago would find the purs.cmd
+# shim there, which Node refuses to spawn. Elsewhere spago finds purs there. $IsWindows is
+# PowerShell 7's, so Windows PowerShell is told by $env:OS.
 $bin = "node_modules/.bin"
+if ($env:OS -eq "Windows_NT") {
+    $shim = ".cmd"
+}
+else {
+    $shim = ""
+    $env:PATH = (Resolve-Path $bin).Path + [IO.Path]::PathSeparator + $env:PATH
+}
 
 New-Item -ItemType Directory -Force -Path $distDir | Out-Null
 
-& "$bin/spago.cmd" build
+& "$bin/spago$shim" build
 Assert-Success "spago build"
 
 # PureScript compiles each module into an ES module that exports main without running it, so each
 # bundle's entry point is a stub on stdin that imports main and calls it.
 function Bundle([string] $module, [string] $outfile, [string[]] $flags) {
     "import { main } from './output/TeamTavern.$module/index.js'; main();" |
-    & "$bin/esbuild.cmd" --bundle "--outfile=$outfile" @flags
+    & "$bin/esbuild$shim" --bundle "--outfile=$outfile" @flags
     Assert-Success "Bundling $outfile"
 }
 
@@ -119,7 +128,7 @@ if ($buildClient) {
     $script = "app.min.$discriminator.js"
     $stylesheet = "style.min.$discriminator.css"
 
-    & "$bin/sass.cmd" src/TeamTavern/Client/Style/Main.scss "$clientDir/$stylesheet" --style compressed
+    & "$bin/sass$shim" src/TeamTavern/Client/Style/Main.scss "$clientDir/$stylesheet" --style compressed
     Assert-Success "Compiling the stylesheet"
 
     Bundle "Client.Main" "$clientDir/$script" @("--minify")
