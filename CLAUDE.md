@@ -50,8 +50,7 @@ Playwright's `playwright-report/` and `test-results/`, and
   sibling checkouts, PowerShell 7, mise's Node and npm, the Chromium build
   Playwright expects and the local stack's images. Docker's daemon is not
   running at the start of a session: start it with `dockerd &`. Run the scripts
-  as `pwsh ./bundle.ps1 ...`, and spago as `mise x -- spago build`, since mise
-  is not activated there.
+  as `pwsh ./bundle.ps1 ...`.
 
 ## Build and verify
 
@@ -69,7 +68,8 @@ npm run typecheck                 # tsc over test-playwright/ and playwright.con
 
 Bare `spago` and `purs` are the project's own copies: `mise.toml` puts
 `node_modules/.bin` on PATH inside the repo, and `bundle.ps1` puts it there
-itself, so a build never runs a spago or purs installed globally.
+itself, so a build never runs a spago or purs installed globally. Run plain
+`spago build`, never `npx spago`, which dies with `spawn EINVAL` on Windows.
 
 `npm test` is Playwright, configured in `playwright.config.ts`.
 `test-playwright/stack.setup.ts` takes the local stack down, brings it back up,
@@ -100,11 +100,9 @@ styles, and no handful of specs covers it.
 
 `test-playwright/screenshots.mjs` shoots every screen of the site at 375 px and
 1280 px against the running local stack, into `test-playwright/screenshots/`, for
-checking a change by eye; `--only=<text>` picks scenes by name. Run it as
-`"$(mise which node)" test-playwright/screenshots.mjs`, the Node binary itself,
-since a `node` shim on Windows can pass its arguments through `cmd.exe`. It
-makes what the seed lacks, a conversation or a block, through the pages, so run
-it on a stack the next `npm test` reseeds.
+checking a change by eye; `--only=<text>` picks scenes by name. It makes what
+the seed lacks, a conversation or a block, through the pages, so run it on a
+stack the next `npm test` reseeds.
 `phone.spec.ts` holds every page and overlay to a 375 px window with the
 longest names a player can give.
 

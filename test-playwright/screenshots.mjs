@@ -1,6 +1,6 @@
 // Screenshots every screen of the site at phone and desktop width, against the running
 // local stack, for comparing with the prototype's (redesign/prototype/screenshot.mjs):
-//   "$(mise which node)" test-playwright/screenshots.mjs [--only=<text>] ...
+//   node test-playwright/screenshots.mjs [--only=<text>] ...
 // With no --only it takes every scene; each --only keeps the scenes whose name holds its
 // text. The shots go to test-playwright/screenshots/. Scenes sign in as the seeded players
 // (stacks/test-seed/players.sql) and make what the seed doesn't hold, a conversation or a

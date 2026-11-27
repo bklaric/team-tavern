@@ -395,8 +395,7 @@ next batch, passed back as it came.
 ## Practicalities
 
 - The dev stack's `tt-postgres` container holds the dump; the export needs it running.
-- Screenshot with `"$(mise which node)" redesign/prototype/screenshot.mjs ...`. The
-  plain `node` shim passes arguments through `cmd.exe`, which splits URLs at `&`.
+- Screenshot with `node redesign/prototype/screenshot.mjs ...`.
 - Bash heredocs containing apostrophes fail in this environment. Write one-off
   scripts with the Write tool into the git-ignored `screenshots/` folder, run them,
   then delete them.

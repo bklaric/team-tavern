@@ -93,7 +93,7 @@ fit these guides, so these override them:
      setup restarts the one local stack.
    - Run `npm test -- guides.spec.ts crawlers.spec.ts accessibility.spec.ts phone.spec.ts ads.spec.ts --timeout=120000`.
      The longer timeout keeps accessibility checks passing on a busy machine.
-   - Look at the page with `"$(mise which node)" test-playwright/screenshots.mjs --only=<slug>`.
+   - Look at the page with `node test-playwright/screenshots.mjs --only=<slug>`.
 9. **Review.** Run a blog-reviewer agent on the file. List the standing
    choices above as non-defects, and point it at the sibling guides as the
    standard. Check each finding against the sources before applying it,

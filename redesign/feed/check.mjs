@@ -1,6 +1,6 @@
 // Checks the feed query's marks against the prototype's compare() on the same posts:
-//   "$(mise which node)" redesign/feed/check.mjs
-//   "$(mise which node)" redesign/feed/check.mjs --api http://localhost:8090
+//   node redesign/feed/check.mjs
+//   node redesign/feed/check.mjs --api http://localhost:8090
 // The prototype runs on the samples export-sample.sh writes, so export the
 // games below first. Without --api the query runs through psql with its batch
 // limits lifted, so every post in the game is marked. With --api the feed
