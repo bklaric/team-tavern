@@ -30,11 +30,19 @@ param (
 $PSDefaultParameterValues = @{ "*:ErrorAction" = "Stop" }
 
 # Native tools don't stop the script when they fail, so each one is checked after it runs.
+# A tool that isn't installed never runs and leaves $LASTEXITCODE as the previous command set it,
+# so it's cleared here and after every check: a tool that didn't run fails the check too.
+$global:LASTEXITCODE = $null
 function Assert-Success([string] $what) {
-    if ($LASTEXITCODE -ne 0) {
+    if ($null -eq $global:LASTEXITCODE) {
+        Write-Output "$what failed: the command didn't run."
+        exit 1
+    }
+    if ($global:LASTEXITCODE -ne 0) {
         Write-Output "$what failed."
         exit 1
     }
+    $global:LASTEXITCODE = $null
 }
 
 $validTargets = @("client", "server")
@@ -74,30 +82,20 @@ Write-Output ("Targets: " + ($targets -join ", "))
 $distDir = "dist/$environment"
 $clientDir = "$distDir/client"
 
-# The tools come from devDependencies, called by path, so every machine builds with the same
-# versions and nothing has to be installed globally. npm writes them a .cmd shim on Windows and a
-# plain one elsewhere. On Windows node_modules/.bin stays off PATH: spago would find the purs.cmd
-# shim there, which Node refuses to spawn. Elsewhere spago finds purs there. $IsWindows is
-# PowerShell 7's, so Windows PowerShell is told by $env:OS.
-$bin = "node_modules/.bin"
-if ($env:OS -eq "Windows_NT") {
-    $shim = ".cmd"
-}
-else {
-    $shim = ""
-    $env:PATH = (Resolve-Path $bin).Path + [IO.Path]::PathSeparator + $env:PATH
-}
+# Build with the spago, purs, esbuild and sass that package.json pins, not whatever is installed
+# globally.
+$env:PATH = (Join-Path $PSScriptRoot "node_modules/.bin") + [IO.Path]::PathSeparator + $env:PATH
 
 New-Item -ItemType Directory -Force -Path $distDir | Out-Null
 
-& "$bin/spago$shim" build
+spago build
 Assert-Success "spago build"
 
 # PureScript compiles each module into an ES module that exports main without running it, so each
 # bundle's entry point is a stub on stdin that imports main and calls it.
 function Bundle([string] $module, [string] $outfile, [string[]] $flags) {
     "import { main } from './output/TeamTavern.$module/index.js'; main();" |
-    & "$bin/esbuild$shim" --bundle "--outfile=$outfile" @flags
+    esbuild --bundle "--outfile=$outfile" @flags
     Assert-Success "Bundling $outfile"
 }
 
@@ -128,7 +126,7 @@ if ($buildClient) {
     $script = "app.min.$discriminator.js"
     $stylesheet = "style.min.$discriminator.css"
 
-    & "$bin/sass$shim" src/TeamTavern/Client/Style/Main.scss "$clientDir/$stylesheet" --style compressed
+    sass src/TeamTavern/Client/Style/Main.scss "$clientDir/$stylesheet" --style compressed
     Assert-Success "Compiling the stylesheet"
 
     Bundle "Client.Main" "$clientDir/$script" @("--minify")

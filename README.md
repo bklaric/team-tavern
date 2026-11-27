@@ -77,8 +77,8 @@ conventions in each of these in detail.
 
 You need:
 
-- [Volta](https://volta.sh), which picks the Node and npm versions pinned in
-  `package.json`. The compiler, spago and the rest of the toolchain are
+- [mise](https://mise.jdx.dev), which installs the Node and npm versions pinned
+  in `mise.toml`. The compiler, spago and the rest of the toolchain are
   `devDependencies`.
 - Docker.
 - Windows PowerShell, which runs the scripts.
@@ -97,6 +97,7 @@ Then build and bring up the local stack, which seeds its own database:
 
 ```powershell
 cd team-tavern
+mise install
 npm install
 .\bundle.ps1 -environment local
 .\up.ps1

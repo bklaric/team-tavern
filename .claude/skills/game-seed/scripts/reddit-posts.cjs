@@ -1,7 +1,7 @@
 // Saves a subreddit's newest posts as JSON, for counting how players of a game
 // state roles and what they're after.
 //
-//   "$(volta which node)" .claude/skills/game-seed/scripts/reddit-posts.cjs <outdir> <max> <subreddit>...
+//   "$(mise which node)" .claude/skills/game-seed/scripts/reddit-posts.cjs <outdir> <max> <subreddit>...
 //
 // Writes <outdir>/<subreddit>.json: an array of { id, title, flair, text,
 // created }. Reddit refuses scripted requests and its JSON listings, but

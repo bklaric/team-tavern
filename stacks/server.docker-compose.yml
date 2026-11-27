@@ -51,7 +51,7 @@ services:
     logging: *logging
 
   tt-node:
-    # Keep in step with the Volta pin in package.json.
+    # Keep in step with the Node pin in mise.toml.
     image: node:24.21.0
     container_name: tt-node
     restart: unless-stopped

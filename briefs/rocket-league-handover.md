@@ -198,7 +198,7 @@ Its `league` regex matches "Rocket League" itself, so ignore that row.
   `document.body.innerText`. The MCP writes snapshots to `.playwright-mcp/` in
   the repo root, which isn't git-ignored, so delete it afterwards.
 - **Reddit:** `.claude/skills/game-seed/scripts/reddit-posts.cjs`, run with
-  `"$(volta which node)"`.
+  `"$(mise which node)"`.
 - **What the game shows on screen:** `rl-research/play.cjs <videoId> <prefix>
   <start> <every> <count>`. It opens the watch page headless, clicks the
   Croatian consent button ("Prihvati sve"), waits out or skips the ads,

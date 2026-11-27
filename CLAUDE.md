@@ -29,7 +29,7 @@ Playwright's `playwright-report/` and `test-results/`, and
 
 ## Environment
 
-- **Node and npm** are pinned by Volta in `package.json`; with Volta installed
+- **Node and npm** are pinned by mise in `mise.toml`; with mise activated
   the right versions are picked up automatically. The `tt-node` service in
   both compose files under `stacks/`, and the local stack's `tt-discord`,
   `tt-mail`, `tt-steam` and `tt-google` services, pin the same Node version for
@@ -46,10 +46,17 @@ Playwright's `playwright-report/` and `test-results/`, and
 - **Git Bash** runs the bash scripts that don't run in a container or on a
   server, under `redesign/` and `.claude/skills/`.
 - **Docker Desktop** (WSL2 backend on Windows) for the local stack.
+- **Cloud sessions (Linux):** the environment's setup script provides the
+  sibling checkouts, PowerShell 7, mise's Node and npm, the Chromium build
+  Playwright expects and the local stack's images. Docker's daemon is not
+  running at the start of a session: start it with `dockerd &`. Run the scripts
+  as `pwsh ./bundle.ps1 ...`, and spago as `mise x -- spago build`, since mise
+  is not activated there.
 
 ## Build and verify
 
 ```powershell
+mise install                      # once, the pinned Node and npm
 npm install                       # once
 spago build                       # compile everything into output/
 .\bundle.ps1 -environment local   # spago build, then the client and the server, into dist/local/
@@ -60,12 +67,9 @@ npm run typecheck                 # tsc over test-playwright/ and playwright.con
 .\deploy.ps1 -server user@host    # build production, ship it as a new release and check it answers
 ```
 
-Bare `spago` and `purs` work because Volta shims them and, since both are
-dependencies in `package.json`, runs the project-local copies. Without Volta,
-call `./node_modules/.bin/spago` as `bundle.ps1` does. Never `npx spago`, and
-never put `node_modules/.bin` on PATH before running spago: spago then finds
-the `purs.cmd` shim, which Node refuses to spawn, and the build dies with
-`spawn EINVAL`.
+Bare `spago` and `purs` are the project's own copies: `mise.toml` puts
+`node_modules/.bin` on PATH inside the repo, and `bundle.ps1` puts it there
+itself, so a build never runs a spago or purs installed globally.
 
 `npm test` is Playwright, configured in `playwright.config.ts`.
 `test-playwright/stack.setup.ts` takes the local stack down, brings it back up,
@@ -97,9 +101,10 @@ styles, and no handful of specs covers it.
 `test-playwright/screenshots.mjs` shoots every screen of the site at 375 px and
 1280 px against the running local stack, into `test-playwright/screenshots/`, for
 checking a change by eye; `--only=<text>` picks scenes by name. Run it as
-`"$(volta which node)" test-playwright/screenshots.mjs`, since the plain `node`
-shim goes through `cmd.exe`. It makes what the seed lacks, a conversation or a
-block, through the pages, so run it on a stack the next `npm test` reseeds.
+`"$(mise which node)" test-playwright/screenshots.mjs`, the Node binary itself,
+since a `node` shim on Windows can pass its arguments through `cmd.exe`. It
+makes what the seed lacks, a conversation or a block, through the pages, so run
+it on a stack the next `npm test` reseeds.
 `phone.spec.ts` holds every page and overlay to a 375 px window with the
 longest names a player can give.
 

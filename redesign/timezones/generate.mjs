@@ -1,5 +1,5 @@
 // Writes src/TeamTavern/Shared/Timezones.purs, the timezones a player can pick:
-//   "$(volta which node)" redesign/timezones/generate.mjs
+//   "$(mise which node)" redesign/timezones/generate.mjs
 // The zones are tzdb's zone.tab, which gives every country its own zones under
 // names of its own (Europe/Zagreb), where zone1970.tab merges countries whose
 // clocks have agreed since 1970. A zone's city is CLDR's English name for it,

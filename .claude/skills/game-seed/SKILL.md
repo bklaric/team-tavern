@@ -100,7 +100,7 @@ use it, and labels follow the posts' words.
   game's LFG subreddit or recruitment board, and count how they state a role
   and what they are after. Reddit refuses WebFetch and scripted requests, but
   serves a browser, so `scripts/reddit-posts.cjs` fetches through Playwright's
-  Chromium (run it with `"$(volta which node)"`; usage is in its header). The
+  Chromium (run it with `"$(mise which node)"`; usage is in its header). The
   active LFG subreddits are `valorant_lfg`, `apexlfg`, `Overwatch_LFG` and
   `TeamRedditTeams` for League; their flairs are regions and platforms, never
   what a post is after, so the counting is on the text. Dota, CS2, Siege, TF2,

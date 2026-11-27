@@ -30,7 +30,7 @@ services:
       - ../../stacks/test-seed:/test-seed:ro
 
   tt-node:
-    # Keep in step with the Volta pin in package.json.
+    # Keep in step with the Node pin in mise.toml.
     image: node:24.21.0
     container_name: tt-node
     restart: unless-stopped
@@ -56,7 +56,7 @@ services:
   # Answers the Discord API the node container calls, at DISCORD_API_URL in .env,
   # swapping codes with the DISCORD_CLIENT_SECRET there.
   tt-discord:
-    # Keep in step with the Volta pin in package.json.
+    # Keep in step with the Node pin in mise.toml.
     image: node:24.21.0
     container_name: tt-discord
     restart: unless-stopped
@@ -68,7 +68,7 @@ services:
   # Takes the mail the node container sends to AWS_ENDPOINT_URL_SESV2 in .env, and
   # shows it at /mail on Caddy's port.
   tt-mail:
-    # Keep in step with the Volta pin in package.json.
+    # Keep in step with the Node pin in mise.toml.
     image: node:24.21.0
     container_name: tt-mail
     restart: unless-stopped
@@ -78,7 +78,7 @@ services:
 
   # Answers the Steam Web API the node container calls, at STEAM_API_URL in .env.
   tt-steam:
-    # Keep in step with the Volta pin in package.json.
+    # Keep in step with the Node pin in mise.toml.
     image: node:24.21.0
     container_name: tt-steam
     restart: unless-stopped
@@ -89,7 +89,7 @@ services:
   # Swaps the codes the node container sends to GOOGLE_TOKEN_URL in .env, with
   # the GOOGLE_CLIENT_SECRET there.
   tt-google:
-    # Keep in step with the Volta pin in package.json.
+    # Keep in step with the Node pin in mise.toml.
     image: node:24.21.0
     container_name: tt-google
     restart: unless-stopped
